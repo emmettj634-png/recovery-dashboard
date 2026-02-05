@@ -158,6 +158,7 @@ button{cursor:pointer;}
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
 
+/* ================= CONSTANTS ================= */
 const cream="#FDF9D8";
 const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
@@ -423,7 +424,6 @@ function populateWeeks(){
 }
 function renderLeaderboards(){
   leaderboardContainer.innerHTML="";
-
   if(!weekFilter.value)return;
   const[s,e]=weekFilter.value.split(" - ");
   const start=new Date(s),end=new Date(e);
@@ -481,39 +481,42 @@ function renderCharts(){
   });
 
   avgChart?.destroy();
-  avgChart=new Chart(avgChartEl,{
-    type:"bar",
-    data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
-    options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true,max:100}},
-      plugins:{legend:{labels:{color:cream}}}}
-  });
+  avgChart=new Chart(
+    document.getElementById("avgChart"),
+    {
+      type:"bar",
+      data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
+      options:{
+        scales:{
+          x:{ticks:{color:cream}},
+          y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
+        },
+        plugins:{legend:{labels:{color:cream}}}
+      }
+    }
+  );
 
   const totals={};
   modules.forEach(m=>totals[m]=0);
   playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
 
   teamChart?.destroy();
-  teamChart=new Chart(moduleChart,{
-    type:"bar",
-    data:{labels:Object.keys(totals),
-      datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]},
-    options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true}},
-      plugins:{legend:{labels:{color:cream}}}}
-  });
-}
-function renderPlayerModuleChart(p){
-  const totals={};
-  modules.forEach(m=>totals[m]=0);
-  p.sessions.forEach(s=>totals[s.module]++);
-
-  playerModuleChart?.destroy();
-  playerModuleChart=new Chart(
-    document.getElementById("playerModuleChart"),
-    {type:"bar",
-     data:{labels:Object.keys(totals),
-       datasets:[{data:Object.values(totals),backgroundColor:cream}]},
-     options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true}},
-       plugins:{legend:{display:false}}}}
+  teamChart=new Chart(
+    document.getElementById("moduleChart"),
+    {
+      type:"bar",
+      data:{
+        labels:Object.keys(totals),
+        datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]
+      },
+      options:{
+        scales:{
+          x:{ticks:{color:cream}},
+          y:{ticks:{color:cream},beginAtZero:true}
+        },
+        plugins:{legend:{labels:{color:cream}}}
+      }
+    }
   );
 }
 
