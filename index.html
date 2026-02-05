@@ -432,49 +432,53 @@ if(sortedWeeks.length){
 function renderLeaderboards(){
   leaderboardContainer.innerHTML="";
   if(!weekFilter.value)return;
-  const[s,e]=weekFilter.value.split(" - ");
-  const start=new Date(s),end=new Date(e);
+
+  const [s,e]=weekFilter.value.split(" - ");
+  const start=new Date(s), end=new Date(e);
 
   positions.forEach(pos=>{
-    const group=playerData.filter(p=>p.position===pos);
-    if(group.length===0)return;
+    const group = playerData.filter(p=>p.position===pos);
+    if(!group.length) return;
 
-    const ranked=group.map(p=>{
-    const top = ranked
-  .filter(p => p.days > 0)
-  .sort((a,b) => b.days - a.days)
-  .slice(0,5);
-    const bottom = ranked
-  .filter(p => !top.some(t => t.name === p.name))
-  .sort((a,b)=>a.days-b.days)
-  .slice(0,5);
-
-      const days=[...new Set(
+    // 1️⃣ Build ranked list FIRST
+    const ranked = group.map(p=>{
+      const days = [...new Set(
         p.sessions.filter(x=>{
           const d=new Date(x.date);
-          return d>=start&&d<=end;
+          return d>=start && d<=end;
         }).map(x=>x.date)
       )].length;
-      return{name:p.name,days};
-    }).sort((a,b)=>b.days-a.days);
+      return { name:p.name, days };
+    });
 
-    const div=document.createElement("div");
-    div.className="leaderboard";
+    // 2️⃣ Top performers (only players with activity)
+    const top = ranked
+      .filter(p => p.days > 0)
+      .sort((a,b)=>b.days - a.days)
+      .slice(0,5);
 
-    let html=`<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
-    ranked.slice(0,Math.min(5,ranked.length))
-      .forEach((p,i)=>html+=`<li>${p.name}</li>`
-);
-    html+=`</ol>`;
+    // 3️⃣ Bottom performers (exclude top players)
+    const bottom = ranked
+      .filter(p => !top.some(t => t.name === p.name))
+      .sort((a,b)=>a.days - b.days)
+      .slice(0,5);
 
+    // 4️⃣ Build HTML
+    const div = document.createElement("div");
+    div.className = "leaderboard";
+
+    let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
+    top.forEach(p => html += `<li>${p.name}</li>`);
+    html += `</ol>`;
+
+    // 5️⃣ Only show bottom if group is large enough
     if(group.length > 5){
-  html += `<strong>Bottom Performers</strong><ol>`;
-  bottom.forEach(p => html += `<li>${p.name}</li>`);
-  html += `</ol>`;
-}
+      html += `<strong>Bottom Performers</strong><ol>`;
+      bottom.forEach(p => html += `<li>${p.name}</li>`);
+      html += `</ol>`;
+    }
 
-    
-    div.innerHTML=html;
+    div.innerHTML = html;
     leaderboardContainer.appendChild(div);
   });
 }
