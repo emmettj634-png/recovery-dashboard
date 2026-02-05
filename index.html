@@ -137,6 +137,9 @@ button{cursor:pointer;}
 </div>
 
 <script>
+const weekFilter = document.getElementById("weekFilter");
+const leaderboardContainer = document.getElementById("leaderboardContainer");
+
 const cream="#FDF9D8";
 
 const modules=[
@@ -475,7 +478,8 @@ function populateWeeks(){
     });
   });
 
-  weekFilter.innerHTML = "";
+  if (!weekFilter) return;
+weekFilter.innerHTML = "";
   Object.keys(weeks).sort().forEach(w=>{
     const o = document.createElement("option");
     o.value = w;
@@ -542,7 +546,10 @@ toggleView.onclick=()=>{
   toggleView.textContent=toTeam?"Player View":"Team View";
   if(toTeam) renderTeamView();
 };
-weekFilter.onchange = renderLeaderboards;
+const weekFilterEl = document.getElementById("weekFilter");
+if (weekFilterEl) {
+  weekFilterEl.onchange = renderLeaderboards;
+}
 
 /* ================= INIT ================= */
 loadCSV();
