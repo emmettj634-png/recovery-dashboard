@@ -67,22 +67,6 @@ button{cursor:pointer;}
 
 .team-position{margin-top:40px;}
 .team-position h2{text-align:center;}
-/* ===== Weekly Leaderboard ===== */
-.leaderboard {
-  margin-top: 30px;
-}
-.leaderboard h3 {
-  text-align: center;
-  margin-bottom: 5px;
-}
-.leaderboard ol {
-  padding-left: 20px;
-}
-.leaderboard li {
-  color: #FDF9D8;
-  font-size: 0.95rem;
-}
-
 </style>
 </head>
 
@@ -137,9 +121,6 @@ button{cursor:pointer;}
 </div>
 
 <script>
-const weekFilter = document.getElementById("weekFilter");
-const leaderboardContainer = document.getElementById("leaderboardContainer");
-
 const cream="#FDF9D8";
 
 const modules=[
@@ -336,6 +317,12 @@ function renderModules(){
     card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
     const ul=card.querySelector("ul");
     playerData.filter(p=>p.position===positionFilter.value)
+      .filter(p=>p.sessions.some(s=>s.module===mod&&s.date===dateFilter.value))
+      .forEach(p=>{
+        const li=document.createElement("li");
+        li.textContent=p.name;
+        ul.appendChild(li);
+      });
     playerData
   .filter(p => p.position === positionFilter.value)
   .forEach(p => {
@@ -386,18 +373,7 @@ function renderTeamView(){
     });
     teamView.appendChild(sec);
   });
-  populateWeeks();
-renderLeaderboards();
-
 }
-<h2 style="text-align:center;">Weekly Participation Leaderboard</h2>
-
-<div style="text-align:center;margin-bottom:15px;">
-  <select id="weekFilter"></select>
-</div>
-
-<div id="leaderboardContainer"></div>
-
 
 /* ================= CHARTS (FIXED ONLY) ================= */
 function renderCharts(){
@@ -455,78 +431,6 @@ function renderCharts(){
     }
   );
 }
-/* ================= WEEKLY LEADERBOARD ================= */
-
-function getWeekRange(dateStr){
-  const d = new Date(dateStr);
-  const start = new Date(d);
-  start.setDate(d.getDate() - d.getDay());
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  return {
-    label: `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`,
-    start, end
-  };
-}
-
-function populateWeeks(){
-  const weeks = {};
-  playerData.forEach(p=>{
-    p.sessions.forEach(s=>{
-      const w = getWeekRange(s.date);
-      weeks[w.label] = w;
-    });
-  });
-
-  if (!weekFilter) return;
-weekFilter.innerHTML = "";
-  Object.keys(weeks).sort().forEach(w=>{
-    const o = document.createElement("option");
-    o.value = w;
-    o.textContent = w;
-    weekFilter.appendChild(o);
-  });
-}
-
-function renderLeaderboards(){
-  leaderboardContainer.innerHTML = "";
-  if(!weekFilter.value) return;
-
-  const [startStr,endStr] = weekFilter.value.split(" - ");
-  const start = new Date(startStr);
-  const end = new Date(endStr);
-
-  positions.forEach(pos=>{
-    const players = playerData.filter(p=>p.position===pos);
-
-    const ranked = players.map(p=>{
-      const days = [...new Set(
-        p.sessions
-          .filter(s=>{
-            const d=new Date(s.date);
-            return d>=start && d<=end;
-          })
-          .map(s=>s.date)
-      )].length;
-      return {name:p.name,days};
-    }).sort((a,b)=>b.days-a.days);
-
-    const top = ranked.slice(0,5);
-    const bottom = ranked.slice(-5).reverse();
-
-    const div=document.createElement("div");
-    div.className="leaderboard";
-    div.innerHTML=`
-      <h3>${pos}</h3>
-      <strong>Top 5</strong>
-      <ol>${top.map((p,i)=>`<li>#${i+1} ${p.name}</li>`).join("")}</ol>
-      <strong>Bottom 5</strong>
-      <ol>${bottom.map((p,i)=>`<li>#${i+1} ${p.name}</li>`).join("")}</ol>
-    `;
-    leaderboardContainer.appendChild(div);
-  });
-}
-
 
 /* ================= EVENTS ================= */
 positionFilter.onchange=()=>{
@@ -546,10 +450,6 @@ toggleView.onclick=()=>{
   toggleView.textContent=toTeam?"Player View":"Team View";
   if(toTeam) renderTeamView();
 };
-const weekFilterEl = document.getElementById("weekFilter");
-if (weekFilterEl) {
-  weekFilterEl.onchange = renderLeaderboards;
-}
 
 /* ================= INIT ================= */
 loadCSV();
