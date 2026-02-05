@@ -67,6 +67,9 @@ button{cursor:pointer;}
 
 .team-position{margin-top:40px;}
 .team-position h2{text-align:center;}
+
+.leaderboard{margin-top:30px;}
+.leaderboard li{color:#FDF9D8;}
 </style>
 </head>
 
@@ -91,9 +94,11 @@ button{cursor:pointer;}
     <option value="">Select Date</option>
   </select>
 
+  <!-- ✅ TEAM VIEW BUTTON -->
   <button id="toggleView">Team View</button>
 </div>
 
+<!-- ================= PLAYER VIEW ================= -->
 <div id="playerView">
 
 <h2>Player Details</h2>
@@ -108,31 +113,51 @@ button{cursor:pointer;}
 <div id="selectedDateLabel" style="text-align:center;font-weight:bold;"></div>
 <div id="moduleGrid" class="module-grid"></div>
 
+<h2>Cumulative Module Usage (Selected Player)</h2>
+<div class="chart-box">
+  <canvas id="playerModuleChart"></canvas>
+</div>
+
 <h2>Average Daily Participation by Position (%)</h2>
-<div class="chart-box"><canvas id="avgChart"></canvas></div>
+<div class="chart-box">
+  <canvas id="avgChart"></canvas>
+</div>
 
 <h2>Total Team Module Usage (All Dates)</h2>
-<div class="chart-box"><canvas id="moduleChart"></canvas></div>
+<div class="chart-box">
+  <canvas id="moduleChart"></canvas>
+</div>
 
 </div>
 
-<div id="teamView" class="hidden"></div>
+<!-- ================= TEAM VIEW ================= -->
+<div id="teamView" class="hidden">
+
+<h2 style="text-align:center;">Team Module Participation (Selected Date)</h2>
+<div id="teamModuleGrid"></div>
+
+<hr style="margin:40px 0;opacity:.4;">
+
+<h2 style="text-align:center;">Weekly Participation Leaderboard</h2>
+<div style="text-align:center;margin-bottom:15px;">
+  <select id="weekFilter"></select>
+</div>
+
+<div id="leaderboardContainer"></div>
+
+</div>
 
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded",()=>{
+
+/* ================= CONSTANTS ================= */
 const cream="#FDF9D8";
+const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
+const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
 
-const modules=[
-  "Cryo","Red Light","Cold Tub","Hot Tub",
-  "Massage Chair","Manual Massages","Cocoon"
-];
-
-const positions=[
-  "QB","RB","WR","TE","OL","DT","DE",
-  "CB","S","LB","Specialists"
-];
-
+/* ================= FULL ROSTER ================= */
 const roster = [
   {name:"Ace Hodges",position:"OL"},
   {name:"Alex Shieldnight",position:"DE"},
@@ -245,20 +270,19 @@ const roster = [
 ];
 
 let playerData = roster.map(p=>({...p,sessions:[]}));
-const uniqueDates = p => [...new Set(p.sessions.map(s=>s.date))];
-let avgChartInstance=null, moduleChartInstance=null;
+const uniqueDates=p=>[...new Set(p.sessions.map(s=>s.date))];
 
 /* ================= CSV LOAD ================= */
 async function loadCSV(){
-  const res = await fetch("data.csv?v="+Date.now());
-  const text = await res.text();
+  const res=await fetch("data.csv?v="+Date.now());
+  const text=await res.text();
   playerData.forEach(p=>p.sessions=[]);
 
   text.split("\n").slice(1).forEach(r=>{
-    if(!r.trim()) return;
-    const [n,m,d] = r.split(",").map(x=>x.trim());
-    const p = playerData.find(x=>x.name===n);
-    if(p) p.sessions.push({module:m,date:d});
+    if(!r.trim())return;
+    const[n,m,d]=r.split(",").map(x=>x.trim());
+    const p=playerData.find(x=>x.name===n);
+    if(p)p.sessions.push({module:m,date:d});
   });
 
   populateDates();
@@ -266,6 +290,7 @@ async function loadCSV(){
   renderModules();
   renderCharts();
 }
+loadCSV();
 
 /* ================= DROPDOWNS ================= */
 function populateDates(){
@@ -279,7 +304,7 @@ function populateDates(){
 }
 function populatePlayers(){
   playerFilter.innerHTML='<option value="">Select Player</option>';
-  if(!positionFilter.value) return;
+  if(!positionFilter.value)return;
   playerData.filter(p=>p.position===positionFilter.value)
     .sort((a,b)=>a.name.localeCompare(b.name))
     .forEach(p=>{
@@ -290,86 +315,144 @@ function populatePlayers(){
 }
 
 /* ================= PLAYER DETAILS ================= */
+let playerModuleChart=null;
 function showPlayer(){
-  const p = playerData.find(x=>x.name===playerFilter.value);
-  if(!p) return;
+  const p=playerData.find(x=>x.name===playerFilter.value);
+  if(!p)return;
   playerStatsGrid.classList.remove("hidden");
-  playerRecoveryDays.textContent = uniqueDates(p).length;
-  playerLastDate.textContent = uniqueDates(p).sort().pop()||"N/A";
+  playerRecoveryDays.textContent=uniqueDates(p).length;
+  playerLastDate.textContent=uniqueDates(p).sort().pop()||"N/A";
+
   const mods={};
   p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
-  playerMostModule.textContent =
-    Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0]||"N/A";
-  const group = playerData.filter(x=>x.position===p.position);
-  const rank = group.sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
+  playerMostModule.textContent=Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0]||"N/A";
+
+  const group=playerData.filter(x=>x.position===p.position);
+  const rank=group.sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
     .findIndex(x=>x.name===p.name)+1;
-  playerRank.textContent = `#${rank} out of ${group.length}`;
+  playerRank.textContent=`#${rank} out of ${group.length}`;
+
+  renderPlayerModuleChart(p);
 }
 
 /* ================= MODULE PARTICIPATION ================= */
 function renderModules(){
   moduleGrid.innerHTML="";
-  if(!positionFilter.value||!dateFilter.value) return;
+  if(!positionFilter.value||!dateFilter.value)return;
   selectedDateLabel.textContent=`${dateFilter.value} — ${positionFilter.value}`;
+
   modules.forEach(mod=>{
     const card=document.createElement("div");
     card.className="module-card";
     card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
     const ul=card.querySelector("ul");
-    playerData.filter(p=>p.position===positionFilter.value)
-playerData
-  .filter(p => p.position === positionFilter.value)
-  .forEach(p => {
-    const count = p.sessions.filter(
-      s => s.module === mod && s.date === dateFilter.value
-    ).length;
 
-    if (count > 0) {
-      const li = document.createElement("li");
-      li.textContent = count > 1
-        ? `${p.name} x${count}`
-        : p.name;
-      ul.appendChild(li);
-    }
-  });
+    playerData.filter(p=>p.position===positionFilter.value).forEach(p=>{
+      const count=p.sessions.filter(
+        s=>s.module===mod&&s.date===dateFilter.value
+      ).length;
+      if(count>0){
+        const li=document.createElement("li");
+        li.textContent=count>1?`${p.name} x${count}`:p.name;
+        ul.appendChild(li);
+      }
+    });
+
     moduleGrid.appendChild(card);
   });
 }
 
 /* ================= TEAM VIEW ================= */
-function ensureDateSelected(){
-  if(dateFilter.value) return;
-  const opts=[...dateFilter.options].map(o=>o.value).filter(Boolean);
-  if(opts.length) dateFilter.value=opts[opts.length-1];
-}
 function renderTeamView(){
-  ensureDateSelected();
-  teamView.innerHTML="";
-  if(!dateFilter.value) return;
+  teamModuleGrid.innerHTML="";
   positions.forEach(pos=>{
     const sec=document.createElement("div");
     sec.className="team-position";
     sec.innerHTML=`<h2>${pos}</h2><div class="module-grid"></div>`;
     const grid=sec.querySelector(".module-grid");
+
     modules.forEach(mod=>{
       const card=document.createElement("div");
       card.className="module-card";
       card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
       const ul=card.querySelector("ul");
-      playerData.filter(p=>p.position===pos)
-        .filter(p=>p.sessions.some(s=>s.module===mod&&s.date===dateFilter.value))
-        .forEach(p=>{
+
+      playerData.filter(p=>p.position===pos).forEach(p=>{
+        const count=p.sessions.filter(
+          s=>s.module===mod&&s.date===dateFilter.value
+        ).length;
+        if(count>0){
           const li=document.createElement("li");
-          li.textContent=p.name;
+          li.textContent=count>1?`${p.name} x${count}`:p.name;
           ul.appendChild(li);
-        });
+        }
+      });
+
       grid.appendChild(card);
     });
-    teamView.appendChild(sec);
+
+    teamModuleGrid.appendChild(sec);
+  });
+
+  populateWeeks();
+  renderLeaderboards();
+}
+
+/* ================= WEEKLY LEADERBOARD ================= */
+function getWeekRange(dateStr){
+  const d=new Date(dateStr);
+  const start=new Date(d);start.setDate(d.getDate()-d.getDay());
+  const end=new Date(start);end.setDate(start.getDate()+6);
+  return{label:`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`,start,end};
+}
+function populateWeeks(){
+  weekFilter.innerHTML="";
+  const weeks={};
+  playerData.forEach(p=>{
+    p.sessions.forEach(s=>{
+      const w=getWeekRange(s.date);
+      weeks[w.label]=w;
+    });
+  });
+  Object.keys(weeks).forEach(w=>{
+    const o=document.createElement("option");
+    o.value=w;o.textContent=w;
+    weekFilter.appendChild(o);
+  });
+}
+function renderLeaderboards(){
+  leaderboardContainer.innerHTML="";
+  if(!weekFilter.value)return;
+  const[s,e]=weekFilter.value.split(" - ");
+  const start=new Date(s),end=new Date(e);
+
+  positions.forEach(pos=>{
+    const ranked=playerData.filter(p=>p.position===pos).map(p=>{
+      const days=[...new Set(
+        p.sessions.filter(x=>{
+          const d=new Date(x.date);
+          return d>=start&&d<=end;
+        }).map(x=>x.date)
+      )].length;
+      return{name:p.name,days};
+    }).sort((a,b)=>b.days-a.days);
+
+    const div=document.createElement("div");
+    div.className="leaderboard";
+    div.innerHTML=`
+      <h3>${pos}</h3>
+      <strong>Top 5</strong>
+      <ol>${ranked.slice(0,5).map((p,i)=>`<li>#${i+1} ${p.name}</li>`).join("")}</ol>
+      <strong>Bottom 5</strong>
+      <ol>${ranked.slice(-5).reverse().map((p,i)=>`<li>#${i+1} ${p.name}</li>`).join("")}</ol>
+    `;
+    leaderboardContainer.appendChild(div);
   });
 }
 
-/* ================= CHARTS (FIXED ONLY) ================= */
+/* ================= CHARTS ================= */
+let avgChart=null,teamChart=null;
+
 function renderCharts(){
   const posDay={};
   playerData.forEach(p=>{
@@ -386,67 +469,60 @@ function renderCharts(){
     return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
   });
 
-  avgChartInstance?.destroy();
-  avgChartInstance=new Chart(
-    document.getElementById("avgChart"),
-    {
-      type:"bar",
-      data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
-      options:{
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
-        },
-        plugins:{legend:{labels:{color:cream}}}
-      }
-    }
-  );
+  avgChart?.destroy();
+  avgChart=new Chart(document.getElementById("avgChart"),{
+    type:"bar",
+    data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
+    options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true,max:100}},
+      plugins:{legend:{labels:{color:cream}}}}
+  });
 
   const totals={};
   modules.forEach(m=>totals[m]=0);
   playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
 
-  moduleChartInstance?.destroy();
-  moduleChartInstance=new Chart(
-    document.getElementById("moduleChart"),
-    {
-      type:"bar",
-      data:{
-        labels:Object.keys(totals),
-        datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]
-      },
-      options:{
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream},beginAtZero:true}
-        },
-        plugins:{legend:{labels:{color:cream}}}
-      }
-    }
+  teamChart?.destroy();
+  teamChart=new Chart(document.getElementById("moduleChart"),{
+    type:"bar",
+    data:{labels:Object.keys(totals),
+      datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]},
+    options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true}},
+      plugins:{legend:{labels:{color:cream}}}}
+  });
+}
+
+function renderPlayerModuleChart(p){
+  const totals={};
+  modules.forEach(m=>totals[m]=0);
+  p.sessions.forEach(s=>totals[s.module]++);
+
+  playerModuleChart?.destroy();
+  playerModuleChart=new Chart(
+    document.getElementById("playerModuleChart"),
+    {type:"bar",
+     data:{labels:Object.keys(totals),
+       datasets:[{data:Object.values(totals),backgroundColor:cream}]},
+     options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true}},
+       plugins:{legend:{display:false}}}}
   );
 }
 
 /* ================= EVENTS ================= */
-positionFilter.onchange=()=>{
-  populatePlayers();
-  renderModules();
-};
+positionFilter.onchange=()=>{populatePlayers();renderModules();};
 playerFilter.onchange=showPlayer;
-dateFilter.onchange=()=>{
-  renderModules();
-  renderTeamView();
-};
+dateFilter.onchange=()=>{renderModules();};
+
 toggleView.onclick=()=>{
   const toTeam=teamView.classList.contains("hidden");
   playerView.classList.toggle("hidden");
   teamView.classList.toggle("hidden");
   playerFilter.classList.toggle("hidden");
   toggleView.textContent=toTeam?"Player View":"Team View";
-  if(toTeam) renderTeamView();
+  if(toTeam)renderTeamView();
 };
+weekFilter.onchange=renderLeaderboards;
 
-/* ================= INIT ================= */
-loadCSV();
+});
 </script>
 
 </body>
