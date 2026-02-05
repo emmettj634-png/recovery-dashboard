@@ -94,7 +94,6 @@ button{cursor:pointer;}
   <button id="toggleView">Team View</button>
 </div>
 
-<!-- ================= PLAYER VIEW ================= -->
 <div id="playerView">
 
 <h2>Player Details</h2>
@@ -117,7 +116,6 @@ button{cursor:pointer;}
 
 </div>
 
-<!-- ================= TEAM VIEW ================= -->
 <div id="teamView" class="hidden"></div>
 
 </div>
@@ -135,7 +133,6 @@ const positions=[
   "CB","S","LB","Specialists"
 ];
 
-/* ================= FULL ROSTER ================= */
 const roster = [
   {name:"Ace Hodges",position:"OL"},
   {name:"Alex Shieldnight",position:"DE"},
@@ -249,7 +246,7 @@ const roster = [
 
 let playerData = roster.map(p=>({...p,sessions:[]}));
 const uniqueDates = p => [...new Set(p.sessions.map(s=>s.date))];
-let avgChart=null, moduleChart=null;
+let avgChartInstance=null, moduleChartInstance=null;
 
 /* ================= CSV LOAD ================= */
 async function loadCSV(){
@@ -363,7 +360,7 @@ function renderTeamView(){
   });
 }
 
-/* ================= CHARTS ================= */
+/* ================= CHARTS (FIXED ONLY) ================= */
 function renderCharts(){
   const posDay={};
   playerData.forEach(p=>{
@@ -372,41 +369,52 @@ function renderCharts(){
       posDay[p.position][d]=(posDay[p.position][d]||0)+1;
     });
   });
+
   const labels=Object.keys(posDay);
   const values=labels.map(pos=>{
     const total=roster.filter(r=>r.position===pos).length;
     const days=Object.values(posDay[pos]).map(c=>(c/total)*100);
     return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
   });
-  avgChart?.destroy();
-  avgChart=new Chart(avgChart,{
-    type:"bar",
-    data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
-    options:{
-      scales:{
-        x:{ticks:{color:cream}},
-        y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
-      },
-      plugins:{legend:{labels:{color:cream}}}
+
+  avgChartInstance?.destroy();
+  avgChartInstance=new Chart(
+    document.getElementById("avgChart"),
+    {
+      type:"bar",
+      data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
+      options:{
+        scales:{
+          x:{ticks:{color:cream}},
+          y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
+        },
+        plugins:{legend:{labels:{color:cream}}}
+      }
     }
-  });
+  );
 
   const totals={};
   modules.forEach(m=>totals[m]=0);
   playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
-  moduleChart?.destroy();
-  moduleChart=new Chart(moduleChart,{
-    type:"bar",
-    data:{labels:Object.keys(totals),
-          datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]},
-    options:{
-      scales:{
-        x:{ticks:{color:cream}},
-        y:{ticks:{color:cream},beginAtZero:true}
+
+  moduleChartInstance?.destroy();
+  moduleChartInstance=new Chart(
+    document.getElementById("moduleChart"),
+    {
+      type:"bar",
+      data:{
+        labels:Object.keys(totals),
+        datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]
       },
-      plugins:{legend:{labels:{color:cream}}}
+      options:{
+        scales:{
+          x:{ticks:{color:cream}},
+          y:{ticks:{color:cream},beginAtZero:true}
+        },
+        plugins:{legend:{labels:{color:cream}}}
+      }
     }
-  });
+  );
 }
 
 /* ================= EVENTS ================= */
