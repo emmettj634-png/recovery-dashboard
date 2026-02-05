@@ -325,7 +325,6 @@ let playerModuleChart=null;
 function showPlayer(){
   const p=playerData.find(x=>x.name===playerFilter.value);
   if(!p)return;
-
   playerStatsGrid.classList.remove("hidden");
   playerRecoveryDays.textContent=uniqueDates(p).length;
   playerLastDate.textContent=uniqueDates(p).sort().pop()||"N/A";
@@ -339,10 +338,8 @@ function showPlayer(){
     .findIndex(x=>x.name===p.name)+1;
   playerRank.textContent=`#${rank} out of ${group.length}`;
 
-  // ✅ FIX: always render player chart here
   renderPlayerModuleChart(p);
 }
-
 
 /* ================= MODULE PARTICIPATION ================= */
 function renderModules(){
@@ -524,9 +521,8 @@ function renderCharts(){
 }
 
 /* ================= EVENTS ================= */
-// ✅ FIX: bind player dropdown explicitly
-playerFilter.addEventListener("change", showPlayer);
 positionFilter.onchange=()=>{populatePlayers();renderModules();};
+playerFilter.onchange=showPlayer;
 dateFilter.onchange=()=>{renderModules();};
 
 toggleView.onclick=()=>{
