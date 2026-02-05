@@ -13,20 +13,45 @@
   --text:#FDF9D8;
   --cream:#FDF9D8;
 }
+
 body {
   background:var(--bg);
   color:var(--text);
   font-family:Arial, sans-serif;
 }
+
 .container {
   max-width:1400px;
   margin:auto;
   padding:20px;
 }
-h1 {
-  text-align:center;
-  font-size:3.8rem;
+
+/* ===== HEADER WITH LOGOS ===== */
+.header {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:25px;
+  margin-bottom:25px;
 }
+
+.header h1 {
+  font-size:3.8rem;
+  margin:0;
+  text-align:center;
+}
+
+.header-logo {
+  height:60px;
+  width:auto;
+  opacity:0.95;
+}
+
+/* Hide logos on small screens */
+@media (max-width:600px){
+  .header-logo { display:none; }
+}
+
 .controls {
   display:flex;
   gap:12px;
@@ -34,11 +59,13 @@ h1 {
   justify-content:center;
   margin-bottom:25px;
 }
+
 select {
   padding:10px;
   border-radius:6px;
   border:none;
 }
+
 h2 { margin-top:40px; }
 
 .stats-grid {
@@ -46,33 +73,42 @@ h2 { margin-top:40px; }
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:15px;
 }
+
 .stat-card {
   background:var(--card);
   padding:15px;
   border-radius:8px;
 }
+
 .hidden { display:none; }
 
-.chart-box { height:400px; margin-top:20px; }
+.chart-box {
+  height:400px;
+  margin-top:20px;
+}
 
 .module-grid {
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:15px;
 }
+
 .module-card {
   background:var(--card);
   padding:12px;
   border-radius:8px;
 }
+
 .module-card h3 {
   border-bottom:1px solid rgba(253,249,216,.4);
   margin-bottom:8px;
 }
+
 .module-card ul {
   list-style:none;
   padding-left:0;
 }
+
 .module-card li {
   font-size:.9rem;
   margin-bottom:4px;
@@ -83,7 +119,12 @@ h2 { margin-top:40px; }
 <body>
 <div class="container">
 
-<h1>Oklahoma Elite Recovery</h1>
+<!-- ===== HEADER ===== -->
+<div class="header">
+  <img src="images/logo.png" alt="Logo" class="header-logo">
+  <h1>Oklahoma Elite Recovery</h1>
+  <img src="images/logo.png" alt="Logo" class="header-logo">
+</div>
 
 <div class="controls">
   <select id="positionFilter">
@@ -126,7 +167,6 @@ h2 { margin-top:40px; }
 /* ================= CONFIG ================= */
 const cream = "#FDF9D8";
 
-/* ================= MODULES ================= */
 const modules = [
   "Cryo","Red Light","Cold Tub","Hot Tub",
   "Massage Chair","Manual Massages","Cocoon"
@@ -257,6 +297,7 @@ function parseDate(d){
   }
   return d;
 }
+
 function fmt(d){
   const [y,m,da]=d.split("-");
   return `${+m}/${+da}/${y}`;
@@ -291,8 +332,7 @@ const selectedDateLabel=document.getElementById("selectedDateLabel");
 
 function populatePlayers(){
   playerFilter.innerHTML='<option value="">Select Player</option>';
-  playerData
-    .filter(p=>p.position===positionFilter.value)
+  playerData.filter(p=>p.position===positionFilter.value)
     .sort((a,b)=>a.name.localeCompare(b.name))
     .forEach(p=>{
       const o=document.createElement("option");
@@ -343,7 +383,6 @@ function showPlayer(){
   if(!p) return;
 
   document.getElementById("playerStatsGrid").classList.remove("hidden");
-
   document.getElementById("playerRecoveryDays").textContent = uniqueDates(p).length;
 
   const last = uniqueDates(p).sort().pop();
@@ -403,9 +442,7 @@ function refreshCharts(){
           x:{ticks:{color:cream}},
           y:{ticks:{color:cream},beginAtZero:true,max:100}
         },
-        plugins:{
-          legend:{labels:{color:cream}}
-        }
+        plugins:{legend:{labels:{color:cream}}}
       }
     }
   );
@@ -436,9 +473,7 @@ function refreshCharts(){
           x:{ticks:{color:cream}},
           y:{ticks:{color:cream},beginAtZero:true}
         },
-        plugins:{
-          legend:{labels:{color:cream}}
-        }
+        plugins:{legend:{labels:{color:cream}}}
       }
     }
   );
