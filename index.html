@@ -27,12 +27,6 @@ h1 {
   text-align:center;
   font-size:3.8rem;
 }
-#modeBadge {
-  text-align:center;
-  font-size:.9rem;
-  opacity:.8;
-  margin-bottom:15px;
-}
 .controls {
   display:flex;
   gap:12px;
@@ -90,7 +84,6 @@ h2 { margin-top:40px; }
 <div class="container">
 
 <h1>Oklahoma Elite Recovery</h1>
-<div id="modeBadge">Repo CSV Loaded</div>
 
 <div class="controls">
   <select id="positionFilter">
@@ -133,6 +126,7 @@ h2 { margin-top:40px; }
 /* ================= CONFIG ================= */
 const cream = "#FDF9D8";
 
+/* ================= MODULES ================= */
 const modules = [
   "Cryo","Red Light","Cold Tub","Hot Tub",
   "Massage Chair","Manual Massages","Cocoon"
@@ -297,7 +291,8 @@ const selectedDateLabel=document.getElementById("selectedDateLabel");
 
 function populatePlayers(){
   playerFilter.innerHTML='<option value="">Select Player</option>';
-  playerData.filter(p=>p.position===positionFilter.value)
+  playerData
+    .filter(p=>p.position===positionFilter.value)
     .sort((a,b)=>a.name.localeCompare(b.name))
     .forEach(p=>{
       const o=document.createElement("option");
@@ -342,6 +337,31 @@ function renderModules(){
   });
 }
 
+/* ================= PLAYER DETAILS ================= */
+function showPlayer(){
+  const p = playerData.find(x => x.name === playerFilter.value);
+  if(!p) return;
+
+  document.getElementById("playerStatsGrid").classList.remove("hidden");
+
+  document.getElementById("playerRecoveryDays").textContent = uniqueDates(p).length;
+
+  const last = uniqueDates(p).sort().pop();
+  document.getElementById("playerLastDate").textContent = last ? fmt(last) : "N/A";
+
+  const mods = {};
+  p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
+  document.getElementById("playerMostModule").textContent =
+    Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0] || "N/A";
+
+  const rank = playerData
+    .filter(x=>x.position===p.position)
+    .sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
+    .findIndex(x=>x.name===p.name)+1;
+
+  document.getElementById("playerRank").textContent = `#${rank}`;
+}
+
 /* ================= CHARTS ================= */
 let positionChart=null;
 let moduleChart=null;
@@ -376,7 +396,17 @@ function refreshCharts(){
           backgroundColor:cream
         }]
       },
-      options:{responsive:true,maintainAspectRatio:false}
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          x:{ticks:{color:cream}},
+          y:{ticks:{color:cream},beginAtZero:true,max:100}
+        },
+        plugins:{
+          legend:{labels:{color:cream}}
+        }
+      }
     }
   );
 
@@ -399,7 +429,17 @@ function refreshCharts(){
           backgroundColor:cream
         }]
       },
-      options:{responsive:true,maintainAspectRatio:false}
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          x:{ticks:{color:cream}},
+          y:{ticks:{color:cream},beginAtZero:true}
+        },
+        plugins:{
+          legend:{labels:{color:cream}}
+        }
+      }
     }
   );
 }
@@ -409,6 +449,7 @@ positionFilter.addEventListener("change",()=>{
   populatePlayers();
   renderModules();
 });
+playerFilter.addEventListener("change", showPlayer);
 dateFilter.addEventListener("change",renderModules);
 
 /* ================= INIT ================= */
