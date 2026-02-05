@@ -407,28 +407,31 @@ function getWeekRange(dateStr){
   return{label:`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`,start,end};
 }
 function populateWeeks(){
-  weekFilter.innerHTML="";
-  const weeks={};
+  weekFilter.innerHTML = "";
+  const weeks = {};
+
   playerData.forEach(p=>{
     p.sessions.forEach(s=>{
-      const w=getWeekRange(s.date);
-      weeks[w.label]=w;
+      const w = getWeekRange(s.date);
+      weeks[w.label] = w;
     });
   });
+
   const sortedWeeks = Object.values(weeks)
-  .sort((a,b) => b.start - a.start);
-  sortedWeeks.forEach(w => {
-  const o = document.createElement("option");
-  o.value = w.label;
-  o.textContent = w.label;
-  weekFilter.appendChild(o);
-});
-if(sortedWeeks.length){
-  weekFilter.value = sortedWeeks[0].label;
+    .sort((a,b) => b.start - a.start);
+
+  sortedWeeks.forEach(w=>{
+    const o = document.createElement("option");
+    o.value = w.label;
+    o.textContent = w.label;
+    weekFilter.appendChild(o);
+  });
+
+  if(sortedWeeks.length){
+    weekFilter.value = sortedWeeks[0].label;
+  }
 }
 
-  });
-}
 function renderLeaderboards(){
   leaderboardContainer.innerHTML="";
   if(!weekFilter.value)return;
