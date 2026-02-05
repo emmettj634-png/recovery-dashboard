@@ -415,10 +415,18 @@ function populateWeeks(){
       weeks[w.label]=w;
     });
   });
-  Object.keys(weeks).forEach(w=>{
-    const o=document.createElement("option");
-    o.value=w;o.textContent=w;
-    weekFilter.appendChild(o);
+  const sortedWeeks = Object.values(weeks)
+  .sort((a,b) => b.start - a.start);
+  sortedWeeks.forEach(w => {
+  const o = document.createElement("option");
+  o.value = w.label;
+  o.textContent = w.label;
+  weekFilter.appendChild(o);
+});
+if(sortedWeeks.length){
+  weekFilter.value = sortedWeeks[0].label;
+}
+
   });
 }
 function renderLeaderboards(){
@@ -432,6 +440,15 @@ function renderLeaderboards(){
     if(group.length===0)return;
 
     const ranked=group.map(p=>{
+    const top = ranked
+  .filter(p => p.days > 0)
+  .sort((a,b) => b.days - a.days)
+  .slice(0,5);
+    const bottom = ranked
+  .filter(p => !top.some(t => t.name === p.name))
+  .sort((a,b)=>a.days-b.days)
+  .slice(0,5);
+
       const days=[...new Set(
         p.sessions.filter(x=>{
           const d=new Date(x.date);
@@ -446,16 +463,17 @@ function renderLeaderboards(){
 
     let html=`<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
     ranked.slice(0,Math.min(5,ranked.length))
-      .forEach((p,i)=>html+=`<li>#${i+1} ${p.name}</li>`);
+      .forEach((p,i)=>html+=`<li>${p.name}</li>`
+);
     html+=`</ol>`;
 
-    if(group.length>5){
-      html+=`<strong>Bottom Performers</strong><ol>`;
-      ranked.slice(-5).reverse()
-        .forEach((p,i)=>html+=`<li>#${i+1} ${p.name}</li>`);
-      html+=`</ol>`;
-    }
+    if(group.length > 5){
+  html += `<strong>Bottom Performers</strong><ol>`;
+  bottom.forEach(p => html += `<li>${p.name}</li>`);
+  html += `</ol>`;
+}
 
+    
     div.innerHTML=html;
     leaderboardContainer.appendChild(div);
   });
