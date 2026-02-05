@@ -44,9 +44,7 @@ select,input[type="file"] {
   border-radius:6px;
   border:none;
 }
-input[type="file"] {
-  display:none;
-}
+input[type="file"] { display:none; }
 h2 { margin-top:40px; }
 
 .stats-grid {
@@ -134,21 +132,14 @@ h2 { margin-top:40px; }
 </div>
 
 <script>
-/* ================= MODE DETECTION ================= */
+/* ================= MODE ================= */
 const isAdmin = window.location.pathname.includes("admin");
-
 const modeBadge = document.getElementById("modeBadge");
 const csvInput = document.getElementById("csvFile");
 
-if (isAdmin) {
-  csvInput.style.display = "block";
-  csvInput.disabled = false;
-  modeBadge.textContent = "Admin View (CSV Upload Enabled)";
-} else {
-  csvInput.style.display = "none";
-  csvInput.disabled = true;
-  modeBadge.textContent = "User View (Read Only)";
-}
+modeBadge.textContent = isAdmin
+  ? "Admin View (Local CSV Override)"
+  : "User View (Repo CSV Loaded)";
 
 /* ================= DOM ================= */
 const positionFilter = document.getElementById("positionFilter");
@@ -169,7 +160,7 @@ const modules = [
   "Massage Chair","Manual Massages","Cocoon"
 ];
 
-/* ================= FULL ROSTER ================= */
+/* ================= ROSTER ================= */
 const roster = [
   {name:"Ace Hodges",position:"OL"},
   {name:"Alex Shieldnight",position:"DE"},
@@ -281,14 +272,7 @@ const roster = [
   {name:"eLGee Webster",position:"LB"}
 ];
 
-/* ================= DATA ================= */
-let playerData =
-  JSON.parse(localStorage.getItem("recoveryData")) ||
-  roster.map(p=>({name:p.name,position:p.position,sessions:[]}));
-
-function saveData(){
-  localStorage.setItem("recoveryData",JSON.stringify(playerData));
-}
+let playerData = roster.map(p=>({ ...p, sessions: [] }));
 
 const uniqueDates = p => [...new Set(p.sessions.map(s=>s.date))];
 
@@ -305,7 +289,30 @@ function fmt(d){
   return `${+m}/${+da}/${y}`;
 }
 
-/* ================= DROPDOWNS ================= */
+/* ================= CSV AUTO LOAD ================= */
+async function loadCSVFromRepo(){
+  try{
+    const res = await fetch("data.csv");
+    const text = await res.text();
+    playerData.forEach(p=>p.sessions=[]);
+
+    text.split("\n").slice(1).forEach(row=>{
+      if(!row.trim()) return;
+      const [name,module,date]=row.split(",").map(x=>x.trim());
+      const iso=parseDate(date);
+      const p=playerData.find(x=>x.name===name);
+      if(p && iso) p.sessions.push({module,date:iso});
+    });
+
+    populateDates();
+    refreshCharts();
+    renderModules();
+  }catch(e){
+    console.error("Failed to load CSV",e);
+  }
+}
+
+/* ================= UI ================= */
 function populatePlayers(){
   playerFilter.innerHTML='<option value="">Select Player</option>';
   playerData.filter(p=>p.position===positionFilter.value)
@@ -330,13 +337,10 @@ function populateDates(){
   if(dates.length) dateFilter.value=dates[dates.length-1];
 }
 
-/* ================= MODULE GRID ================= */
 function renderModules(){
   moduleGrid.innerHTML="";
-  selectedDateLabel.textContent="";
-  if(!positionFilter.value || !dateFilter.value) return;
-
-  selectedDateLabel.textContent = `${fmt(dateFilter.value)} — ${positionFilter.value}`;
+  if(!positionFilter.value||!dateFilter.value) return;
+  selectedDateLabel.textContent=`${fmt(dateFilter.value)} — ${positionFilter.value}`;
 
   modules.forEach(mod=>{
     const card=document.createElement("div");
@@ -345,7 +349,7 @@ function renderModules(){
     const ul=card.querySelector("ul");
 
     playerData.filter(p=>p.position===positionFilter.value)
-      .filter(p=>p.sessions.some(s=>s.module===mod && s.date===dateFilter.value))
+      .filter(p=>p.sessions.some(s=>s.module===mod&&s.date===dateFilter.value))
       .forEach(p=>{
         const li=document.createElement("li");
         li.textContent=p.name;
@@ -356,67 +360,34 @@ function renderModules(){
   });
 }
 
-/* ================= PLAYER VIEW ================= */
 function showPlayer(){
   const p=playerData.find(x=>x.name===playerFilter.value);
   if(!p) return;
-
   playerStatsGrid.classList.remove("hidden");
-  playerRecoveryDays.textContent = uniqueDates(p).length;
 
-  const last = uniqueDates(p).sort().pop();
-  playerLastDate.textContent = last ? fmt(last) : "N/A";
+  playerRecoveryDays.textContent=uniqueDates(p).length;
+  const last=uniqueDates(p).sort().pop();
+  playerLastDate.textContent=last?fmt(last):"N/A";
 
   const mods={};
   p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
-  playerMostModule.textContent =
-    Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0] || "N/A";
+  playerMostModule.textContent=Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0]||"N/A";
 
-  const rank = playerData
+  const rank=playerData
     .filter(x=>x.position===p.position)
     .sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
-    .findIndex(x=>x.name===p.name) + 1;
-
-  playerRank.textContent = `#${rank}`;
-}
-
-/* ================= CSV IMPORT (ADMIN ONLY) ================= */
-if(isAdmin){
-  csvInput.addEventListener("change",e=>{
-    const file=e.target.files[0];
-    if(!file) return;
-
-    playerData.forEach(p=>p.sessions=[]);
-
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      ev.target.result.split("\n").slice(1).forEach(r=>{
-        if(!r.trim()) return;
-        const [name,module,date]=r.split(",").map(x=>x.trim());
-        const iso=parseDate(date);
-        const p=playerData.find(x=>x.name===name);
-        if(p && iso) p.sessions.push({module,date:iso});
-      });
-      saveData();
-      populateDates();
-      refreshCharts();
-      renderModules();
-    };
-    reader.readAsText(file);
-  });
+    .findIndex(x=>x.name===p.name)+1;
+  playerRank.textContent=`#${rank}`;
 }
 
 /* ================= CHARTS ================= */
-let positionChart=null;
-let moduleChart=null;
+let positionChart,moduleChart;
 
 function refreshCharts(){
-  /* Avg Daily Participation by Position */
   const posDayCounts={};
-
   playerData.forEach(p=>{
     uniqueDates(p).forEach(d=>{
-      if(!posDayCounts[p.position]) posDayCounts[p.position]={};
+      posDayCounts[p.position]??={};
       posDayCounts[p.position][d]=(posDayCounts[p.position][d]||0)+1;
     });
   });
@@ -425,65 +396,25 @@ function refreshCharts(){
   const values=labels.map(pos=>{
     const total=roster.filter(r=>r.position===pos).length;
     const daily=Object.values(posDayCounts[pos]).map(c=>(c/total)*100);
-    return daily.length
-      ? (daily.reduce((a,b)=>a+b)/daily.length).toFixed(1)
-      : 0;
+    return daily.length?(daily.reduce((a,b)=>a+b)/daily.length).toFixed(1):0;
   });
 
-  if(positionChart) positionChart.destroy();
-  positionChart=new Chart(document.getElementById("positionAvgChart"),{
+  positionChart?.destroy();
+  positionChart=new Chart(positionAvgChart,{
     type:"bar",
-    data:{
-      labels,
-      datasets:[{
-        label:"Avg Daily Participation (%)",
-        data:values,
-        backgroundColor:"rgba(253,249,216,.8)"
-      }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      scales:{
-        y:{
-          beginAtZero:true,
-          max:100,
-          ticks:{
-            color:"#FDF9D8",
-            callback:v=>v+"%"
-          }
-        },
-        x:{ticks:{color:"#FDF9D8"}}
-      },
-      plugins:{legend:{labels:{color:"#FDF9D8"}}}
-    }
+    data:{labels,datasets:[{label:"Avg Daily Participation (%)",data:values}]},
+    options:{responsive:true,maintainAspectRatio:false}
   });
 
-  /* Total Team Module Usage */
   const totals={};
   modules.forEach(m=>totals[m]=0);
   playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
 
-  if(moduleChart) moduleChart.destroy();
-  moduleChart=new Chart(document.getElementById("moduleChart"),{
+  moduleChart?.destroy();
+  moduleChart=new Chart(moduleChartCanvas,{
     type:"bar",
-    data:{
-      labels:Object.keys(totals),
-      datasets:[{
-        label:"Total Uses",
-        data:Object.values(totals),
-        backgroundColor:"rgba(253,249,216,.8)"
-      }]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      scales:{
-        y:{ticks:{color:"#FDF9D8"}},
-        x:{ticks:{color:"#FDF9D8"}}
-      },
-      plugins:{legend:{labels:{color:"#FDF9D8"}}}
-    }
+    data:{labels:Object.keys(totals),datasets:[{label:"Total Uses",data:Object.values(totals)}]},
+    options:{responsive:true,maintainAspectRatio:false}
   });
 }
 
@@ -496,8 +427,8 @@ playerFilter.addEventListener("change",showPlayer);
 dateFilter.addEventListener("change",renderModules);
 
 /* ================= INIT ================= */
-populateDates();
-refreshCharts();
+loadCSVFromRepo();
 </script>
+
 </body>
 </html>
