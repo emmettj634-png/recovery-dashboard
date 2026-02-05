@@ -317,12 +317,21 @@ function renderModules(){
     card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
     const ul=card.querySelector("ul");
     playerData.filter(p=>p.position===positionFilter.value)
-      .filter(p=>p.sessions.some(s=>s.module===mod&&s.date===dateFilter.value))
-      .forEach(p=>{
-        const li=document.createElement("li");
-        li.textContent=p.name;
-        ul.appendChild(li);
-      });
+    playerData
+  .filter(p => p.position === positionFilter.value)
+  .forEach(p => {
+    const count = p.sessions.filter(
+      s => s.module === mod && s.date === dateFilter.value
+    ).length;
+
+    if (count > 0) {
+      const li = document.createElement("li");
+      li.textContent = count > 1
+        ? `${p.name} x${count}`
+        : p.name;
+      ul.appendChild(li);
+    }
+  });
     moduleGrid.appendChild(card);
   });
 }
