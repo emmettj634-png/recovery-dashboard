@@ -23,23 +23,49 @@ body {
   margin:auto;
   padding:20px;
 }
-h1 {
-  text-align:center;
-  font-size:3.8rem;
+
+/* ===== HEADER ===== */
+.header {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:25px;
+  margin-bottom:20px;
 }
+.header h1 {
+  font-size:3.8rem;
+  margin:0;
+}
+.header-logo {
+  height:60px;
+  opacity:.95;
+}
+@media(max-width:600px){
+  .header-logo{display:none;}
+}
+
+/* ===== CONTROLS ===== */
 .controls {
   display:flex;
   gap:12px;
   flex-wrap:wrap;
   justify-content:center;
-  margin-bottom:25px;
+  margin-bottom:20px;
 }
-select {
-  padding:10px;
+select, button {
+  padding:10px 14px;
   border-radius:6px;
   border:none;
+  font-weight:bold;
 }
-h2 { margin-top:40px; }
+button {
+  background:var(--cream);
+  color:#841617;
+  cursor:pointer;
+}
+
+/* ===== LAYOUT ===== */
+.hidden { display:none; }
 
 .stats-grid {
   display:grid;
@@ -51,9 +77,6 @@ h2 { margin-top:40px; }
   padding:15px;
   border-radius:8px;
 }
-.hidden { display:none; }
-
-.chart-box { height:400px; margin-top:20px; }
 
 .module-grid {
   display:grid;
@@ -77,14 +100,28 @@ h2 { margin-top:40px; }
   font-size:.9rem;
   margin-bottom:4px;
 }
+
+/* ===== TEAM VIEW ===== */
+.team-position {
+  margin-top:40px;
+}
+.team-position h2 {
+  text-align:center;
+}
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<h1>Oklahoma Elite Recovery</h1>
+<!-- HEADER -->
+<div class="header">
+  <img src="images/logo.png" class="header-logo">
+  <h1>Oklahoma Elite Recovery</h1>
+  <img src="images/logo.png" class="header-logo">
+</div>
 
+<!-- CONTROLS -->
 <div class="controls">
   <select id="positionFilter">
     <option value="">Select Position</option>
@@ -100,8 +137,12 @@ h2 { margin-top:40px; }
   <select id="dateFilter">
     <option value="">Select Date</option>
   </select>
+
+  <button id="toggleView">Team View</button>
 </div>
 
+<!-- PLAYER VIEW -->
+<div id="playerView">
 <h2>Player Details</h2>
 <div id="playerStatsGrid" class="stats-grid hidden">
   <div class="stat-card">Recovery Days<br><strong id="playerRecoveryDays">0</strong></div>
@@ -113,24 +154,21 @@ h2 { margin-top:40px; }
 <h2>Module Participation (Selected Date)</h2>
 <div id="selectedDateLabel" style="text-align:center;font-weight:bold;"></div>
 <div id="moduleGrid" class="module-grid"></div>
+</div>
 
-<h2>Average Daily Participation by Position (%)</h2>
-<div class="chart-box"><canvas id="positionAvgChart"></canvas></div>
-
-<h2>Total Team Module Usage</h2>
-<div class="chart-box"><canvas id="moduleChart"></canvas></div>
+<!-- TEAM VIEW -->
+<div id="teamView" class="hidden"></div>
 
 </div>
 
 <script>
 /* ================= CONFIG ================= */
-const cream = "#FDF9D8";
-
-/* ================= MODULES ================= */
 const modules = [
   "Cryo","Red Light","Cold Tub","Hot Tub",
   "Massage Chair","Manual Massages","Cocoon"
 ];
+
+const positions = ["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
 
 /* ================= FULL ROSTER ================= */
 const roster = [
@@ -269,30 +307,22 @@ async function loadCSVFromRepo(){
 
   playerData.forEach(p=>p.sessions=[]);
 
-  text.split("\n").slice(1).forEach(row=>{
-    if(!row.trim()) return;
-    const [name,module,date]=row.split(",").map(x=>x.trim());
+  text.split("\n").slice(1).forEach(r=>{
+    if(!r.trim()) return;
+    const [name,module,date]=r.split(",").map(x=>x.trim());
     const iso=parseDate(date);
     const p=playerData.find(x=>x.name===name);
     if(p && iso) p.sessions.push({module,date:iso});
   });
 
   populateDates();
-  refreshCharts();
   renderModules();
 }
 
-/* ================= UI ================= */
-const positionFilter=document.getElementById("positionFilter");
-const playerFilter=document.getElementById("playerFilter");
-const dateFilter=document.getElementById("dateFilter");
-const moduleGrid=document.getElementById("moduleGrid");
-const selectedDateLabel=document.getElementById("selectedDateLabel");
-
+/* ================= PLAYER VIEW ================= */
 function populatePlayers(){
   playerFilter.innerHTML='<option value="">Select Player</option>';
-  playerData
-    .filter(p=>p.position===positionFilter.value)
+  playerData.filter(p=>p.position===positionFilter.value)
     .sort((a,b)=>a.name.localeCompare(b.name))
     .forEach(p=>{
       const o=document.createElement("option");
@@ -302,22 +332,35 @@ function populatePlayers(){
     });
 }
 
-function populateDates(){
-  const dates=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>s.date)))].sort();
-  dateFilter.innerHTML='<option value="">Select Date</option>';
-  dates.forEach(d=>{
-    const o=document.createElement("option");
-    o.value=d;
-    o.textContent=fmt(d);
-    dateFilter.appendChild(o);
-  });
-  if(dates.length) dateFilter.value=dates[dates.length-1];
+function showPlayer(){
+  const p = playerData.find(x=>x.name===playerFilter.value);
+  if(!p) return;
+
+  playerStatsGrid.classList.remove("hidden");
+  playerRecoveryDays.textContent = uniqueDates(p).length;
+
+  const last = uniqueDates(p).sort().pop();
+  playerLastDate.textContent = last ? fmt(last) : "N/A";
+
+  const mods={};
+  p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
+  playerMostModule.textContent =
+    Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0] || "N/A";
+
+  const group = playerData.filter(x=>x.position===p.position);
+  const rank = group
+    .sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
+    .findIndex(x=>x.name===p.name)+1;
+
+  playerRank.textContent = `#${rank} out of ${group.length}`;
 }
 
 function renderModules(){
   moduleGrid.innerHTML="";
   if(!positionFilter.value||!dateFilter.value) return;
-  selectedDateLabel.textContent=`${fmt(dateFilter.value)} — ${positionFilter.value}`;
+
+  selectedDateLabel.textContent =
+    `${fmt(dateFilter.value)} — ${positionFilter.value}`;
 
   modules.forEach(mod=>{
     const card=document.createElement("div");
@@ -337,120 +380,54 @@ function renderModules(){
   });
 }
 
-/* ================= PLAYER DETAILS ================= */
-function showPlayer(){
-  const p = playerData.find(x => x.name === playerFilter.value);
-  if(!p) return;
+/* ================= TEAM VIEW ================= */
+function renderTeamView(){
+  teamView.innerHTML="";
+  if(!dateFilter.value) return;
 
-  document.getElementById("playerStatsGrid").classList.remove("hidden");
+  positions.forEach(pos=>{
+    const section=document.createElement("div");
+    section.className="team-position";
+    section.innerHTML=`<h2>${pos}</h2><div class="module-grid"></div>`;
+    const grid=section.querySelector(".module-grid");
 
-  document.getElementById("playerRecoveryDays").textContent = uniqueDates(p).length;
+    modules.forEach(mod=>{
+      const card=document.createElement("div");
+      card.className="module-card";
+      card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
+      const ul=card.querySelector("ul");
 
-  const last = uniqueDates(p).sort().pop();
-  document.getElementById("playerLastDate").textContent = last ? fmt(last) : "N/A";
+      playerData.filter(p=>p.position===pos)
+        .filter(p=>p.sessions.some(s=>s.module===mod&&s.date===dateFilter.value))
+        .forEach(p=>{
+          const li=document.createElement("li");
+          li.textContent=p.name;
+          ul.appendChild(li);
+        });
 
-  const mods = {};
-  p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
-  document.getElementById("playerMostModule").textContent =
-    Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0] || "N/A";
-
-  const rank = playerData
-    .filter(x=>x.position===p.position)
-    .sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
-    .findIndex(x=>x.name===p.name)+1;
-
-  document.getElementById("playerRank").textContent = `#${rank}`;
-}
-
-/* ================= CHARTS ================= */
-let positionChart=null;
-let moduleChart=null;
-
-function refreshCharts(){
-  const posDayCounts={};
-
-  playerData.forEach(p=>{
-    uniqueDates(p).forEach(d=>{
-      posDayCounts[p.position]??={};
-      posDayCounts[p.position][d]=(posDayCounts[p.position][d]||0)+1;
+      grid.appendChild(card);
     });
+
+    teamView.appendChild(section);
   });
-
-  const posLabels=Object.keys(posDayCounts);
-  const posValues=posLabels.map(pos=>{
-    const total=roster.filter(r=>r.position===pos).length;
-    const daily=Object.values(posDayCounts[pos]).map(c=>(c/total)*100);
-    return daily.length?(daily.reduce((a,b)=>a+b)/daily.length).toFixed(1):0;
-  });
-
-  positionChart?.destroy();
-  positionChart=new Chart(
-    document.getElementById("positionAvgChart"),
-    {
-      type:"bar",
-      data:{
-        labels:posLabels,
-        datasets:[{
-          label:"Avg Daily Participation (%)",
-          data:posValues,
-          backgroundColor:cream
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream},beginAtZero:true,max:100}
-        },
-        plugins:{
-          legend:{labels:{color:cream}}
-        }
-      }
-    }
-  );
-
-  const totals={};
-  modules.forEach(m=>totals[m]=0);
-  playerData.forEach(p=>p.sessions.forEach(s=>{
-    if(totals[s.module]!==undefined) totals[s.module]++;
-  }));
-
-  moduleChart?.destroy();
-  moduleChart=new Chart(
-    document.getElementById("moduleChart"),
-    {
-      type:"bar",
-      data:{
-        labels:Object.keys(totals),
-        datasets:[{
-          label:"Total Team Module Usage",
-          data:Object.values(totals),
-          backgroundColor:cream
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream},beginAtZero:true}
-        },
-        plugins:{
-          legend:{labels:{color:cream}}
-        }
-      }
-    }
-  );
 }
+
+/* ================= TOGGLE ================= */
+toggleView.addEventListener("click",()=>{
+  playerView.classList.toggle("hidden");
+  teamView.classList.toggle("hidden");
+  toggleView.textContent =
+    teamView.classList.contains("hidden") ? "Team View" : "Player View";
+  if(!teamView.classList.contains("hidden")) renderTeamView();
+});
 
 /* ================= EVENTS ================= */
-positionFilter.addEventListener("change",()=>{
-  populatePlayers();
+positionFilter.addEventListener("change",populatePlayers);
+playerFilter.addEventListener("change",showPlayer);
+dateFilter.addEventListener("change",()=>{
   renderModules();
+  if(!teamView.classList.contains("hidden")) renderTeamView();
 });
-playerFilter.addEventListener("change", showPlayer);
-dateFilter.addEventListener("change",renderModules);
 
 /* ================= INIT ================= */
 loadCSVFromRepo();
