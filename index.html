@@ -68,7 +68,20 @@ button{cursor:pointer;}
 .team-position{margin-top:40px;}
 .team-position h2{text-align:center;}
 
-.leaderboard{margin-top:30px;}
+.leaderboard-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:25px;
+  justify-content:center;
+  max-width:1200px;
+  margin:0 auto;
+}
+.leaderboard{
+  background:var(--card);
+  padding:15px;
+  border-radius:8px;
+}
+.leaderboard h3{text-align:center;}
 .leaderboard li{color:#FDF9D8;}
 </style>
 </head>
@@ -94,7 +107,6 @@ button{cursor:pointer;}
     <option value="">Select Date</option>
   </select>
 
-  <!-- ✅ TEAM VIEW BUTTON -->
   <button id="toggleView">Team View</button>
 </div>
 
@@ -114,19 +126,13 @@ button{cursor:pointer;}
 <div id="moduleGrid" class="module-grid"></div>
 
 <h2>Cumulative Module Usage (Selected Player)</h2>
-<div class="chart-box">
-  <canvas id="playerModuleChart"></canvas>
-</div>
+<div class="chart-box"><canvas id="playerModuleChart"></canvas></div>
 
 <h2>Average Daily Participation by Position (%)</h2>
-<div class="chart-box">
-  <canvas id="avgChart"></canvas>
-</div>
+<div class="chart-box"><canvas id="avgChart"></canvas></div>
 
 <h2>Total Team Module Usage (All Dates)</h2>
-<div class="chart-box">
-  <canvas id="moduleChart"></canvas>
-</div>
+<div class="chart-box"><canvas id="moduleChart"></canvas></div>
 
 </div>
 
@@ -143,7 +149,7 @@ button{cursor:pointer;}
   <select id="weekFilter"></select>
 </div>
 
-<div id="leaderboardContainer"></div>
+<div id="leaderboardContainer" class="leaderboard-grid"></div>
 
 </div>
 
@@ -152,7 +158,6 @@ button{cursor:pointer;}
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
 
-/* ================= CONSTANTS ================= */
 const cream="#FDF9D8";
 const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
@@ -269,7 +274,7 @@ const roster = [
   {name:"eLGee Webster",position:"LB"}
 ];
 
-let playerData = roster.map(p=>({...p,sessions:[]}));
+let playerData=roster.map(p=>({...p,sessions:[]}));
 const uniqueDates=p=>[...new Set(p.sessions.map(s=>s.date))];
 
 /* ================= CSV LOAD ================= */
@@ -348,9 +353,7 @@ function renderModules(){
     const ul=card.querySelector("ul");
 
     playerData.filter(p=>p.position===positionFilter.value).forEach(p=>{
-      const count=p.sessions.filter(
-        s=>s.module===mod&&s.date===dateFilter.value
-      ).length;
+      const count=p.sessions.filter(s=>s.module===mod&&s.date===dateFilter.value).length;
       if(count>0){
         const li=document.createElement("li");
         li.textContent=count>1?`${p.name} x${count}`:p.name;
@@ -378,9 +381,7 @@ function renderTeamView(){
       const ul=card.querySelector("ul");
 
       playerData.filter(p=>p.position===pos).forEach(p=>{
-        const count=p.sessions.filter(
-          s=>s.module===mod&&s.date===dateFilter.value
-        ).length;
+        const count=p.sessions.filter(s=>s.module===mod&&s.date===dateFilter.value).length;
         if(count>0){
           const li=document.createElement("li");
           li.textContent=count>1?`${p.name} x${count}`:p.name;
@@ -422,12 +423,16 @@ function populateWeeks(){
 }
 function renderLeaderboards(){
   leaderboardContainer.innerHTML="";
+
   if(!weekFilter.value)return;
   const[s,e]=weekFilter.value.split(" - ");
   const start=new Date(s),end=new Date(e);
 
   positions.forEach(pos=>{
-    const ranked=playerData.filter(p=>p.position===pos).map(p=>{
+    const group=playerData.filter(p=>p.position===pos);
+    if(group.length===0)return;
+
+    const ranked=group.map(p=>{
       const days=[...new Set(
         p.sessions.filter(x=>{
           const d=new Date(x.date);
@@ -439,20 +444,26 @@ function renderLeaderboards(){
 
     const div=document.createElement("div");
     div.className="leaderboard";
-    div.innerHTML=`
-      <h3>${pos}</h3>
-      <strong>Top 5</strong>
-      <ol>${ranked.slice(0,5).map((p,i)=>`<li>#${i+1} ${p.name}</li>`).join("")}</ol>
-      <strong>Bottom 5</strong>
-      <ol>${ranked.slice(-5).reverse().map((p,i)=>`<li>#${i+1} ${p.name}</li>`).join("")}</ol>
-    `;
+
+    let html=`<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
+    ranked.slice(0,Math.min(5,ranked.length))
+      .forEach((p,i)=>html+=`<li>#${i+1} ${p.name}</li>`);
+    html+=`</ol>`;
+
+    if(group.length>5){
+      html+=`<strong>Bottom Performers</strong><ol>`;
+      ranked.slice(-5).reverse()
+        .forEach((p,i)=>html+=`<li>#${i+1} ${p.name}</li>`);
+      html+=`</ol>`;
+    }
+
+    div.innerHTML=html;
     leaderboardContainer.appendChild(div);
   });
 }
 
 /* ================= CHARTS ================= */
 let avgChart=null,teamChart=null;
-
 function renderCharts(){
   const posDay={};
   playerData.forEach(p=>{
@@ -470,7 +481,7 @@ function renderCharts(){
   });
 
   avgChart?.destroy();
-  avgChart=new Chart(document.getElementById("avgChart"),{
+  avgChart=new Chart(avgChartEl,{
     type:"bar",
     data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
     options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true,max:100}},
@@ -482,7 +493,7 @@ function renderCharts(){
   playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
 
   teamChart?.destroy();
-  teamChart=new Chart(document.getElementById("moduleChart"),{
+  teamChart=new Chart(moduleChart,{
     type:"bar",
     data:{labels:Object.keys(totals),
       datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]},
@@ -490,7 +501,6 @@ function renderCharts(){
       plugins:{legend:{labels:{color:cream}}}}
   });
 }
-
 function renderPlayerModuleChart(p){
   const totals={};
   modules.forEach(m=>totals[m]=0);
