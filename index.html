@@ -11,6 +11,7 @@
   --bg:#841617;
   --card:rgba(255,255,255,.15);
   --text:#FDF9D8;
+  --cream:#FDF9D8;
 }
 body {
   background:var(--bg);
@@ -39,12 +40,11 @@ h1 {
   justify-content:center;
   margin-bottom:25px;
 }
-select,input[type="file"] {
+select {
   padding:10px;
   border-radius:6px;
   border:none;
 }
-input[type="file"] { display:none; }
 h2 { margin-top:40px; }
 
 .stats-grid {
@@ -90,7 +90,7 @@ h2 { margin-top:40px; }
 <div class="container">
 
 <h1>Oklahoma Elite Recovery</h1>
-<div id="modeBadge"></div>
+<div id="modeBadge">Repo CSV Loaded</div>
 
 <div class="controls">
   <select id="positionFilter">
@@ -107,8 +107,6 @@ h2 { margin-top:40px; }
   <select id="dateFilter">
     <option value="">Select Date</option>
   </select>
-
-  <input type="file" id="csvFile" accept=".csv">
 </div>
 
 <h2>Player Details</h2>
@@ -132,35 +130,15 @@ h2 { margin-top:40px; }
 </div>
 
 <script>
-/* ================= MODE ================= */
-const isAdmin = window.location.pathname.includes("admin");
-const modeBadge = document.getElementById("modeBadge");
-const csvInput = document.getElementById("csvFile");
-
-modeBadge.textContent = isAdmin
-  ? "Admin View (Local CSV Override)"
-  : "User View (Repo CSV Loaded)";
-
-/* ================= DOM ================= */
-const positionFilter = document.getElementById("positionFilter");
-const playerFilter = document.getElementById("playerFilter");
-const dateFilter = document.getElementById("dateFilter");
-const moduleGrid = document.getElementById("moduleGrid");
-const selectedDateLabel = document.getElementById("selectedDateLabel");
-
-const playerStatsGrid = document.getElementById("playerStatsGrid");
-const playerRecoveryDays = document.getElementById("playerRecoveryDays");
-const playerLastDate = document.getElementById("playerLastDate");
-const playerMostModule = document.getElementById("playerMostModule");
-const playerRank = document.getElementById("playerRank");
-
 /* ================= CONFIG ================= */
+const cream = "#FDF9D8";
+
 const modules = [
   "Cryo","Red Light","Cold Tub","Hot Tub",
   "Massage Chair","Manual Massages","Cocoon"
 ];
 
-/* ================= ROSTER ================= */
+/* ================= FULL ROSTER ================= */
 const roster = [
   {name:"Ace Hodges",position:"OL"},
   {name:"Alex Shieldnight",position:"DE"},
@@ -272,8 +250,9 @@ const roster = [
   {name:"eLGee Webster",position:"LB"}
 ];
 
-let playerData = roster.map(p=>({ ...p, sessions: [] }));
+let playerData = roster.map(p => ({ ...p, sessions: [] }));
 
+/* ================= HELPERS ================= */
 const uniqueDates = p => [...new Set(p.sessions.map(s=>s.date))];
 
 function parseDate(d){
@@ -289,30 +268,33 @@ function fmt(d){
   return `${+m}/${+da}/${y}`;
 }
 
-/* ================= CSV AUTO LOAD ================= */
+/* ================= CSV LOAD ================= */
 async function loadCSVFromRepo(){
-  try{
-    const res = await fetch("data.csv");
-    const text = await res.text();
-    playerData.forEach(p=>p.sessions=[]);
+  const res = await fetch("data.csv");
+  const text = await res.text();
 
-    text.split("\n").slice(1).forEach(row=>{
-      if(!row.trim()) return;
-      const [name,module,date]=row.split(",").map(x=>x.trim());
-      const iso=parseDate(date);
-      const p=playerData.find(x=>x.name===name);
-      if(p && iso) p.sessions.push({module,date:iso});
-    });
+  playerData.forEach(p=>p.sessions=[]);
 
-    populateDates();
-    refreshCharts();
-    renderModules();
-  }catch(e){
-    console.error("Failed to load CSV",e);
-  }
+  text.split("\n").slice(1).forEach(row=>{
+    if(!row.trim()) return;
+    const [name,module,date]=row.split(",").map(x=>x.trim());
+    const iso=parseDate(date);
+    const p=playerData.find(x=>x.name===name);
+    if(p && iso) p.sessions.push({module,date:iso});
+  });
+
+  populateDates();
+  refreshCharts();
+  renderModules();
 }
 
 /* ================= UI ================= */
+const positionFilter=document.getElementById("positionFilter");
+const playerFilter=document.getElementById("playerFilter");
+const dateFilter=document.getElementById("dateFilter");
+const moduleGrid=document.getElementById("moduleGrid");
+const selectedDateLabel=document.getElementById("selectedDateLabel");
+
 function populatePlayers(){
   playerFilter.innerHTML='<option value="">Select Player</option>';
   playerData.filter(p=>p.position===positionFilter.value)
@@ -360,31 +342,13 @@ function renderModules(){
   });
 }
 
-function showPlayer(){
-  const p=playerData.find(x=>x.name===playerFilter.value);
-  if(!p) return;
-  playerStatsGrid.classList.remove("hidden");
-
-  playerRecoveryDays.textContent=uniqueDates(p).length;
-  const last=uniqueDates(p).sort().pop();
-  playerLastDate.textContent=last?fmt(last):"N/A";
-
-  const mods={};
-  p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
-  playerMostModule.textContent=Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0]||"N/A";
-
-  const rank=playerData
-    .filter(x=>x.position===p.position)
-    .sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
-    .findIndex(x=>x.name===p.name)+1;
-  playerRank.textContent=`#${rank}`;
-}
-
 /* ================= CHARTS ================= */
-let positionChart,moduleChart;
+let positionChart=null;
+let moduleChart=null;
 
 function refreshCharts(){
   const posDayCounts={};
+
   playerData.forEach(p=>{
     uniqueDates(p).forEach(d=>{
       posDayCounts[p.position]??={};
@@ -392,30 +356,52 @@ function refreshCharts(){
     });
   });
 
-  const labels=Object.keys(posDayCounts);
-  const values=labels.map(pos=>{
+  const posLabels=Object.keys(posDayCounts);
+  const posValues=posLabels.map(pos=>{
     const total=roster.filter(r=>r.position===pos).length;
     const daily=Object.values(posDayCounts[pos]).map(c=>(c/total)*100);
     return daily.length?(daily.reduce((a,b)=>a+b)/daily.length).toFixed(1):0;
   });
 
   positionChart?.destroy();
-  positionChart=new Chart(positionAvgChart,{
-    type:"bar",
-    data:{labels,datasets:[{label:"Avg Daily Participation (%)",data:values}]},
-    options:{responsive:true,maintainAspectRatio:false}
-  });
+  positionChart=new Chart(
+    document.getElementById("positionAvgChart"),
+    {
+      type:"bar",
+      data:{
+        labels:posLabels,
+        datasets:[{
+          label:"Avg Daily Participation (%)",
+          data:posValues,
+          backgroundColor:cream
+        }]
+      },
+      options:{responsive:true,maintainAspectRatio:false}
+    }
+  );
 
   const totals={};
   modules.forEach(m=>totals[m]=0);
-  playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
+  playerData.forEach(p=>p.sessions.forEach(s=>{
+    if(totals[s.module]!==undefined) totals[s.module]++;
+  }));
 
   moduleChart?.destroy();
-  moduleChart=new Chart(moduleChartCanvas,{
-    type:"bar",
-    data:{labels:Object.keys(totals),datasets:[{label:"Total Uses",data:Object.values(totals)}]},
-    options:{responsive:true,maintainAspectRatio:false}
-  });
+  moduleChart=new Chart(
+    document.getElementById("moduleChart"),
+    {
+      type:"bar",
+      data:{
+        labels:Object.keys(totals),
+        datasets:[{
+          label:"Total Team Module Usage",
+          data:Object.values(totals),
+          backgroundColor:cream
+        }]
+      },
+      options:{responsive:true,maintainAspectRatio:false}
+    }
+  );
 }
 
 /* ================= EVENTS ================= */
@@ -423,7 +409,6 @@ positionFilter.addEventListener("change",()=>{
   populatePlayers();
   renderModules();
 });
-playerFilter.addEventListener("change",showPlayer);
 dateFilter.addEventListener("change",renderModules);
 
 /* ================= INIT ================= */
