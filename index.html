@@ -519,6 +519,21 @@ function renderCharts(){
     }
   );
 }
+function renderPlayerModuleChart(p){
+  const totals={};
+  modules.forEach(m=>totals[m]=0);
+  p.sessions.forEach(s=>totals[s.module]++);
+
+  playerModuleChart?.destroy();
+  playerModuleChart=new Chart(
+    document.getElementById("playerModuleChart"),
+    {type:"bar",
+     data:{labels:Object.keys(totals),
+       datasets:[{data:Object.values(totals),backgroundColor:cream}]},
+     options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true}},
+       plugins:{legend:{display:false}}}}
+  );
+}
 
 /* ================= EVENTS ================= */
 positionFilter.onchange=()=>{populatePlayers();renderModules();};
