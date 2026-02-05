@@ -7,77 +7,51 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-:root {
+:root{
   --bg:#841617;
   --card:rgba(255,255,255,.15);
   --text:#FDF9D8;
-  --cream:#FDF9D8;
 }
-body {
+body{
   background:var(--bg);
   color:var(--text);
   font-family:Arial, sans-serif;
 }
-.container {
+.container{
   max-width:1400px;
   margin:auto;
   padding:20px;
 }
-h1 {
-  text-align:center;
-  font-size:3.5rem;
-}
-.controls {
+h1{text-align:center;font-size:3.5rem;}
+.controls{
   display:flex;
   gap:12px;
   flex-wrap:wrap;
   justify-content:center;
   margin-bottom:25px;
 }
-select, button {
+select,button{
   padding:10px;
   border-radius:6px;
   border:none;
   font-weight:bold;
 }
-button {
-  background:var(--cream);
-  color:#841617;
+button{
   cursor:pointer;
 }
-.hidden { display:none; }
-
-.stats-grid {
+.hidden{display:none;}
+.stats-grid,.module-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:15px;
 }
-.stat-card {
+.stat-card,.module-card{
   background:var(--card);
   padding:15px;
   border-radius:8px;
 }
-.chart-box {
-  height:400px;
-  margin-top:25px;
-}
-.module-grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:15px;
-}
-.module-card {
-  background:var(--card);
-  padding:12px;
-  border-radius:8px;
-}
-.module-card h3 {
-  border-bottom:1px solid rgba(253,249,216,.4);
-  margin-bottom:8px;
-}
-.team-position {
-  margin-top:40px;
-}
+.team-position{margin-top:40px;}
+.chart-box{height:350px;margin-top:30px;}
 </style>
 </head>
 
@@ -117,11 +91,7 @@ button {
 </div>
 
 <h2>Module Participation (Selected Date)</h2>
-<div id="selectedDateLabel" style="text-align:center;font-weight:bold;"></div>
 <div id="moduleGrid" class="module-grid"></div>
-
-<h2>Average Daily Participation by Position (%)</h2>
-<div class="chart-box"><canvas id="positionAvgChart"></canvas></div>
 
 <h2>Total Team Module Usage</h2>
 <div class="chart-box"><canvas id="moduleChart"></canvas></div>
@@ -134,59 +104,161 @@ button {
 </div>
 
 <script>
+/* ================= CONFIG ================= */
 const modules = [
   "Cryo","Red Light","Cold Tub","Hot Tub",
   "Massage Chair","Manual Massages","Cocoon"
 ];
-
 const positions = ["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
 
-/* ===== FULL ROSTER ===== */
+/* ================= FULL ROSTER ================= */
 const roster = [
-  {name:"Daniel Akinkunmi",position:"OL"},
+  {name:"Ace Hodges",position:"OL"},
+  {name:"Alex Shieldnight",position:"DE"},
+  {name:"Andy Bass",position:"RB"},
+  {name:"Barrett Travis",position:"LB"},
+  {name:"Beau Jandreau",position:"LB"},
+  {name:"Ben Anderson",position:"Specialists"},
+  {name:"Ben McCreary",position:"RB"},
+  {name:"Bergin Kysar",position:"DE"},
+  {name:"Bishop Thomas",position:"DT"},
   {name:"Bowe Bentley",position:"QB"},
-  {name:"Gabe Sawchuk",position:"RB"}
-  /* ⬅️ keep your FULL roster here — unchanged from your working version */
+  {name:"Brian Harris",position:"DT"},
+  {name:"CJ Nickson",position:"DE"},
+  {name:"Caleb Nitta",position:"OL"},
+  {name:"Casen Calmus",position:"S"},
+  {name:"Cole Sullivan",position:"LB"},
+  {name:"Courtland Guillory",position:"CB"},
+  {name:"Dakoda Fields",position:"CB"},
+  {name:"Dane Bathurst",position:"LB"},
+  {name:"Daniel Akinkunmi",position:"OL"},
+  {name:"Daniel Odom",position:"WR"},
+  {name:"Danny Okoye",position:"DE"},
+  {name:"Darius Afalava",position:"OL"},
+  {name:"David Rowaiye",position:"DT"},
+  {name:"David Stone",position:"DT"},
+  {name:"DeZephen Walker",position:"RB"},
+  {name:"Deacon Schmitt",position:"OL"},
+  {name:"Derrick Johnson",position:"CB"},
+  {name:"E'Marion Harris",position:"OL"},
+  {name:"Eddy Pierre-Louis",position:"OL"},
+  {name:"Eli Bowen",position:"CB"},
+  {name:"Eli Merck",position:"WR"},
+  {name:"Elijah Thomas",position:"WR"},
+  {name:"Emmanuel Choice",position:"WR"},
+  {name:"Fred Hinton",position:"OL"},
+  {name:"Gabe Sawchuk",position:"RB"},
+  {name:"Grayson Miller",position:"Specialists"},
+  {name:"Gunnar Allen",position:"OL"},
+  {name:"Hayden Hansen",position:"TE"},
+  {name:"Heath Ozaeta",position:"OL"},
+  {name:"Isaiah Sategna",position:"WR"},
+  {name:"Ivan Carreon",position:"WR"},
+  {name:"Jack Van Dorselaer",position:"TE"},
+  {name:"Jacob Curry",position:"LB"},
+  {name:"Jacob Henry",position:"DT"},
+  {name:"Jacob Jordan",position:"WR"},
+  {name:"Jacob Ulrich",position:"Specialists"},
+  {name:"Jacobe Johnson",position:"CB"},
+  {name:"Jahsiear Rogers",position:"WR"},
+  {name:"Jake Kreul",position:"DE"},
+  {name:"Jake Maikkula",position:"OL"},
+  {name:"James Carrington",position:"DT"},
+  {name:"James Nesta",position:"LB"},
+  {name:"Jayden Jackson",position:"DT"},
+  {name:"Jayden Petit",position:"WR"},
+  {name:"Jer'Michael Carter",position:"WR"},
+  {name:"Jeremiah Newcombe",position:"CB"},
+  {name:"Jett Niu",position:"QB"},
+  {name:"John Locke",position:"TE"},
+  {name:"John Mateer",position:"QB"},
+  {name:"Jonathan Hatton",position:"RB"},
+  {name:"Kade McIntyre",position:"TE"},
+  {name:"Kenneth Wermy",position:"OL"},
+  {name:"Kenny Ozowalu",position:"DE"},
+  {name:"Kip Lewis",position:"LB"},
+  {name:"Kristan Moore",position:"LB"},
+  {name:"Lebron Bauer",position:"CB"},
+  {name:"Liam Evans",position:"Specialists"},
+  {name:"Lloyd Avant",position:"RB"},
+  {name:"Mackenzie Alleyne",position:"WR"},
+  {name:"Marcus James",position:"LB"},
+  {name:"Markel Ford",position:"S"},
+  {name:"Matthew Nelson",position:"DE"},
+  {name:"Michael Boganowski",position:"S"},
+  {name:"Michael Fasusi",position:"OL"},
+  {name:"Nigel Smith",position:"DT"},
+  {name:"Niko Jandreau",position:"S"},
+  {name:"Noah Best",position:"OL"},
+  {name:"Omarion Robinson",position:"S"},
+  {name:"Owen Hollenbeck",position:"OL"},
+  {name:"PJ Adebawore",position:"DE"},
+  {name:"Parker Livingstone",position:"WR"},
+  {name:"Peyton Bowen",position:"S"},
+  {name:"Peyton Joseph",position:"OL"},
+  {name:"Preston Mickens",position:"CB"},
+  {name:"Preston Tarpley",position:"Specialists"},
+  {name:"Prince Ijioma",position:"CB"},
+  {name:"Reed DeQuasie",position:"S"},
+  {name:"Reggie Powers",position:"S"},
+  {name:"Rocky Beers",position:"TE"},
+  {name:"Ryan Fodje",position:"OL"},
+  {name:"Ryder Mix",position:"TE"},
+  {name:"Sean Hutton",position:"OL"},
+  {name:"Seth Freeman",position:"Specialists"},
+  {name:"Tate Sandell",position:"Specialists"},
+  {name:"Taylor Heim",position:"LB"},
+  {name:"Taylor Wein",position:"DE"},
+  {name:"Tory Blaylock",position:"RB"},
+  {name:"Trace Rudd",position:"Specialists"},
+  {name:"Trell Harris",position:"WR"},
+  {name:"Trent Wilson",position:"DT"},
+  {name:"Trey Brown",position:"WR"},
+  {name:"Trynae Washington",position:"TE"},
+  {name:"Trystan Haynes",position:"CB"},
+  {name:"Tyler Ruxer",position:"TE"},
+  {name:"Whitt Newbauer",position:"QB"},
+  {name:"Wyatt Gilmore",position:"DE"},
+  {name:"Xavier Robinson",position:"RB"},
+  {name:"eLGee Webster",position:"LB"}
 ];
 
-let playerData = roster.map(p => ({ ...p, sessions: [] }));
+let playerData = roster.map(p => ({...p, sessions:[]}));
 
+/* ================= HELPERS ================= */
 const uniqueDates = p => [...new Set(p.sessions.map(s=>s.date))];
+const fmt = d => d;
 
-function parseDate(d){
-  if(d.includes("/")){
-    const [m,da,y]=d.split("/").map(Number);
-    return `${y}-${String(m).padStart(2,"0")}-${String(da).padStart(2,"0")}`;
-  }
-  return d;
-}
-function fmt(d){
-  const [y,m,da]=d.split("-");
-  return `${+m}/${+da}/${y}`;
-}
-
-/* ===== CSV LOAD ===== */
-async function loadCSVFromRepo(){
-  const res = await fetch("data.csv");
+/* ================= CSV LOAD (CACHE-BUSTED) ================= */
+async function loadCSV(){
+  const res = await fetch("data.csv?v=" + Date.now());
   const text = await res.text();
 
-  playerData.forEach(p=>p.sessions=[]);
-
-  text.split("\n").slice(1).forEach(row=>{
-    if(!row.trim()) return;
-    const [name,module,date]=row.split(",").map(x=>x.trim());
-    const iso=parseDate(date);
-    const p=playerData.find(x=>x.name===name);
-    if(p && iso) p.sessions.push({module,date:iso});
+  text.split("\n").slice(1).forEach(r=>{
+    if(!r.trim()) return;
+    const [name,module,date] = r.split(",").map(x=>x.trim());
+    const p = playerData.find(x=>x.name===name);
+    if(p) p.sessions.push({module,date});
   });
 
   populateDates();
-  refreshCharts();
-  renderModules();
+  refreshChart();
   renderTeamView();
 }
 
-/* ===== PLAYER VIEW ===== */
+/* ================= DATES ================= */
+function populateDates(){
+  const dates=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>s.date)))];
+  dateFilter.innerHTML='<option value="">Select Date</option>';
+  dates.forEach(d=>{
+    const o=document.createElement("option");
+    o.value=d;
+    o.textContent=d;
+    dateFilter.appendChild(o);
+  });
+}
+
+/* ================= PLAYER VIEW ================= */
 function populatePlayers(){
   playerFilter.innerHTML='<option value="">Select Player</option>';
   playerData.filter(p=>p.position===positionFilter.value)
@@ -199,107 +271,77 @@ function populatePlayers(){
 }
 
 function showPlayer(){
-  const p = playerData.find(x=>x.name===playerFilter.value);
+  const p=playerData.find(x=>x.name===playerFilter.value);
   if(!p) return;
 
   playerStatsGrid.classList.remove("hidden");
   playerRecoveryDays.textContent = uniqueDates(p).length;
-
-  const last = uniqueDates(p).sort().pop();
-  playerLastDate.textContent = last ? fmt(last) : "N/A";
+  playerLastDate.textContent = uniqueDates(p).sort().pop() || "N/A";
 
   const mods={};
   p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
-  playerMostModule.textContent =
-    Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0] || "N/A";
+  playerMostModule.textContent = Object.keys(mods)[0] || "N/A";
 
-  const group = playerData.filter(x=>x.position===p.position);
-  const rank = group
-    .sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
+  const group=playerData.filter(x=>x.position===p.position);
+  const rank=group.sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
     .findIndex(x=>x.name===p.name)+1;
-
   playerRank.textContent = `#${rank} out of ${group.length}`;
 }
 
-function renderModules(){
-  moduleGrid.innerHTML="";
-  if(!positionFilter.value||!dateFilter.value) return;
-
-  selectedDateLabel.textContent =
-    `${fmt(dateFilter.value)} — ${positionFilter.value}`;
-
-  modules.forEach(mod=>{
-    const count = playerData.filter(p=>
-      p.position===positionFilter.value &&
-      p.sessions.some(s=>s.module===mod && s.date===dateFilter.value)
-    ).length;
-
-    const card=document.createElement("div");
-    card.className="module-card";
-    card.innerHTML=`<h3>${mod}</h3><strong>${count} players</strong>`;
-    moduleGrid.appendChild(card);
-  });
-}
-
-/* ===== TEAM VIEW ===== */
+/* ================= TEAM VIEW ================= */
 function renderTeamView(){
   teamView.innerHTML="";
   if(!dateFilter.value) return;
 
   positions.forEach(pos=>{
-    const section=document.createElement("div");
-    section.className="team-position";
-    section.innerHTML=`<h2>${pos}</h2><div class="module-grid"></div>`;
-    const grid=section.querySelector(".module-grid");
+    const sec=document.createElement("div");
+    sec.className="team-position";
+    sec.innerHTML=`<h2>${pos}</h2><div class="module-grid"></div>`;
+    const grid=sec.querySelector(".module-grid");
 
-    modules.forEach(mod=>{
-      const count = playerData.filter(p=>
+    modules.forEach(m=>{
+      const count=playerData.filter(p=>
         p.position===pos &&
-        p.sessions.some(s=>s.module===mod && s.date===dateFilter.value)
+        p.sessions.some(s=>s.module===m && s.date===dateFilter.value)
       ).length;
 
-      const card=document.createElement("div");
-      card.className="module-card";
-      card.innerHTML=`<h3>${mod}</h3><strong>${count} players</strong>`;
-      grid.appendChild(card);
+      const c=document.createElement("div");
+      c.className="module-card";
+      c.innerHTML=`${m}<br><strong>${count}</strong>`;
+      grid.appendChild(c);
     });
 
-    teamView.appendChild(section);
+    teamView.appendChild(sec);
   });
 }
 
-/* ===== CHARTS ===== */
-let positionChart,moduleChart;
-
-function refreshCharts(){
+/* ================= CHART ================= */
+let moduleChart;
+function refreshChart(){
   const totals={};
   modules.forEach(m=>totals[m]=0);
   playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
-
   moduleChart?.destroy();
-  moduleChart=new Chart(document.getElementById("moduleChart"),{
+  moduleChart=new Chart(moduleChart,{
     type:"bar",
     data:{labels:Object.keys(totals),datasets:[{data:Object.values(totals)}]},
     options:{responsive:true}
   });
 }
 
-/* ===== EVENTS ===== */
-positionFilter.addEventListener("change",populatePlayers);
-playerFilter.addEventListener("change",showPlayer);
-dateFilter.addEventListener("change",()=>{
-  renderModules();
-  renderTeamView();
-});
-toggleView.addEventListener("click",()=>{
+/* ================= EVENTS ================= */
+positionFilter.onchange=populatePlayers;
+playerFilter.onchange=showPlayer;
+dateFilter.onchange=renderTeamView;
+toggleView.onclick=()=>{
   playerView.classList.toggle("hidden");
   teamView.classList.toggle("hidden");
-  toggleView.textContent =
-    teamView.classList.contains("hidden") ? "Team View" : "Player View";
-});
+  toggleView.textContent=
+    teamView.classList.contains("hidden")?"Team View":"Player View";
+};
 
-/* ===== INIT ===== */
-loadCSVFromRepo();
+/* ================= INIT ================= */
+loadCSV();
 </script>
 
 </body>
