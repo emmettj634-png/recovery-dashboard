@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Oklahoma Elite Recovery Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npmjsdelivr.net/npm/chart.js"></script>
 
 <style>
 :root{
@@ -149,7 +149,7 @@ const positions=[
   "CB","S","LB","Specialists"
 ];
 
-/* ===== FULL ROSTER ===== */
+/* ===== FULL ROSTER (VERTICAL) ===== */
 const roster = [
   { name:"Ace Hodges", position:"OL" },
   { name:"Alex Shieldnight", position:"DE" },
@@ -291,79 +291,33 @@ function populateDates(){
   });
 }
 
-/* ===== PLAYERS ===== */
-function populatePlayers(){
-  playerFilter.innerHTML='<option value="">Select Player</option>';
-  if(!positionFilter.value) return;
-  playerData
-    .filter(p=>p.position===positionFilter.value)
-    .sort((a,b)=>a.name.localeCompare(b.name))
-    .forEach(p=>{
-      const o=document.createElement("option");
-      o.value=p.name;
-      o.textContent=p.name;
-      playerFilter.appendChild(o);
-    });
-}
-
-/* ===== PLAYER DETAILS (FIXED) ===== */
-function showPlayer(){
-  const p = playerData.find(x=>x.name===playerFilter.value);
-  if(!p) return;
-
-  playerStatsGrid.classList.remove("hidden");
-  playerRecoveryDays.textContent = uniqueDates(p).length;
-  playerLastDate.textContent = uniqueDates(p).sort().pop() || "N/A";
-
-  const mods={};
-  p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
-  playerMostModule.textContent =
-    Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0] || "N/A";
-
-  const group = playerData.filter(x=>x.position===p.position);
-  const rank = group
-    .sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
-    .findIndex(x=>x.name===p.name)+1;
-
-  playerRank.textContent = `#${rank} out of ${group.length}`;
-}
-
-/* ===== MODULE PARTICIPATION ===== */
-function renderModules(){
-  moduleGrid.innerHTML="";
-  if(!positionFilter.value||!dateFilter.value) return;
-  selectedDateLabel.textContent = `${dateFilter.value} — ${positionFilter.value}`;
-  modules.forEach(mod=>{
-    const card=document.createElement("div");
-    card.className="module-card";
-    card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
-    const ul=card.querySelector("ul");
-    playerData
-      .filter(p=>p.position===positionFilter.value)
-      .filter(p=>p.sessions.some(s=>s.module===mod&&s.date===dateFilter.value))
-      .forEach(p=>{
-        const li=document.createElement("li");
-        li.textContent=p.name;
-        ul.appendChild(li);
-      });
-    moduleGrid.appendChild(card);
-  });
+/* ===== FORCE LATEST DATE ===== */
+function ensureDateSelected(){
+  if(dateFilter.value) return;
+  const dates=[...dateFilter.options].map(o=>o.value).filter(Boolean);
+  if(dates.length){
+    dateFilter.value = dates[dates.length-1];
+  }
 }
 
 /* ===== TEAM VIEW ===== */
 function renderTeamView(){
+  ensureDateSelected();
   teamView.innerHTML="";
   if(!dateFilter.value) return;
+
   positions.forEach(pos=>{
     const sec=document.createElement("div");
     sec.className="team-position";
     sec.innerHTML=`<h2>${pos}</h2><div class="module-grid"></div>`;
     const grid=sec.querySelector(".module-grid");
+
     modules.forEach(mod=>{
       const card=document.createElement("div");
       card.className="module-card";
       card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
       const ul=card.querySelector("ul");
+
       playerData
         .filter(p=>p.position===pos)
         .filter(p=>p.sessions.some(s=>s.module===mod&&s.date===dateFilter.value))
@@ -372,87 +326,22 @@ function renderTeamView(){
           li.textContent=p.name;
           ul.appendChild(li);
         });
+
       grid.appendChild(card);
     });
+
     teamView.appendChild(sec);
   });
 }
 
-/* ===== CHARTS ===== */
-let positionChart=null;
-let moduleChartInstance=null;
-
-function refreshCharts(){
-  const posDay={};
-  playerData.forEach(p=>{
-    uniqueDates(p).forEach(d=>{
-      posDay[p.position]??={};
-      posDay[p.position][d]=(posDay[p.position][d]||0)+1;
-    });
-  });
-
-  const posLabels=Object.keys(posDay);
-  const posVals=posLabels.map(pos=>{
-    const total=roster.filter(r=>r.position===pos).length;
-    const days=Object.values(posDay[pos]).map(c=>(c/total)*100);
-    return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
-  });
-
-  positionChart?.destroy();
-  positionChart=new Chart(
-    document.getElementById("positionAvgChart"),
-    {
-      type:"bar",
-      data:{labels:posLabels,datasets:[{label:"%",data:posVals,backgroundColor:cream}]},
-      options:{
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
-        },
-        plugins:{legend:{labels:{color:cream}}}
-      }
-    }
-  );
-
-  const totals={};
-  modules.forEach(m=>totals[m]=0);
-  playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
-
-  moduleChartInstance?.destroy();
-  moduleChartInstance=new Chart(
-    document.getElementById("moduleChart"),
-    {
-      type:"bar",
-      data:{labels:Object.keys(totals),datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]},
-      options:{
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream},beginAtZero:true}
-        },
-        plugins:{legend:{labels:{color:cream}}}
-      }
-    }
-  );
-}
-
 /* ===== EVENTS ===== */
-positionFilter.onchange=()=>{
-  populatePlayers();
-  renderModules();
-};
-playerFilter.onchange=showPlayer;
-
-dateFilter.onchange=()=>{
-  renderModules();
-  renderTeamView();
-};
-
 toggleView.onclick=()=>{
-  const isTeamView = !teamView.classList.contains("hidden");
+  const toTeam = teamView.classList.contains("hidden");
   playerView.classList.toggle("hidden");
   teamView.classList.toggle("hidden");
-  playerFilter.classList.toggle("hidden");   // HIDE player dropdown in Team View
-  toggleView.textContent = isTeamView ? "Team View" : "Player View";
+  playerFilter.classList.toggle("hidden");
+  toggleView.textContent = toTeam ? "Player View" : "Team View";
+  if(toTeam) renderTeamView();   // ⭐ instant population
 };
 
 /* ===== INIT ===== */
