@@ -143,12 +143,125 @@ const modules=[
   "Cryo","Red Light","Cold Tub","Hot Tub",
   "Massage Chair","Manual Massages","Cocoon"
 ];
-const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
 
-/* ===== FULL ROSTER ===== */
-const roster=[{name:"Ace Hodges",position:"OL"},{name:"Alex Shieldnight",position:"DE"},{name:"Andy Bass",position:"RB"},{name:"Barrett Travis",position:"LB"},{name:"Beau Jandreau",position:"LB"},{name:"Ben Anderson",position:"Specialists"},{name:"Ben McCreary",position:"RB"},{name:"Bergin Kysar",position:"DE"},{name:"Bishop Thomas",position:"DT"},{name:"Bowe Bentley",position:"QB"},{name:"Brian Harris",position:"DT"},{name:"CJ Nickson",position:"DE"},{name:"Caleb Nitta",position:"OL"},{name:"Casen Calmus",position:"S"},{name:"Cole Sullivan",position:"LB"},{name:"Courtland Guillory",position:"CB"},{name:"Dakoda Fields",position:"CB"},{name:"Dane Bathurst",position:"LB"},{name:"Daniel Akinkunmi",position:"OL"},{name:"Daniel Odom",position:"WR"},{name:"Danny Okoye",position:"DE"},{name:"Darius Afalava",position:"OL"},{name:"David Rowaiye",position:"DT"},{name:"David Stone",position:"DT"},{name:"DeZephen Walker",position:"RB"},{name:"Deacon Schmitt",position:"OL"},{name:"Derrick Johnson",position:"CB"},{name:"E'Marion Harris",position:"OL"},{name:"Eddy Pierre-Louis",position:"OL"},{name:"Eli Bowen",position:"CB"},{name:"Eli Merck",position:"WR"},{name:"Elijah Thomas",position:"WR"},{name:"Emmanuel Choice",position:"WR"},{name:"Fred Hinton",position:"OL"},{name:"Gabe Sawchuk",position:"RB"},{name:"Grayson Miller",position:"Specialists"},{name:"Gunnar Allen",position:"OL"},{name:"Hayden Hansen",position:"TE"},{name:"Heath Ozaeta",position:"OL"},{name:"Isaiah Sategna",position:"WR"},{name:"Ivan Carreon",position:"WR"},{name:"Jack Van Dorselaer",position:"TE"},{name:"Jacob Curry",position:"LB"},{name:"Jacob Henry",position:"DT"},{name:"Jacob Jordan",position:"WR"},{name:"Jacob Ulrich",position:"Specialists"},{name:"Jacobe Johnson",position:"CB"},{name:"Jahsiear Rogers",position:"WR"},{name:"Jake Kreul",position:"DE"},{name:"Jake Maikkula",position:"OL"},{name:"James Carrington",position:"DT"},{name:"James Nesta",position:"LB"},{name:"Jayden Jackson",position:"DT"},{name:"Jayden Petit",position:"WR"},{name:"Jer'Michael Carter",position:"WR"},{name:"Jeremiah Newcombe",position:"CB"},{name:"Jett Niu",position:"QB"},{name:"John Locke",position:"TE"},{name:"John Mateer",position:"QB"},{name:"Jonathan Hatton",position:"RB"},{name:"Kade McIntyre",position:"TE"},{name:"Kenneth Wermy",position:"OL"},{name:"Kenny Ozowalu",position:"DE"},{name:"Kip Lewis",position:"LB"},{name:"Kristan Moore",position:"LB"},{name:"Lebron Bauer",position:"CB"},{name:"Liam Evans",position:"Specialists"},{name:"Lloyd Avant",position:"RB"},{name:"Mackenzie Alleyne",position:"WR"},{name:"Marcus James",position:"LB"},{name:"Markel Ford",position:"S"},{name:"Matthew Nelson",position:"DE"},{name:"Michael Boganowski",position:"S"},{name:"Michael Fasusi",position:"OL"},{name:"Nigel Smith",position:"DT"},{name:"Niko Jandreau",position:"S"},{name:"Noah Best",position:"OL"},{name:"Omarion Robinson",position:"S"},{name:"Owen Hollenbeck",position:"OL"},{name:"PJ Adebawore",position:"DE"},{name:"Parker Livingstone",position:"WR"},{name:"Peyton Bowen",position:"S"},{name:"Peyton Joseph",position:"OL"},{name:"Preston Mickens",position:"CB"},{name:"Preston Tarpley",position:"Specialists"},{name:"Prince Ijioma",position:"CB"},{name:"Reed DeQuasie",position:"S"},{name:"Reggie Powers",position:"S"},{name:"Rocky Beers",position:"TE"},{name:"Ryan Fodje",position:"OL"},{name:"Ryder Mix",position:"TE"},{name:"Sean Hutton",position:"OL"},{name:"Seth Freeman",position:"Specialists"},{name:"Tate Sandell",position:"Specialists"},{name:"Taylor Heim",position:"LB"},{name:"Taylor Wein",position:"DE"},{name:"Tory Blaylock",position:"RB"},{name:"Trace Rudd",position:"Specialists"},{name:"Trell Harris",position:"WR"},{name:"Trent Wilson",position:"DT"},{name:"Trey Brown",position:"WR"},{name:"Trynae Washington",position:"TE"},{name:"Trystan Haynes",position:"CB"},{name:"Tyler Ruxer",position:"TE"},{name:"Whitt Newbauer",position:"QB"},{name:"Wyatt Gilmore",position:"DE"},{name:"Xavier Robinson",position:"RB"},{name:"eLGee Webster",position:"LB"}];
+const positions=[
+  "QB","RB","WR","TE","OL","DT","DE",
+  "CB","S","LB","Specialists"
+];
 
-let playerData=roster.map(p=>({...p,sessions:[]}));
+/* ===== FULL ROSTER (VERTICAL) ===== */
+const roster = [
+  { name:"Ace Hodges", position:"OL" },
+  { name:"Alex Shieldnight", position:"DE" },
+  { name:"Andy Bass", position:"RB" },
+  { name:"Barrett Travis", position:"LB" },
+  { name:"Beau Jandreau", position:"LB" },
+  { name:"Ben Anderson", position:"Specialists" },
+  { name:"Ben McCreary", position:"RB" },
+  { name:"Bergin Kysar", position:"DE" },
+  { name:"Bishop Thomas", position:"DT" },
+  { name:"Bowe Bentley", position:"QB" },
+  { name:"Brian Harris", position:"DT" },
+  { name:"CJ Nickson", position:"DE" },
+  { name:"Caleb Nitta", position:"OL" },
+  { name:"Casen Calmus", position:"S" },
+  { name:"Cole Sullivan", position:"LB" },
+  { name:"Courtland Guillory", position:"CB" },
+  { name:"Dakoda Fields", position:"CB" },
+  { name:"Dane Bathurst", position:"LB" },
+  { name:"Daniel Akinkunmi", position:"OL" },
+  { name:"Daniel Odom", position:"WR" },
+  { name:"Danny Okoye", position:"DE" },
+  { name:"Darius Afalava", position:"OL" },
+  { name:"David Rowaiye", position:"DT" },
+  { name:"David Stone", position:"DT" },
+  { name:"DeZephen Walker", position:"RB" },
+  { name:"Deacon Schmitt", position:"OL" },
+  { name:"Derrick Johnson", position:"CB" },
+  { name:"E'Marion Harris", position:"OL" },
+  { name:"Eddy Pierre-Louis", position:"OL" },
+  { name:"Eli Bowen", position:"CB" },
+  { name:"Eli Merck", position:"WR" },
+  { name:"Elijah Thomas", position:"WR" },
+  { name:"Emmanuel Choice", position:"WR" },
+  { name:"Fred Hinton", position:"OL" },
+  { name:"Gabe Sawchuk", position:"RB" },
+  { name:"Grayson Miller", position:"Specialists" },
+  { name:"Gunnar Allen", position:"OL" },
+  { name:"Hayden Hansen", position:"TE" },
+  { name:"Heath Ozaeta", position:"OL" },
+  { name:"Isaiah Sategna", position:"WR" },
+  { name:"Ivan Carreon", position:"WR" },
+  { name:"Jack Van Dorselaer", position:"TE" },
+  { name:"Jacob Curry", position:"LB" },
+  { name:"Jacob Henry", position:"DT" },
+  { name:"Jacob Jordan", position:"WR" },
+  { name:"Jacob Ulrich", position:"Specialists" },
+  { name:"Jacobe Johnson", position:"CB" },
+  { name:"Jahsiear Rogers", position:"WR" },
+  { name:"Jake Kreul", position:"DE" },
+  { name:"Jake Maikkula", position:"OL" },
+  { name:"James Carrington", position:"DT" },
+  { name:"James Nesta", position:"LB" },
+  { name:"Jayden Jackson", position:"DT" },
+  { name:"Jayden Petit", position:"WR" },
+  { name:"Jer'Michael Carter", position:"WR" },
+  { name:"Jeremiah Newcombe", position:"CB" },
+  { name:"Jett Niu", position:"QB" },
+  { name:"John Locke", position:"TE" },
+  { name:"John Mateer", position:"QB" },
+  { name:"Jonathan Hatton", position:"RB" },
+  { name:"Kade McIntyre", position:"TE" },
+  { name:"Kenneth Wermy", position:"OL" },
+  { name:"Kenny Ozowalu", position:"DE" },
+  { name:"Kip Lewis", position:"LB" },
+  { name:"Kristan Moore", position:"LB" },
+  { name:"Lebron Bauer", position:"CB" },
+  { name:"Liam Evans", position:"Specialists" },
+  { name:"Lloyd Avant", position:"RB" },
+  { name:"Mackenzie Alleyne", position:"WR" },
+  { name:"Marcus James", position:"LB" },
+  { name:"Markel Ford", position:"S" },
+  { name:"Matthew Nelson", position:"DE" },
+  { name:"Michael Boganowski", position:"S" },
+  { name:"Michael Fasusi", position:"OL" },
+  { name:"Nigel Smith", position:"DT" },
+  { name:"Niko Jandreau", position:"S" },
+  { name:"Noah Best", position:"OL" },
+  { name:"Omarion Robinson", position:"S" },
+  { name:"Owen Hollenbeck", position:"OL" },
+  { name:"PJ Adebawore", position:"DE" },
+  { name:"Parker Livingstone", position:"WR" },
+  { name:"Peyton Bowen", position:"S" },
+  { name:"Peyton Joseph", position:"OL" },
+  { name:"Preston Mickens", position:"CB" },
+  { name:"Preston Tarpley", position:"Specialists" },
+  { name:"Prince Ijioma", position:"CB" },
+  { name:"Reed DeQuasie", position:"S" },
+  { name:"Reggie Powers", position:"S" },
+  { name:"Rocky Beers", position:"TE" },
+  { name:"Ryan Fodje", position:"OL" },
+  { name:"Ryder Mix", position:"TE" },
+  { name:"Sean Hutton", position:"OL" },
+  { name:"Seth Freeman", position:"Specialists" },
+  { name:"Tate Sandell", position:"Specialists" },
+  { name:"Taylor Heim", position:"LB" },
+  { name:"Taylor Wein", position:"DE" },
+  { name:"Tory Blaylock", position:"RB" },
+  { name:"Trace Rudd", position:"Specialists" },
+  { name:"Trell Harris", position:"WR" },
+  { name:"Trent Wilson", position:"DT" },
+  { name:"Trey Brown", position:"WR" },
+  { name:"Trynae Washington", position:"TE" },
+  { name:"Trystan Haynes", position:"CB" },
+  { name:"Tyler Ruxer", position:"TE" },
+  { name:"Whitt Newbauer", position:"QB" },
+  { name:"Wyatt Gilmore", position:"DE" },
+  { name:"Xavier Robinson", position:"RB" },
+  { name:"eLGee Webster", position:"LB" }
+];
+
+let playerData = roster.map(p=>({...p,sessions:[]}));
 const uniqueDates=p=>[...new Set(p.sessions.map(s=>s.date))];
 
 /* ===== CSV LOAD ===== */
@@ -177,7 +290,22 @@ function populateDates(){
   });
 }
 
-/* ===== MODULE PARTICIPATION (POSITION) ===== */
+/* ===== PLAYERS ===== */
+function populatePlayers(){
+  playerFilter.innerHTML='<option value="">Select Player</option>';
+  if(!positionFilter.value)return;
+  playerData
+    .filter(p=>p.position===positionFilter.value)
+    .sort((a,b)=>a.name.localeCompare(b.name))
+    .forEach(p=>{
+      const o=document.createElement("option");
+      o.value=p.name;
+      o.textContent=p.name;
+      playerFilter.appendChild(o);
+    });
+}
+
+/* ===== MODULE PARTICIPATION ===== */
 function renderModules(){
   moduleGrid.innerHTML="";
   if(!positionFilter.value||!dateFilter.value)return;
@@ -187,7 +315,8 @@ function renderModules(){
     card.className="module-card";
     card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
     const ul=card.querySelector("ul");
-    playerData.filter(p=>p.position===positionFilter.value)
+    playerData
+      .filter(p=>p.position===positionFilter.value)
       .filter(p=>p.sessions.some(s=>s.module===mod&&s.date===dateFilter.value))
       .forEach(p=>{
         const li=document.createElement("li");
@@ -212,7 +341,8 @@ function renderTeamView(){
       card.className="module-card";
       card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
       const ul=card.querySelector("ul");
-      playerData.filter(p=>p.position===pos)
+      playerData
+        .filter(p=>p.position===pos)
         .filter(p=>p.sessions.some(s=>s.module===mod&&s.date===dateFilter.value))
         .forEach(p=>{
           const li=document.createElement("li");
@@ -226,7 +356,8 @@ function renderTeamView(){
 }
 
 /* ===== CHARTS ===== */
-let positionChart,moduleChart;
+let positionChart=null;
+let moduleChartInstance=null;
 
 function refreshCharts(){
   const posDay={};
@@ -236,44 +367,56 @@ function refreshCharts(){
       posDay[p.position][d]=(posDay[p.position][d]||0)+1;
     });
   });
+
   const posLabels=Object.keys(posDay);
   const posVals=posLabels.map(pos=>{
     const total=roster.filter(r=>r.position===pos).length;
     const days=Object.values(posDay[pos]).map(c=>(c/total)*100);
     return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
   });
+
   positionChart?.destroy();
-  positionChart=new Chart(positionAvgChart,{
-    type:"bar",
-    data:{labels:posLabels,datasets:[{label:"%",data:posVals,backgroundColor:cream}]},
-    options:{
-      scales:{
-        x:{ticks:{color:cream}},
-        y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
-      },
-      plugins:{legend:{labels:{color:cream}}}
+  positionChart=new Chart(
+    document.getElementById("positionAvgChart"),
+    {
+      type:"bar",
+      data:{labels:posLabels,datasets:[{label:"%",data:posVals,backgroundColor:cream}]},
+      options:{
+        scales:{
+          x:{ticks:{color:cream}},
+          y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
+        },
+        plugins:{legend:{labels:{color:cream}}}
+      }
     }
-  });
+  );
 
   const totals={};
   modules.forEach(m=>totals[m]=0);
   playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
-  moduleChart?.destroy();
-  moduleChart=new Chart(moduleChart,{
-    type:"bar",
-    data:{labels:Object.keys(totals),datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]},
-    options:{
-      scales:{
-        x:{ticks:{color:cream}},
-        y:{ticks:{color:cream},beginAtZero:true}
-      },
-      plugins:{legend:{labels:{color:cream}}}
+
+  moduleChartInstance?.destroy();
+  moduleChartInstance=new Chart(
+    document.getElementById("moduleChart"),
+    {
+      type:"bar",
+      data:{labels:Object.keys(totals),datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]},
+      options:{
+        scales:{
+          x:{ticks:{color:cream}},
+          y:{ticks:{color:cream},beginAtZero:true}
+        },
+        plugins:{legend:{labels:{color:cream}}}
+      }
     }
-  });
+  );
 }
 
 /* ===== EVENTS ===== */
-positionFilter.onchange=renderModules;
+positionFilter.onchange=()=>{
+  populatePlayers();
+  renderModules();
+};
 dateFilter.onchange=()=>{
   renderModules();
   renderTeamView();
