@@ -165,6 +165,30 @@ button{cursor:pointer;}
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
 
+/* ================= DOM BINDINGS (CRITICAL FIX) ================= */
+const positionFilter = document.getElementById("positionFilter");
+const playerFilter = document.getElementById("playerFilter");
+const dateFilter = document.getElementById("dateFilter");
+const toggleView = document.getElementById("toggleView");
+
+const monthFilter = document.getElementById("monthFilter");
+const monthWeekFilter = document.getElementById("monthWeekFilter");
+const weekFilter = document.getElementById("weekFilter");
+
+const playerView = document.getElementById("playerView");
+const teamView = document.getElementById("teamView");
+
+const moduleGrid = document.getElementById("moduleGrid");
+const teamModuleGrid = document.getElementById("teamModuleGrid");
+const leaderboardContainer = document.getElementById("leaderboardContainer");
+
+const playerStatsGrid = document.getElementById("playerStatsGrid");
+const playerRecoveryDays = document.getElementById("playerRecoveryDays");
+const playerLastDate = document.getElementById("playerLastDate");
+const playerMostModule = document.getElementById("playerMostModule");
+const playerRank = document.getElementById("playerRank");
+const selectedDateLabel = document.getElementById("selectedDateLabel");
+
 /* ================= CONSTANTS ================= */
 const cream="#FDF9D8";
 const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
@@ -281,7 +305,7 @@ const roster = [
   {name:"eLGee Webster",position:"LB"}
 ];
 
-/* ================= DATA + HELPERS ================= */
+/* ================= DATA ================= */
 let playerData = roster.map(p=>({...p,sessions:[]}));
 const uniqueDates = p => [...new Set(p.sessions.map(s=>s.date))];
 
@@ -317,66 +341,31 @@ async function loadCSV(){
 }
 loadCSV();
 
-/* ================= MONTH FILTERS ================= */
-function populateMonths(){
-  monthFilter.innerHTML="";
-  const months=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>getMonthKey(s.date))))].sort();
-  months.forEach(m=>{
+/* ================= DROPDOWNS ================= */
+function populateDates(){
+  const dates=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>s.date)))].sort();
+  dateFilter.innerHTML='<option value="">Select Date</option>';
+  dates.forEach(d=>{
     const o=document.createElement("option");
-    o.value=m;o.textContent=m;
-    monthFilter.appendChild(o);
+    o.value=d;o.textContent=d;
+    dateFilter.appendChild(o);
   });
-  monthFilter.value=months[months.length-1]||"";
-  populateMonthWeeks();
 }
-function populateMonthWeeks(){
-  monthWeekFilter.innerHTML='<option value="all">All Weeks</option>';
-  playerData.flatMap(p=>p.sessions)
-    .filter(s=>getMonthKey(s.date)===monthFilter.value)
-    .map(s=>getWeekOfMonth(s.date))
-    .filter((v,i,a)=>a.indexOf(v)===i)
-    .sort((a,b)=>a-b)
-    .forEach(w=>{
+function populatePlayers(){
+  playerFilter.innerHTML='<option value="">Select Player</option>';
+  if(!positionFilter.value)return;
+  playerData.filter(p=>p.position===positionFilter.value)
+    .sort((a,b)=>a.name.localeCompare(b.name))
+    .forEach(p=>{
       const o=document.createElement("option");
-      o.value=w;o.textContent=`Week ${w}`;
-      monthWeekFilter.appendChild(o);
+      o.value=p.name;o.textContent=p.name;
+      playerFilter.appendChild(o);
     });
 }
 
-/* ================= MONTHLY CHART ================= */
-let monthlyAvgChart=null;
-function renderMonthlyAvgChart(){
-  const posDay={};
-  playerData.forEach(p=>{
-    const dates=new Set();
-    p.sessions.forEach(s=>{
-      if(getMonthKey(s.date)!==monthFilter.value)return;
-      if(monthWeekFilter.value!=="all"&&getWeekOfMonth(s.date)!=monthWeekFilter.value)return;
-      dates.add(s.date);
-    });
-    dates.forEach(d=>{
-      posDay[p.position]??={};
-      posDay[p.position][d]=(posDay[p.position][d]||0)+1;
-    });
-  });
-
-  const labels=Object.keys(posDay);
-  const values=labels.map(pos=>{
-    const total=roster.filter(r=>r.position===pos).length;
-    const days=Object.values(posDay[pos]).map(c=>(c/total)*100);
-    return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
-  });
-
-  monthlyAvgChart?.destroy();
-  monthlyAvgChart=new Chart(document.getElementById("monthlyAvgChart"),{
-    type:"bar",
-    data:{labels,datasets:[{data:values,backgroundColor:cream}]},
-    options:{scales:{y:{beginAtZero:true,max:100}}}
-  });
-}
-
-monthFilter.onchange=()=>{populateMonthWeeks();renderMonthlyAvgChart();};
-monthWeekFilter.onchange=renderMonthlyAvgChart;
+/* ================= EVENTS ================= */
+positionFilter.onchange=()=>{populatePlayers();renderModules();};
+dateFilter.onchange=renderModules;
 
 });
 </script>
