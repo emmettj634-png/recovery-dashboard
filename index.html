@@ -126,7 +126,7 @@ button{cursor:pointer;}
 <div id="selectedDateLabel" style="text-align:center;font-weight:bold;"></div>
 <div id="moduleGrid" class="module-grid"></div>
 
-<h2>Cumulative Module Usage (Selected Player)</h2>
+<h2 id="playerModuleTitle">Cumulative Module Usage</h2>
 <div class="chart-box"><canvas id="playerModuleChart"></canvas></div>
 
 <h2>Average Daily Participation by Position (%)</h2>
@@ -412,7 +412,9 @@ function showPlayer(){
   playerStatsGrid.classList.remove("hidden");
   playerRecoveryDays.textContent=uniqueDates(p).length;
   playerLastDate.textContent=uniqueDates(p).sort().pop()||"N/A";
-
+  document.getElementById("playerModuleTitle").textContent =
+  `Cumulative Module Usage – ${p.name}`;
+ 
   const mods={};
   p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
   playerMostModule.textContent=Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0]||"N/A";
