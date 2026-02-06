@@ -562,15 +562,33 @@ function renderPlayerModuleChart(p){
 /* ================= EVENTS ================= */
 positionFilter.onchange=()=>{populatePlayers();renderModules();};
 playerFilter.onchange=showPlayer;
-dateFilter.onchange=()=>{renderModules();};
+dateFilter.onchange = () => {
+  // Update player-view module participation
+  renderModules();
 
-toggleView.onclick=()=>{
-  const toTeam=teamView.classList.contains("hidden");
+  // ✅ ALSO update team-view module participation if Team View is active
+  if (!teamView.classList.contains("hidden")) {
+    renderTeamView();
+  }
+};
+toggleView.onclick = () => {
+  const toTeam = teamView.classList.contains("hidden");
+
+  // Toggle views
   playerView.classList.toggle("hidden");
   teamView.classList.toggle("hidden");
+
+  // Hide irrelevant dropdowns in Team View
   playerFilter.classList.toggle("hidden");
-  toggleView.textContent=toTeam?"Player View":"Team View";
-  if(toTeam)renderTeamView();
+  positionFilter.classList.toggle("hidden");
+
+  // Update button label
+  toggleView.textContent = toTeam ? "Player View" : "Team View";
+
+  // Render team modules immediately when entering Team View
+  if (toTeam) {
+    renderTeamView();
+  }
 };
 weekFilter.onchange=renderLeaderboards;
 
