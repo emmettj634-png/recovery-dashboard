@@ -316,7 +316,7 @@ const uniqueDates=p=>[...new Set(p.sessions.map(s=>s.date))];
 
 /* ================= CSV LOAD ================= */
 async function loadCSV(){
-  const res=await fetch("recoverykey.csv?v="+Date.now());
+  const res=await fetch("eliterecoverykey.csv?v="+Date.now());
   const text=await res.text();
   playerData.forEach(p=>p.sessions=[]);
 
