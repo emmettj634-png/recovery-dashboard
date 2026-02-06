@@ -108,13 +108,6 @@ button{cursor:pointer;}
 <h2>Average Daily Participation by Position (%)</h2>
 <div class="chart-box"><canvas id="avgChart"></canvas></div>
 
-<h2>Average Monthly Participation by Position (%)</h2>
-<div class="controls">
-  <select id="monthFilter"></select>
-  <select id="monthWeekFilter"></select>
-</div>
-<div class="chart-box"><canvas id="monthlyAvgChart"></canvas></div>
-
 <h2>Total Team Module Usage (All Dates)</h2>
 <div class="chart-box"><canvas id="moduleChart"></canvas></div>
 
@@ -141,7 +134,15 @@ button{cursor:pointer;}
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
 
-/* ===== DOM ===== */
+/* ================= HELPERS ================= */
+const fmtDate = d => {
+  const x=new Date(d);
+  return `${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}-${x.getFullYear()}`;
+};
+const parseDate = d => new Date(d);
+const desc = (a,b)=>parseDate(b)-parseDate(a);
+
+/* ================= DOM ================= */
 const $=id=>document.getElementById(id);
 const positionFilter=$("positionFilter"),
 playerFilter=$("playerFilter"),
@@ -158,17 +159,15 @@ playerLastDate=$("playerLastDate"),
 playerMostModule=$("playerMostModule"),
 playerRank=$("playerRank"),
 selectedDateLabel=$("selectedDateLabel"),
-monthFilter=$("monthFilter"),
-monthWeekFilter=$("monthWeekFilter"),
 weekFilter=$("weekFilter");
 
-/* ===== CONSTANTS ===== */
+/* ================= CONSTANTS ================= */
 const cream="#FDF9D8";
 const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
 
-/* ===== FULL ROSTER (UNCHANGED) ===== */
-const roster = [ /* EXACT roster you provided */
+/* ================= ROSTER ================= */
+const roster = [
   {name:"Ace Hodges",position:"OL"},{name:"Alex Shieldnight",position:"DE"},
   {name:"Andy Bass",position:"RB"},{name:"Barrett Travis",position:"LB"},
   {name:"Beau Jandreau",position:"LB"},{name:"Ben Anderson",position:"Specialists"},
@@ -228,13 +227,7 @@ const roster = [ /* EXACT roster you provided */
 let playerData=roster.map(p=>({...p,sessions:[]}));
 const uniqueDates=p=>[...new Set(p.sessions.map(s=>s.date))];
 
-const monthKey=d=>{const x=new Date(d);return`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`};
-const weekRange=d=>{
-  const x=new Date(d);const s=new Date(x);s.setDate(x.getDate()-x.getDay());
-  const e=new Date(s);e.setDate(s.getDate()+6);return{s,e,label:`${s.toLocaleDateString()} - ${e.toLocaleDateString()}`};
-};
-
-/* ===== LOAD CSV ===== */
+/* ================= LOAD CSV ================= */
 fetch("data.csv?v="+Date.now()).then(r=>r.text()).then(text=>{
   text.split("\n").slice(1).forEach(r=>{
     if(!r.trim())return;
@@ -243,18 +236,15 @@ fetch("data.csv?v="+Date.now()).then(r=>r.text()).then(text=>{
     if(p)p.sessions.push({module:m,date:d});
   });
   populateDates(); populatePlayers();
-  renderDailyAvg(); populateMonths(); populateWeeks();
+  renderTotalModuleChart(); renderDailyAvg(); populateWeeks();
 });
 
-/* ===== SORT HELPERS ===== */
-const descDate=(a,b)=>new Date(b)-new Date(a);
-
-/* ===== DROPDOWNS ===== */
+/* ================= DROPDOWNS ================= */
 function populateDates(){
   const dates=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>s.date)))]
-    .sort(descDate);
+    .sort(desc);
   dateFilter.innerHTML='<option value="">Select Date</option>';
-  dates.forEach(d=>dateFilter.innerHTML+=`<option>${d}</option>`);
+  dates.forEach(d=>dateFilter.innerHTML+=`<option value="${d}">${fmtDate(d)}</option>`);
 }
 function populatePlayers(){
   playerFilter.innerHTML='<option value="">Select Player</option>';
@@ -264,39 +254,90 @@ function populatePlayers(){
     .forEach(p=>playerFilter.innerHTML+=`<option>${p.name}</option>`);
 }
 
-/* ===== PLAYER DETAILS + MODULE CHART ===== */
+/* ================= MODULE PARTICIPATION ================= */
+function renderModules(){
+  moduleGrid.innerHTML="";
+  if(!positionFilter.value||!dateFilter.value)return;
+  selectedDateLabel.textContent=`${fmtDate(dateFilter.value)} — ${positionFilter.value}`;
+
+  modules.forEach(mod=>{
+    const card=document.createElement("div");
+    card.className="module-card";
+    card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
+    const ul=card.querySelector("ul");
+
+    playerData.filter(p=>p.position===positionFilter.value).forEach(p=>{
+      const c=p.sessions.filter(s=>s.module===mod&&s.date===dateFilter.value).length;
+      if(c)ul.innerHTML+=`<li>${p.name}${c>1?" x"+c:""}</li>`;
+    });
+
+    moduleGrid.appendChild(card);
+  });
+}
+
+/* ================= PLAYER DETAILS + TOOLTIP ================= */
 let playerModuleChart=null;
 function showPlayer(){
   const p=playerData.find(x=>x.name===playerFilter.value);
   if(!p)return;
   playerStatsGrid.classList.remove("hidden");
-  playerRecoveryDays.textContent=uniqueDates(p).length;
-  playerLastDate.textContent=uniqueDates(p).sort(descDate)[0]||"N/A";
 
-  const mods={};p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
-  playerMostModule.textContent=Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0]||"N/A";
+  playerRecoveryDays.textContent=uniqueDates(p).length;
+  playerLastDate.textContent=fmtDate(uniqueDates(p).sort(desc)[0]);
+
+  const totals={}, lastDates={};
+  modules.forEach(m=>{totals[m]=0;lastDates[m]=null;});
+
+  p.sessions.forEach(s=>{
+    totals[s.module]++;
+    if(!lastDates[s.module]||parseDate(s.date)>parseDate(lastDates[s.module])){
+      lastDates[s.module]=s.date;
+    }
+  });
+
+  playerMostModule.textContent=Object.keys(totals).sort((a,b)=>totals[b]-totals[a])[0];
 
   const peers=playerData.filter(x=>x.position===p.position)
     .sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length);
   playerRank.textContent=`#${peers.findIndex(x=>x.name===p.name)+1} of ${peers.length}`;
 
-  const totals={};modules.forEach(m=>totals[m]=0);
-  p.sessions.forEach(s=>totals[s.module]++);
   playerModuleChart?.destroy();
   playerModuleChart=new Chart($("playerModuleChart"),{
     type:"bar",
     data:{labels:modules,datasets:[{data:Object.values(totals),backgroundColor:cream}]},
     options:{
-      scales:{
-        x:{ticks:{color:cream}},
-        y:{ticks:{color:cream},beginAtZero:true}
-      },
-      plugins:{legend:{display:false}}
+      scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label:(ctx)=>{
+              const mod=ctx.label;
+              const last=lastDates[mod]?fmtDate(lastDates[mod]):"N/A";
+              return [`Total Uses: ${ctx.parsed.y}`,`Last Used: ${last}`];
+            }
+          }
+        }
+      }
     }
   });
 }
 
-/* ===== DAILY AVG ===== */
+/* ================= TOTAL TEAM MODULE ================= */
+let moduleChart=null;
+function renderTotalModuleChart(){
+  const totals={};modules.forEach(m=>totals[m]=0);
+  playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
+  moduleChart?.destroy();
+  moduleChart=new Chart($("moduleChart"),{
+    type:"bar",
+    data:{labels:modules,datasets:[{data:Object.values(totals),backgroundColor:cream}]},
+    options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true}},
+             plugins:{legend:{display:false}}}
+  });
+}
+
+/* ================= DAILY AVG ================= */
 function renderDailyAvg(){
   const posDay={};
   playerData.forEach(p=>uniqueDates(p).forEach(d=>{
@@ -311,95 +352,57 @@ function renderDailyAvg(){
         const d=Object.values(posDay[pos]).map(c=>c/t*100);
         return(d.reduce((a,b)=>a+b)/d.length).toFixed(1);
       }),backgroundColor:cream}]},
-    options:{
-      scales:{
-        y:{min:0,max:100,ticks:{color:cream,callback:v=>v+"%"}},
-        x:{ticks:{color:cream}}
-      },
-      plugins:{legend:{display:false}}
-    }
+    options:{scales:{y:{min:0,max:100,ticks:{color:cream,callback:v=>v+"%"}},
+                    x:{ticks:{color:cream}}},
+             plugins:{legend:{display:false}}}
   });
 }
 
-/* ===== MONTHLY AVG ===== */
-function populateMonths(){
-  const months=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>monthKey(s.date))))].sort().reverse();
-  monthFilter.innerHTML="";
-  months.forEach(m=>monthFilter.innerHTML+=`<option>${m}</option>`);
-}
-function renderMonthlyAvg(){
-  const posDay={};
-  playerData.forEach(p=>{
-    const dates=new Set();
-    p.sessions.forEach(s=>{
-      if(monthKey(s.date)!==monthFilter.value)return;
-      dates.add(s.date);
-    });
-    dates.forEach(d=>{
-      posDay[p.position]??={};
-      posDay[p.position][d]=(posDay[p.position][d]||0)+1;
-    });
-  });
-  new Chart($("monthlyAvgChart"),{
-    type:"bar",
-    data:{labels:Object.keys(posDay),
-      datasets:[{data:Object.keys(posDay).map(pos=>{
-        const t=roster.filter(r=>r.position===pos).length;
-        const d=Object.values(posDay[pos]).map(c=>c/t*100);
-        return(d.reduce((a,b)=>a+b)/d.length).toFixed(1);
-      }),backgroundColor:cream}]},
-    options:{
-      scales:{
-        y:{min:0,max:100,ticks:{color:cream,callback:v=>v+"%"}},
-        x:{ticks:{color:cream}}
-      },
-      plugins:{legend:{display:false}}
-    }
-  });
-}
-
-/* ===== TEAM VIEW ===== */
+/* ================= WEEKLY LEADERBOARD ================= */
 function populateWeeks(){
   const weeks={};
   playerData.forEach(p=>p.sessions.forEach(s=>{
-    const w=weekRange(s.date);weeks[w.label]=w;
+    const d=parseDate(s.date);
+    const start=new Date(d);start.setDate(d.getDate()-d.getDay());
+    const label=`${fmtDate(start)} - ${fmtDate(new Date(start.getTime()+6*86400000))}`;
+    weeks[label]=start;
   }));
   weekFilter.innerHTML="";
-  Object.values(weeks).sort((a,b)=>b.s-a.s)
-    .forEach(w=>weekFilter.innerHTML+=`<option>${w.label}</option>`);
+  Object.entries(weeks).sort((a,b)=>b[1]-a[1])
+    .forEach(([l])=>weekFilter.innerHTML+=`<option>${l}</option>`);
 }
-function renderTeamView(){
-  teamModuleGrid.innerHTML="";
+function renderLeaderboards(){
+  leaderboardContainer.innerHTML="";
+  if(!weekFilter.value)return;
+  const [s]=weekFilter.value.split(" - ");
+  const start=parseDate(s);
   positions.forEach(pos=>{
-    const sec=document.createElement("div");
-    sec.className="team-position";
-    sec.innerHTML=`<h2>${pos}</h2><div class="module-grid"></div>`;
-    const grid=sec.querySelector(".module-grid");
-    modules.forEach(mod=>{
-      const card=document.createElement("div");
-      card.className="module-card";
-      card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
-      const ul=card.querySelector("ul");
-      playerData.filter(p=>p.position===pos).forEach(p=>{
-        const c=p.sessions.filter(s=>s.module===mod&&s.date===dateFilter.value).length;
-        if(c)ul.innerHTML+=`<li>${p.name}${c>1?" x"+c:""}</li>`;
-      });
-      grid.appendChild(card);
-    });
-    teamModuleGrid.appendChild(sec);
+    const ranked=playerData.filter(p=>p.position===pos).map(p=>{
+      const days=[...new Set(p.sessions.filter(x=>{
+        const d=parseDate(x.date);
+        return d>=start && d<new Date(start.getTime()+7*86400000);
+      }).map(x=>x.date))].length;
+      return{name:p.name,days};
+    }).sort((a,b)=>b.days-a.days);
+    const top=ranked.filter(p=>p.days>0).slice(0,5);
+    if(!top.length)return;
+    leaderboardContainer.innerHTML+=
+      `<div class="leaderboard"><h3>${pos}</h3><ol>${top.map(p=>`<li>${p.name}</li>`).join("")}</ol></div>`;
   });
 }
 
-/* ===== EVENTS ===== */
-positionFilter.onchange=populatePlayers;
+/* ================= EVENTS ================= */
+positionFilter.onchange=()=>{populatePlayers();renderModules();};
+dateFilter.onchange=renderModules;
 playerFilter.onchange=showPlayer;
-dateFilter.onchange=()=>{renderTeamView();};
-monthFilter.onchange=renderMonthlyAvg;
 toggleView.onclick=()=>{
+  const toTeam=teamView.classList.contains("hidden");
   playerView.classList.toggle("hidden");
   teamView.classList.toggle("hidden");
-  toggleView.textContent=teamView.classList.contains("hidden")?"Team View":"Player View";
+  toggleView.textContent=toTeam?"Player View":"Team View";
+  if(toTeam)renderLeaderboards();
 };
+weekFilter.onchange=renderLeaderboards;
 
 });
 </script>
