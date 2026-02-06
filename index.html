@@ -129,9 +129,19 @@ button{cursor:pointer;}
 <div class="chart-box"><canvas id="playerModuleChart"></canvas></div>
 
 <h2>Average Daily Participation by Position (%)</h2>
+<div style="text-align:center;margin-bottom:10px;">
+  <select id="avgPeriodFilter">
+    <option value="day">Daily</option>
+    <option value="week">Weekly</option>
+    <option value="month">Monthly</option>
+  </select>
+</div>
 <div class="chart-box"><canvas id="avgChart"></canvas></div>
 
 <h2>Total Team Module Usage (All Dates)</h2>
+<div style="text-align:center;margin-bottom:10px;">
+  <select id="teamMonthFilter"></select>
+</div>
 <div class="chart-box"><canvas id="moduleChart"></canvas></div>
 
 </div>
@@ -162,7 +172,18 @@ document.addEventListener("DOMContentLoaded",()=>{
 const cream="#FDF9D8";
 const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
+/* ================= DATE HELPERS ================= */
+function getWeekKey(dateStr){
+  const d = new Date(dateStr);
+  const start = new Date(d);
+  start.setDate(d.getDate() - d.getDay());
+  return start.toISOString().split("T")[0]; // YYYY-MM-DD
+}
 
+function getMonthKey(dateStr){
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
 /* ================= FULL ROSTER ================= */
 const roster = [
   {name:"Ace Hodges",position:"OL"},
@@ -292,6 +313,7 @@ async function loadCSV(){
 
   populateDates();
   populatePlayers();
+  populateMonths();
   renderModules();
   renderCharts();
 }
@@ -317,6 +339,22 @@ function populatePlayers(){
       o.value=p.name;o.textContent=p.name;
       playerFilter.appendChild(o);
     });
+}
+/* ================= MONTH DROPDOWN ================= */
+
+function populateMonths(){
+  const months = [...new Set(
+    playerData.flatMap(p => p.sessions.map(s => getMonthKey(s.date)))
+  )].sort((a,b) => b.localeCompare(a)); // newest first
+
+  teamMonthFilter.innerHTML = `<option value="all">All Months</option>`;
+
+  months.forEach(m=>{
+    const o = document.createElement("option");
+    o.value = m;
+    o.textContent = m;
+    teamMonthFilter.appendChild(o);
+  });
 }
 
 /* ================= PLAYER DETAILS ================= */
@@ -485,64 +523,131 @@ function renderLeaderboards(){
     leaderboardContainer.appendChild(div);
   });
 }
+/* ================= DATE HELPERS ================= */
 
+// Returns start-of-week date (Sunday) as YYYY-MM-DD
+function getWeekKey(dateStr){
+  const d = new Date(dateStr);
+  const start = new Date(d);
+  start.setDate(d.getDate() - d.getDay());
+  return start.toISOString().split("T")[0];
+}
+
+// Returns YYYY-MM for monthly grouping
+function getMonthKey(dateStr){
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
 /* ================= CHARTS ================= */
 let avgChart=null,teamChart=null;
 function renderCharts(){
-  const posDay={};
+  /* ================= AVERAGE DAILY PARTICIPATION ================= */
+
+  const period = avgPeriodFilter?.value || "day"; // day | week | month
+  const posPeriod = {};
+
   playerData.forEach(p=>{
-    uniqueDates(p).forEach(d=>{
-      posDay[p.position]??={};
-      posDay[p.position][d]=(posDay[p.position][d]||0)+1;
+    p.sessions.forEach(s=>{
+      let key;
+      if(period === "day") key = s.date;
+      if(period === "week") key = getWeekKey(s.date);
+      if(period === "month") key = getMonthKey(s.date);
+
+      if(!key) return;
+
+      posPeriod[p.position] ??= {};
+      posPeriod[p.position][key] ??= new Set();
+      posPeriod[p.position][key].add(p.name);
     });
   });
 
-  const labels=Object.keys(posDay);
-  const values=labels.map(pos=>{
-    const total=roster.filter(r=>r.position===pos).length;
-    const days=Object.values(posDay[pos]).map(c=>(c/total)*100);
-    return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
+  const labels = positions.slice(); // use all positions in fixed order
+
+  const values = labels.map(pos=>{
+    const total = roster.filter(r=>r.position === pos).length;
+    if(!total) return 0;
+
+    const periods = Object.values(posPeriod[pos] || {});
+    const avgs = periods.map(set => (set.size / total) * 100);
+
+    return avgs.length
+      ? (avgs.reduce((a,b)=>a+b,0) / avgs.length).toFixed(1)
+      : 0;
   });
 
   avgChart?.destroy();
-  avgChart=new Chart(
+  avgChart = new Chart(
     document.getElementById("avgChart"),
     {
-      type:"bar",
-      data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
-      options:{
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "%",
+          data: values,
+          backgroundColor: cream
+        }]
+      },
+      options: {
+        scales: {
+          x: { ticks: { color: cream } },
+          y: {
+            ticks: { color: cream, callback: v => v + "%" },
+            beginAtZero: true,
+            max: 100
+          }
         },
-        plugins:{legend:{labels:{color:cream}}}
+        plugins: {
+          legend: { labels: { color: cream } }
+        }
       }
     }
   );
 
-  const totals={};
-  modules.forEach(m=>totals[m]=0);
-  playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
+  /* ================= TOTAL TEAM MODULE USAGE (MONTHLY) ================= */
+
+  const selectedMonth = teamMonthFilter?.value || "all";
+  const totals = {};
+  modules.forEach(m => totals[m] = 0);
+
+  playerData.forEach(p=>{
+    p.sessions.forEach(s=>{
+      const month = getMonthKey(s.date);
+      if(selectedMonth === "all" || month === selectedMonth){
+        totals[s.module]++;
+      }
+    });
+  });
 
   teamChart?.destroy();
-  teamChart=new Chart(
+  teamChart = new Chart(
     document.getElementById("moduleChart"),
     {
-      type:"bar",
-      data:{
-        labels:Object.keys(totals),
-        datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]
+      type: "bar",
+      data: {
+        labels: Object.keys(totals),
+        datasets: [{
+          label: "Total Uses",
+          data: Object.values(totals),
+          backgroundColor: cream
+        }]
       },
-      options:{
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream},beginAtZero:true}
+      options: {
+        scales: {
+          x: { ticks: { color: cream } },
+          y: {
+            ticks: { color: cream },
+            beginAtZero: true
+          }
         },
-        plugins:{legend:{labels:{color:cream}}}
+        plugins: {
+          legend: { labels: { color: cream } }
+        }
       }
     }
   );
 }
+
 function renderPlayerModuleChart(p){
   const totals = {};
   const latestDates = {};
@@ -638,6 +743,9 @@ toggleView.onclick = () => {
   }
 };
 weekFilter.onchange=renderLeaderboards;
+avgPeriodFilter.onchange = renderCharts;
+teamMonthFilter.onchange = renderCharts;
+
 
 });
 </script>
