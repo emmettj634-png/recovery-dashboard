@@ -131,6 +131,13 @@ button{cursor:pointer;}
 <h2>Average Daily Participation by Position (%)</h2>
 <div class="chart-box"><canvas id="avgChart"></canvas></div>
 
+<h2>Average Monthly Participation by Position (%)</h2>
+<div class="controls">
+  <select id="monthFilter"></select>
+  <select id="monthWeekFilter"></select>
+</div>
+<div class="chart-box"><canvas id="monthlyAvgChart"></canvas></div>
+
 <h2>Total Team Module Usage (All Dates)</h2>
 <div class="chart-box"><canvas id="moduleChart"></canvas></div>
 
@@ -274,224 +281,80 @@ const roster = [
   {name:"eLGee Webster",position:"LB"}
 ];
 
-let playerData=roster.map(p=>({...p,sessions:[]}));
-const uniqueDates=p=>[...new Set(p.sessions.map(s=>s.date))];
+/* ================= DATA + HELPERS ================= */
+let playerData = roster.map(p=>({...p,sessions:[]}));
+const uniqueDates = p => [...new Set(p.sessions.map(s=>s.date))];
+
+const getMonthKey = d => {
+  const x = new Date(d);
+  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`;
+};
+const getWeekOfMonth = d => {
+  const x = new Date(d);
+  const f = new Date(x.getFullYear(),x.getMonth(),1);
+  return Math.ceil((x.getDate()+f.getDay())/7);
+};
 
 /* ================= CSV LOAD ================= */
 async function loadCSV(){
-  const res=await fetch("data.csv?v="+Date.now());
-  const text=await res.text();
+  const res = await fetch("data.csv?v="+Date.now());
+  const text = await res.text();
   playerData.forEach(p=>p.sessions=[]);
 
   text.split("\n").slice(1).forEach(r=>{
-    if(!r.trim())return;
-    const[n,m,d]=r.split(",").map(x=>x.trim());
-    const p=playerData.find(x=>x.name===n);
-    if(p)p.sessions.push({module:m,date:d});
+    if(!r.trim()) return;
+    const [n,m,d] = r.split(",").map(x=>x.trim());
+    const p = playerData.find(x=>x.name===n);
+    if(p) p.sessions.push({module:m,date:d});
   });
 
   populateDates();
   populatePlayers();
   renderModules();
   renderCharts();
+  populateMonths();
+  renderMonthlyAvgChart();
 }
 loadCSV();
 
-/* ================= DROPDOWNS ================= */
-function populateDates(){
-  const dates=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>s.date)))].sort();
-  dateFilter.innerHTML='<option value="">Select Date</option>';
-  dates.forEach(d=>{
+/* ================= MONTH FILTERS ================= */
+function populateMonths(){
+  monthFilter.innerHTML="";
+  const months=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>getMonthKey(s.date))))].sort();
+  months.forEach(m=>{
     const o=document.createElement("option");
-    o.value=d;o.textContent=d;
-    dateFilter.appendChild(o);
+    o.value=m;o.textContent=m;
+    monthFilter.appendChild(o);
   });
+  monthFilter.value=months[months.length-1]||"";
+  populateMonthWeeks();
 }
-function populatePlayers(){
-  playerFilter.innerHTML='<option value="">Select Player</option>';
-  if(!positionFilter.value)return;
-  playerData.filter(p=>p.position===positionFilter.value)
-    .sort((a,b)=>a.name.localeCompare(b.name))
-    .forEach(p=>{
+function populateMonthWeeks(){
+  monthWeekFilter.innerHTML='<option value="all">All Weeks</option>';
+  playerData.flatMap(p=>p.sessions)
+    .filter(s=>getMonthKey(s.date)===monthFilter.value)
+    .map(s=>getWeekOfMonth(s.date))
+    .filter((v,i,a)=>a.indexOf(v)===i)
+    .sort((a,b)=>a-b)
+    .forEach(w=>{
       const o=document.createElement("option");
-      o.value=p.name;o.textContent=p.name;
-      playerFilter.appendChild(o);
+      o.value=w;o.textContent=`Week ${w}`;
+      monthWeekFilter.appendChild(o);
     });
 }
 
-/* ================= PLAYER DETAILS ================= */
-let playerModuleChart=null;
-function showPlayer(){
-  const p=playerData.find(x=>x.name===playerFilter.value);
-  if(!p)return;
-  playerStatsGrid.classList.remove("hidden");
-  playerRecoveryDays.textContent=uniqueDates(p).length;
-  playerLastDate.textContent=uniqueDates(p).sort().pop()||"N/A";
-
-  const mods={};
-  p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
-  playerMostModule.textContent=Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0]||"N/A";
-
-  const group=playerData.filter(x=>x.position===p.position);
-  const rank=group.sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
-    .findIndex(x=>x.name===p.name)+1;
-  playerRank.textContent=`#${rank} out of ${group.length}`;
-
-  renderPlayerModuleChart(p);
-}
-
-/* ================= MODULE PARTICIPATION ================= */
-function renderModules(){
-  moduleGrid.innerHTML="";
-  if(!positionFilter.value||!dateFilter.value)return;
-  selectedDateLabel.textContent=`${dateFilter.value} — ${positionFilter.value}`;
-
-  modules.forEach(mod=>{
-    const card=document.createElement("div");
-    card.className="module-card";
-    card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
-    const ul=card.querySelector("ul");
-
-    playerData.filter(p=>p.position===positionFilter.value).forEach(p=>{
-      const count=p.sessions.filter(s=>s.module===mod&&s.date===dateFilter.value).length;
-      if(count>0){
-        const li=document.createElement("li");
-        li.textContent=count>1?`${p.name} x${count}`:p.name;
-        ul.appendChild(li);
-      }
-    });
-
-    moduleGrid.appendChild(card);
-  });
-}
-
-/* ================= TEAM VIEW ================= */
-function renderTeamView(){
-  teamModuleGrid.innerHTML="";
-  positions.forEach(pos=>{
-    const sec=document.createElement("div");
-    sec.className="team-position";
-    sec.innerHTML=`<h2>${pos}</h2><div class="module-grid"></div>`;
-    const grid=sec.querySelector(".module-grid");
-
-    modules.forEach(mod=>{
-      const card=document.createElement("div");
-      card.className="module-card";
-      card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
-      const ul=card.querySelector("ul");
-
-      playerData.filter(p=>p.position===pos).forEach(p=>{
-        const count=p.sessions.filter(s=>s.module===mod&&s.date===dateFilter.value).length;
-        if(count>0){
-          const li=document.createElement("li");
-          li.textContent=count>1?`${p.name} x${count}`:p.name;
-          ul.appendChild(li);
-        }
-      });
-
-      grid.appendChild(card);
-    });
-
-    teamModuleGrid.appendChild(sec);
-  });
-
-  populateWeeks();
-  renderLeaderboards();
-}
-
-/* ================= WEEKLY LEADERBOARD ================= */
-function getWeekRange(dateStr){
-  const d=new Date(dateStr);
-  const start=new Date(d);start.setDate(d.getDate()-d.getDay());
-  const end=new Date(start);end.setDate(start.getDate()+6);
-  return{label:`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`,start,end};
-}
-function populateWeeks(){
-  weekFilter.innerHTML = "";
-  const weeks = {};
-
-  playerData.forEach(p=>{
-    p.sessions.forEach(s=>{
-      const w = getWeekRange(s.date);
-      weeks[w.label] = w;
-    });
-  });
-
-  const sortedWeeks = Object.values(weeks)
-    .sort((a,b) => b.start - a.start);
-
-  sortedWeeks.forEach(w=>{
-    const o = document.createElement("option");
-    o.value = w.label;
-    o.textContent = w.label;
-    weekFilter.appendChild(o);
-  });
-
-  if(sortedWeeks.length){
-    weekFilter.value = sortedWeeks[0].label;
-  }
-}
-
-function renderLeaderboards(){
-  leaderboardContainer.innerHTML="";
-  if(!weekFilter.value)return;
-
-  const [s,e]=weekFilter.value.split(" - ");
-  const start=new Date(s), end=new Date(e);
-
-  positions.forEach(pos=>{
-    const group = playerData.filter(p=>p.position===pos);
-    if(!group.length) return;
-
-    // 1️⃣ Build ranked list FIRST
-    const ranked = group.map(p=>{
-      const days = [...new Set(
-        p.sessions.filter(x=>{
-          const d=new Date(x.date);
-          return d>=start && d<=end;
-        }).map(x=>x.date)
-      )].length;
-      return { name:p.name, days };
-    });
-
-    // 2️⃣ Top performers (only players with activity)
-    const top = ranked
-      .filter(p => p.days > 0)
-      .sort((a,b)=>b.days - a.days)
-      .slice(0,5);
-
-    // 3️⃣ Bottom performers (exclude top players)
-    const bottom = ranked
-      .filter(p => !top.some(t => t.name === p.name))
-      .sort((a,b)=>a.days - b.days)
-      .slice(0,5);
-
-    // 4️⃣ Build HTML
-    const div = document.createElement("div");
-    div.className = "leaderboard";
-
-    let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
-    top.forEach(p => html += `<li>${p.name}</li>`);
-    html += `</ol>`;
-
-    // 5️⃣ Only show bottom if group is large enough
-    if(group.length > 5){
-      html += `<strong>Bottom Performers</strong><ol>`;
-      bottom.forEach(p => html += `<li>${p.name}</li>`);
-      html += `</ol>`;
-    }
-
-    div.innerHTML = html;
-    leaderboardContainer.appendChild(div);
-  });
-}
-
-/* ================= CHARTS ================= */
-let avgChart=null,teamChart=null;
-function renderCharts(){
+/* ================= MONTHLY CHART ================= */
+let monthlyAvgChart=null;
+function renderMonthlyAvgChart(){
   const posDay={};
   playerData.forEach(p=>{
-    uniqueDates(p).forEach(d=>{
+    const dates=new Set();
+    p.sessions.forEach(s=>{
+      if(getMonthKey(s.date)!==monthFilter.value)return;
+      if(monthWeekFilter.value!=="all"&&getWeekOfMonth(s.date)!=monthWeekFilter.value)return;
+      dates.add(s.date);
+    });
+    dates.forEach(d=>{
       posDay[p.position]??={};
       posDay[p.position][d]=(posDay[p.position][d]||0)+1;
     });
@@ -504,144 +367,18 @@ function renderCharts(){
     return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
   });
 
-  avgChart?.destroy();
-  avgChart=new Chart(
-    document.getElementById("avgChart"),
-    {
-      type:"bar",
-      data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
-      options:{
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
-        },
-        plugins:{legend:{labels:{color:cream}}}
-      }
-    }
-  );
-
-  const totals={};
-  modules.forEach(m=>totals[m]=0);
-  playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
-
-  teamChart?.destroy();
-  teamChart=new Chart(
-    document.getElementById("moduleChart"),
-    {
-      type:"bar",
-      data:{
-        labels:Object.keys(totals),
-        datasets:[{label:"Total Uses",data:Object.values(totals),backgroundColor:cream}]
-      },
-      options:{
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream},beginAtZero:true}
-        },
-        plugins:{legend:{labels:{color:cream}}}
-      }
-    }
-  );
-}
-function renderPlayerModuleChart(p){
-  const totals = {};
-  const latestDates = {};
-
-  modules.forEach(m=>{
-    totals[m] = 0;
-    latestDates[m] = null;
+  monthlyAvgChart?.destroy();
+  monthlyAvgChart=new Chart(document.getElementById("monthlyAvgChart"),{
+    type:"bar",
+    data:{labels,datasets:[{data:values,backgroundColor:cream}]},
+    options:{scales:{y:{beginAtZero:true,max:100}}}
   });
-
-  // Count uses + track most recent date per module
-  p.sessions.forEach(s=>{
-    totals[s.module]++;
-    if(
-      !latestDates[s.module] ||
-      new Date(s.date) > new Date(latestDates[s.module])
-    ){
-      latestDates[s.module] = s.date;
-    }
-  });
-
-  playerModuleChart?.destroy();
-
-  playerModuleChart = new Chart(
-    document.getElementById("playerModuleChart"),
-    {
-      type: "bar",
-      data: {
-        labels: modules, // ✅ module names ONLY
-        datasets: [{
-          data: modules.map(m => totals[m]),
-          backgroundColor: cream
-        }]
-      },
-      options: {
-        scales: {
-          x: {
-            ticks: { color: cream }
-
-          },
-          y: {
-            ticks: { color: cream },
-            beginAtZero: true
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => {
-                const mod = ctx.label;
-                const date = latestDates[mod] || "N/A";
-                return [
-                  `Total Uses: ${ctx.parsed.y}`,
-                  `Latest Date: ${date}`
-                ];
-              }
-            }
-          }
-        }
-      }
-    }
-  );
 }
 
-/* ================= EVENTS ================= */
-positionFilter.onchange=()=>{populatePlayers();renderModules();};
-playerFilter.onchange=showPlayer;
-dateFilter.onchange = () => {
-  // Update player-view module participation
-  renderModules();
-
-  // ✅ ALSO update team-view module participation if Team View is active
-  if (!teamView.classList.contains("hidden")) {
-    renderTeamView();
-  }
-};
-toggleView.onclick = () => {
-  const toTeam = teamView.classList.contains("hidden");
-
-  // Toggle views
-  playerView.classList.toggle("hidden");
-  teamView.classList.toggle("hidden");
-
-  // Hide irrelevant dropdowns in Team View
-  playerFilter.classList.toggle("hidden");
-  positionFilter.classList.toggle("hidden");
-
-  // Update button label
-  toggleView.textContent = toTeam ? "Player View" : "Team View";
-
-  // Render team modules immediately when entering Team View
-  if (toTeam) {
-    renderTeamView();
-  }
-};
-weekFilter.onchange=renderLeaderboards;
+monthFilter.onchange=()=>{populateMonthWeeks();renderMonthlyAvgChart();};
+monthWeekFilter.onchange=renderMonthlyAvgChart;
 
 });
 </script>
-
 </body>
 </html>
