@@ -171,7 +171,22 @@ const monthKey = d => {
   const x = new Date(d);
   return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`;
 };
+const weekRange = d => {
+  const x = new Date(d);
+  const start = new Date(x);
+  start.setDate(x.getDate() - x.getDay()); // Sunday start
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
 
+  const fmt = y =>
+    `${String(y.getMonth()+1).padStart(2,"0")}-${String(y.getDate()).padStart(2,"0")}-${y.getFullYear()}`;
+
+  return {
+    start,
+    end,
+    label: `${fmt(start)}-${fmt(end)}`
+  };
+};
 const weekOfMonth = d => {
   const x = new Date(d);
   const first = new Date(x.getFullYear(), x.getMonth(), 1);
@@ -362,23 +377,26 @@ function populateMonths(){
 function populateMonthWeeks(){
   monthWeekFilter.innerHTML = `<option value="all">All Weeks</option>`;
 
-  const weeks = [
-    ...new Set(
-      playerData.flatMap(p =>
-        p.sessions
-          .filter(s => monthKey(s.date) === monthFilter.value)
-          .map(s => weekOfMonth(s.date))
-      )
-    )
-  ].sort((a,b)=>b-a); // most recent first
+  const weeks = {};
 
-  weeks.forEach(w=>{
-    const o=document.createElement("option");
-    o.value=w;
-    o.textContent=`Week ${w}`;
-    monthWeekFilter.appendChild(o);
+  playerData.forEach(p=>{
+    p.sessions.forEach(s=>{
+      if(monthKey(s.date) !== monthFilter.value) return;
+      const w = weekRange(s.date);
+      weeks[w.label] = w; // dedupe by label
+    });
   });
+
+  Object.values(weeks)
+    .sort((a,b)=>b.start - a.start) // most recent first
+    .forEach(w=>{
+      const o = document.createElement("option");
+      o.value = w.label;       // store label as value
+      o.textContent = w.label;
+      monthWeekFilter.appendChild(o);
+    });
 }
+
 
 /* ================= PLAYER DETAILS ================= */
 let playerModuleChart=null;
@@ -677,9 +695,10 @@ function renderMonthlyAvgChart(){
 
     p.sessions.forEach(s=>{
       if(monthKey(s.date) !== monthFilter.value) return;
-      if(monthWeekFilter.value !== "all" &&
-         weekOfMonth(s.date) != monthWeekFilter.value) return;
-
+      if(monthWeekFilter.value !== "all"){
+  const w = weekRange(s.date);
+  if(w.label !== monthWeekFilter.value) return;
+}
       dates.add(s.date);
     });
 
