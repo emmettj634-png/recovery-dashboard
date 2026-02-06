@@ -17,25 +17,10 @@ body{
   color:var(--text);
   font-family:Arial, sans-serif;
 }
-.container{
-  max-width:1400px;
-  margin:auto;
-  padding:20px;
-}
+.container{max-width:1400px;margin:auto;padding:20px;}
 h1{text-align:center;font-size:3.5rem;}
-.controls{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  justify-content:center;
-  margin-bottom:25px;
-}
-select,button{
-  padding:10px;
-  border-radius:6px;
-  border:none;
-  font-weight:bold;
-}
+.controls{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:25px;}
+select,button{padding:10px;border-radius:6px;border:none;font-weight:bold;}
 button{cursor:pointer;}
 .hidden{display:none;}
 
@@ -99,18 +84,11 @@ button{cursor:pointer;}
     <option>CB</option><option>S</option><option>LB</option><option>Specialists</option>
   </select>
 
-  <select id="playerFilter">
-    <option value="">Select Player</option>
-  </select>
-
-  <select id="dateFilter">
-    <option value="">Select Date</option>
-  </select>
-
+  <select id="playerFilter"><option value="">Select Player</option></select>
+  <select id="dateFilter"><option value="">Select Date</option></select>
   <button id="toggleView">Team View</button>
 </div>
 
-<!-- ================= PLAYER VIEW ================= -->
 <div id="playerView">
 
 <h2>Player Details</h2>
@@ -143,7 +121,6 @@ button{cursor:pointer;}
 
 </div>
 
-<!-- ================= TEAM VIEW ================= -->
 <div id="teamView" class="hidden">
 
 <h2 style="text-align:center;">Team Module Participation (Selected Date)</h2>
@@ -157,15 +134,12 @@ button{cursor:pointer;}
 </div>
 
 <div id="leaderboardContainer" class="leaderboard-grid"></div>
-
 </div>
-
 </div>
-
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
 
-/* ================= DOM BINDINGS (CRITICAL FIX) ================= */
+/* ================= DOM BINDINGS ================= */
 const positionFilter = document.getElementById("positionFilter");
 const playerFilter = document.getElementById("playerFilter");
 const dateFilter = document.getElementById("dateFilter");
@@ -310,26 +284,26 @@ let playerData = roster.map(p=>({...p,sessions:[]}));
 const uniqueDates = p => [...new Set(p.sessions.map(s=>s.date))];
 
 const getMonthKey = d => {
-  const x = new Date(d);
+  const x=new Date(d);
   return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`;
 };
 const getWeekOfMonth = d => {
-  const x = new Date(d);
-  const f = new Date(x.getFullYear(),x.getMonth(),1);
+  const x=new Date(d);
+  const f=new Date(x.getFullYear(),x.getMonth(),1);
   return Math.ceil((x.getDate()+f.getDay())/7);
 };
 
 /* ================= CSV LOAD ================= */
 async function loadCSV(){
-  const res = await fetch("data.csv?v="+Date.now());
-  const text = await res.text();
+  const res=await fetch("data.csv?v="+Date.now());
+  const text=await res.text();
   playerData.forEach(p=>p.sessions=[]);
 
   text.split("\n").slice(1).forEach(r=>{
-    if(!r.trim()) return;
-    const [n,m,d] = r.split(",").map(x=>x.trim());
-    const p = playerData.find(x=>x.name===n);
-    if(p) p.sessions.push({module:m,date:d});
+    if(!r.trim())return;
+    const[n,m,d]=r.split(",").map(x=>x.trim());
+    const p=playerData.find(x=>x.name===n);
+    if(p)p.sessions.push({module:m,date:d});
   });
 
   populateDates();
@@ -363,9 +337,139 @@ function populatePlayers(){
     });
 }
 
+/* ================= MODULE PARTICIPATION ================= */
+function renderModules(){
+  moduleGrid.innerHTML="";
+  if(!positionFilter.value||!dateFilter.value)return;
+  selectedDateLabel.textContent=`${dateFilter.value} — ${positionFilter.value}`;
+
+  modules.forEach(mod=>{
+    const card=document.createElement("div");
+    card.className="module-card";
+    card.innerHTML=`<h3>${mod}</h3><ul></ul>`;
+    const ul=card.querySelector("ul");
+
+    playerData.filter(p=>p.position===positionFilter.value).forEach(p=>{
+      const count=p.sessions.filter(s=>s.module===mod&&s.date===dateFilter.value).length;
+      if(count>0){
+        const li=document.createElement("li");
+        li.textContent=count>1?`${p.name} x${count}`:p.name;
+        ul.appendChild(li);
+      }
+    });
+
+    moduleGrid.appendChild(card);
+  });
+}
+
+/* ================= CHARTS ================= */
+let avgChart=null, teamChart=null, monthlyAvgChart=null;
+
+function renderCharts(){
+  const posDay={};
+  playerData.forEach(p=>{
+    uniqueDates(p).forEach(d=>{
+      posDay[p.position]??={};
+      posDay[p.position][d]=(posDay[p.position][d]||0)+1;
+    });
+  });
+
+  const labels=Object.keys(posDay);
+  const values=labels.map(pos=>{
+    const total=roster.filter(r=>r.position===pos).length;
+    const days=Object.values(posDay[pos]).map(c=>(c/total)*100);
+    return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
+  });
+
+  avgChart?.destroy();
+  avgChart=new Chart(document.getElementById("avgChart"),{
+    type:"bar",
+    data:{labels,datasets:[{data:values,backgroundColor:cream}]},
+    options:{scales:{y:{beginAtZero:true,max:100}}}
+  });
+
+  const totals={};
+  modules.forEach(m=>totals[m]=0);
+  playerData.forEach(p=>p.sessions.forEach(s=>totals[s.module]++));
+
+  teamChart?.destroy();
+  teamChart=new Chart(document.getElementById("moduleChart"),{
+    type:"bar",
+    data:{labels:Object.keys(totals),datasets:[{data:Object.values(totals),backgroundColor:cream}]},
+    options:{scales:{y:{beginAtZero:true}}}
+  });
+}
+
+/* ================= MONTHLY CHART ================= */
+function populateMonths(){
+  monthFilter.innerHTML="";
+  const months=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>getMonthKey(s.date))))].sort();
+  months.forEach(m=>{
+    const o=document.createElement("option");
+    o.value=m;o.textContent=m;
+    monthFilter.appendChild(o);
+  });
+  monthFilter.value=months[months.length-1]||"";
+  populateMonthWeeks();
+}
+function populateMonthWeeks(){
+  monthWeekFilter.innerHTML='<option value="all">All Weeks</option>';
+  playerData.flatMap(p=>p.sessions)
+    .filter(s=>getMonthKey(s.date)===monthFilter.value)
+    .map(s=>getWeekOfMonth(s.date))
+    .filter((v,i,a)=>a.indexOf(v)===i)
+    .sort((a,b)=>a-b)
+    .forEach(w=>{
+      const o=document.createElement("option");
+      o.value=w;o.textContent=`Week ${w}`;
+      monthWeekFilter.appendChild(o);
+    });
+}
+function renderMonthlyAvgChart(){
+  const posDay={};
+  playerData.forEach(p=>{
+    const dates=new Set();
+    p.sessions.forEach(s=>{
+      if(getMonthKey(s.date)!==monthFilter.value)return;
+      if(monthWeekFilter.value!=="all"&&getWeekOfMonth(s.date)!=monthWeekFilter.value)return;
+      dates.add(s.date);
+    });
+    dates.forEach(d=>{
+      posDay[p.position]??={};
+      posDay[p.position][d]=(posDay[p.position][d]||0)+1;
+    });
+  });
+
+  const labels=Object.keys(posDay);
+  const values=labels.map(pos=>{
+    const total=roster.filter(r=>r.position===pos).length;
+    const days=Object.values(posDay[pos]).map(c=>(c/total)*100);
+    return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
+  });
+
+  monthlyAvgChart?.destroy();
+  monthlyAvgChart=new Chart(document.getElementById("monthlyAvgChart"),{
+    type:"bar",
+    data:{labels,datasets:[{data:values,backgroundColor:cream}]},
+    options:{scales:{y:{beginAtZero:true,max:100}}}
+  });
+}
+
 /* ================= EVENTS ================= */
 positionFilter.onchange=()=>{populatePlayers();renderModules();};
 dateFilter.onchange=renderModules;
+
+monthFilter.onchange=()=>{populateMonthWeeks();renderMonthlyAvgChart();};
+monthWeekFilter.onchange=renderMonthlyAvgChart;
+
+toggleView.onclick=()=>{
+  const toTeam=teamView.classList.contains("hidden");
+  playerView.classList.toggle("hidden");
+  teamView.classList.toggle("hidden");
+  positionFilter.classList.toggle("hidden");
+  playerFilter.classList.toggle("hidden");
+  toggleView.textContent=toTeam?"Player View":"Team View";
+};
 
 });
 </script>
