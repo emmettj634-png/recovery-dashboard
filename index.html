@@ -338,11 +338,15 @@ loadCSV();
 
 /* ================= DROPDOWNS ================= */
 function populateDates(){
-  const dates=[...new Set(playerData.flatMap(p=>p.sessions.map(s=>s.date)))].sort();
-  dateFilter.innerHTML='<option value="">Select Date</option>';
+  const dates = [...new Set(
+    playerData.flatMap(p => p.sessions.map(s => s.date))
+  )]
+  .sort((a,b) => new Date(b) - new Date(a)); // 🔥 newest first
+  dateFilter.innerHTML = '<option value="">Select Date</option>';
   dates.forEach(d=>{
-    const o=document.createElement("option");
-    o.value=d;o.textContent=d;
+    const o = document.createElement("option");
+    o.value = d;
+    o.textContent = d; // or fmtDate(d) if you’re formatting dates
     dateFilter.appendChild(o);
   });
 }
