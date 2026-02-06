@@ -167,6 +167,10 @@ button{cursor:pointer;}
 
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
+function fmtDate(d){
+  const x = new Date(d);
+  return `${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}-${x.getFullYear()}`;
+}
 const monthKey = d => {
   const x = new Date(d);
   return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`;
