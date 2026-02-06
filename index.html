@@ -429,6 +429,10 @@ function showPlayer(){
 
 /* ================= MODULE PARTICIPATION ================= */
 function renderModules(){
+  console.log("renderModules:", {
+  position: positionFilter.value,
+  date: dateFilter.value
+});
   moduleGrid.innerHTML = "";
 
   const pos = positionFilter.value;
