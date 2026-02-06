@@ -132,6 +132,15 @@ button{cursor:pointer;}
 <h2>Average Daily Participation by Position (%)</h2>
 <div class="chart-box"><canvas id="avgChart"></canvas></div>
 
+  <h2>Average Monthly Participation by Position (%)</h2>
+<div class="controls">
+  <select id="monthFilter"></select>
+  <select id="monthWeekFilter"></select>
+</div>
+<div class="chart-box">
+  <canvas id="monthlyAvgChart"></canvas>
+</div>
+
 <h2>Total Team Module Usage (All Dates)</h2>
 <div class="chart-box"><canvas id="moduleChart"></canvas></div>
 
@@ -158,11 +167,23 @@ button{cursor:pointer;}
 
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
+const monthKey = d => {
+  const x = new Date(d);
+  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`;
+};
+
+const weekOfMonth = d => {
+  const x = new Date(d);
+  const first = new Date(x.getFullYear(), x.getMonth(), 1);
+  return Math.ceil((x.getDate() + first.getDay()) / 7);
+};
 
 /* ================= CONSTANTS ================= */
 const cream="#FDF9D8";
 const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
+const monthFilter = document.getElementById("monthFilter");
+const monthWeekFilter = document.getElementById("monthWeekFilter");
 
 /* ================= FULL ROSTER ================= */
 const roster = [
@@ -295,6 +316,8 @@ async function loadCSV(){
   populatePlayers();
   renderModules();
   renderCharts();
+  populateMonths();
+  renderMonthlyAvgChart();
 }
 loadCSV();
 
@@ -318,6 +341,43 @@ function populatePlayers(){
       o.value=p.name;o.textContent=p.name;
       playerFilter.appendChild(o);
     });
+}
+function populateMonths(){
+  const months = [
+    ...new Set(playerData.flatMap(p =>
+      p.sessions.map(s => monthKey(s.date))
+    ))
+  ].sort().reverse(); // most recent first
+
+  monthFilter.innerHTML = "";
+  months.forEach(m=>{
+    const o=document.createElement("option");
+    o.value=m;
+    o.textContent=m;
+    monthFilter.appendChild(o);
+  });
+
+  populateMonthWeeks();
+}
+function populateMonthWeeks(){
+  monthWeekFilter.innerHTML = `<option value="all">All Weeks</option>`;
+
+  const weeks = [
+    ...new Set(
+      playerData.flatMap(p =>
+        p.sessions
+          .filter(s => monthKey(s.date) === monthFilter.value)
+          .map(s => weekOfMonth(s.date))
+      )
+    )
+  ].sort((a,b)=>b-a); // most recent first
+
+  weeks.forEach(w=>{
+    const o=document.createElement("option");
+    o.value=w;
+    o.textContent=`Week ${w}`;
+    monthWeekFilter.appendChild(o);
+  });
 }
 
 /* ================= PLAYER DETAILS ================= */
@@ -607,6 +667,73 @@ function renderPlayerModuleChart(p){
     }
   );
 }
+let monthlyAvgChart = null;
+
+function renderMonthlyAvgChart(){
+  const posDay = {};
+
+  playerData.forEach(p=>{
+    const dates = new Set();
+
+    p.sessions.forEach(s=>{
+      if(monthKey(s.date) !== monthFilter.value) return;
+      if(monthWeekFilter.value !== "all" &&
+         weekOfMonth(s.date) != monthWeekFilter.value) return;
+
+      dates.add(s.date);
+    });
+
+    dates.forEach(d=>{
+      posDay[p.position] ??= {};
+      posDay[p.position][d] = (posDay[p.position][d] || 0) + 1;
+    });
+  });
+
+  const labels = Object.keys(posDay);
+  const values = labels.map(pos=>{
+    const rosterSize = roster.filter(r=>r.position===pos).length;
+    const days = Object.values(posDay[pos]).map(c => (c/rosterSize)*100);
+    return days.length
+      ? (days.reduce((a,b)=>a+b)/days.length).toFixed(1)
+      : 0;
+  });
+
+  monthlyAvgChart?.destroy();
+  monthlyAvgChart = new Chart(
+    document.getElementById("monthlyAvgChart"),
+    {
+      type:"bar",
+      data:{
+        labels,
+        datasets:[{
+          data:values,
+          backgroundColor:cream
+        }]
+      },
+      options:{
+        scales:{
+          x:{ ticks:{ color:cream }},
+          y:{
+            min:0,
+            max:100,
+            ticks:{
+              color:cream,
+              callback:v=>v+"%"
+            }
+          }
+        },
+        plugins:{
+          legend:{ display:false },
+          tooltip:{
+            callbacks:{
+              label:ctx=>ctx.parsed.y+"%"
+            }
+          }
+        }
+      }
+    }
+  );
+}
 
 /* ================= EVENTS ================= */
 positionFilter.onchange=()=>{populatePlayers();renderModules();};
@@ -640,6 +767,13 @@ toggleView.onclick = () => {
   }
 };
 weekFilter.onchange=renderLeaderboards;
+monthFilter.onchange = () => {
+  populateMonthWeeks();
+  renderMonthlyAvgChart();
+};
+
+monthWeekFilter.onchange = renderMonthlyAvgChart;
+
 
 });
 </script>
