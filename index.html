@@ -541,43 +541,34 @@ function getMonthKey(dateStr){
 /* ================= CHARTS ================= */
 let avgChart=null,teamChart=null;
 function renderCharts(){
+
   /* ================= AVERAGE DAILY PARTICIPATION ================= */
-const period = avgPeriodFilter.value;
-const selectedValue = avgPeriodValueFilter.value;
-const posSet = {};
 
-playerData.forEach(p=>{
-  p.sessions.forEach(s=>{
-    let key;
-    if(period === "day") key = "all";
-    if(period === "week") key = getWeekKey(s.date);
-    if(period === "month") key = getMonthKey(s.date);
+  const period = avgPeriodFilter.value;           // day | week | month
+  const selectedValue = avgPeriodValueFilter.value;
+  const labels = positions.slice();               // positions on x-axis
+  const posSet = {};
 
-    // For week/month, only include selected period
-    if(period !== "day" && key !== selectedValue) return;
+  playerData.forEach(p=>{
+    p.sessions.forEach(s=>{
+      let key;
+      if(period === "day") key = "all";
+      if(period === "week") key = getWeekKey(s.date);
+      if(period === "month") key = getMonthKey(s.date);
 
-    posSet[p.position] ??= new Set();
-    posSet[p.position].add(p.name);
+      // For week/month, only include selected period
+      if(period !== "day" && key !== selectedValue) return;
+
+      posSet[p.position] ??= new Set();
+      posSet[p.position].add(p.name);
+    });
   });
-});
 
-const values = labels.map(pos=>{
-  const total = roster.filter(r=>r.position===pos).length;
-  const set = posSet[pos];
-  return set && total ? ((set.size / total) * 100).toFixed(1) : 0;
-});
-
-  const labels = positions.slice(); // use all positions in fixed order
-
-  const values = labels.map(pos=>{
+  const avgValues = labels.map(pos=>{
     const total = roster.filter(r=>r.position === pos).length;
-    if(!total) return 0;
-
-    const periods = Object.values(posPeriod[pos] || {});
-    const avgs = periods.map(set => (set.size / total) * 100);
-
-    return avgs.length
-      ? (avgs.reduce((a,b)=>a+b,0) / avgs.length).toFixed(1)
+    const set = posSet[pos];
+    return set && total
+      ? ((set.size / total) * 100).toFixed(1)
       : 0;
   });
 
@@ -590,7 +581,7 @@ const values = labels.map(pos=>{
         labels,
         datasets: [{
           label: "%",
-          data: values,
+          data: avgValues,
           backgroundColor: cream
         }]
       },
@@ -625,6 +616,8 @@ const values = labels.map(pos=>{
     });
   });
 
+  const moduleValues = Object.values(totals);
+
   teamChart?.destroy();
   teamChart = new Chart(
     document.getElementById("moduleChart"),
@@ -634,7 +627,7 @@ const values = labels.map(pos=>{
         labels: Object.keys(totals),
         datasets: [{
           label: "Total Uses",
-          data: Object.values(totals),
+          data: moduleValues,
           backgroundColor: cream
         }]
       },
