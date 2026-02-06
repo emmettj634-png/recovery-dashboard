@@ -544,18 +544,72 @@ function renderCharts(){
   );
 }
 function renderPlayerModuleChart(p){
-  const totals={};
-  modules.forEach(m=>totals[m]=0);
-  p.sessions.forEach(s=>totals[s.module]++);
+  const totals = {};
+  const latestDates = {};
+
+  modules.forEach(m=>{
+    totals[m] = 0;
+    latestDates[m] = null;
+  });
+
+  p.sessions.forEach(s=>{
+    totals[s.module]++;
+    if(
+      !latestDates[s.module] ||
+      new Date(s.date) > new Date(latestDates[s.module])
+    ){
+      latestDates[s.module] = s.date;
+    }
+  });
 
   playerModuleChart?.destroy();
-  playerModuleChart=new Chart(
+
+  playerModuleChart = new Chart(
     document.getElementById("playerModuleChart"),
-    {type:"bar",
-     data:{labels:Object.keys(totals),
-       datasets:[{data:Object.values(totals),backgroundColor:cream}]},
-     options:{scales:{x:{ticks:{color:cream}},y:{ticks:{color:cream},beginAtZero:true}},
-       plugins:{legend:{display:false}}}}
+    {
+      type:"bar",
+      data:{
+        labels: modules,
+        datasets:[{
+          data: modules.map(m => totals[m]),
+          backgroundColor: cream
+        }]
+      },
+      options:{
+        scales:{
+          x:{
+            ticks:{
+              color: cream,
+              callback:(value, index)=>{
+                const mod = modules[index];
+                return latestDates[mod]
+                  ? `${mod}\n(${latestDates[mod]})`
+                  : `${mod}\n(N/A)`;
+              }
+            }
+          },
+          y:{
+            ticks:{ color: cream },
+            beginAtZero:true
+          }
+        },
+        plugins:{
+          legend:{ display:false },
+          tooltip:{
+            callbacks:{
+              label:(ctx)=>{
+                const mod = ctx.label.split("\n")[0];
+                const date = latestDates[mod] || "N/A";
+                return [
+                  `Total Uses: ${ctx.parsed.y}`,
+                  `Latest Date: ${date}`
+                ];
+              }
+            }
+          }
+        }
+      }
+    }
   );
 }
 
