@@ -552,6 +552,7 @@ function renderPlayerModuleChart(p){
     latestDates[m] = null;
   });
 
+  // Count uses + track most recent date per module
   p.sessions.forEach(s=>{
     totals[s.module]++;
     if(
@@ -567,38 +568,30 @@ function renderPlayerModuleChart(p){
   playerModuleChart = new Chart(
     document.getElementById("playerModuleChart"),
     {
-      type:"bar",
-      data:{
-        labels: modules,
-        datasets:[{
+      type: "bar",
+      data: {
+        labels: modules, // ✅ module names ONLY
+        datasets: [{
           data: modules.map(m => totals[m]),
           backgroundColor: cream
         }]
       },
-      options:{
-        scales:{
-          x:{
-            ticks:{
-              color: cream,
-              callback:(value, index)=>{
-                const mod = modules[index];
-                return latestDates[mod]
-                  ? `${mod}\n(${latestDates[mod]})`
-                  : `${mod}\n(N/A)`;
-              }
-            }
+      options: {
+        scales: {
+          x: {
+            ticks: { color: cream }
           },
-          y:{
-            ticks:{ color: cream },
-            beginAtZero:true
+          y: {
+            ticks: { color: cream },
+            beginAtZero: true
           }
         },
-        plugins:{
-          legend:{ display:false },
-          tooltip:{
-            callbacks:{
-              label:(ctx)=>{
-                const mod = ctx.label.split("\n")[0];
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const mod = ctx.label;
                 const date = latestDates[mod] || "N/A";
                 return [
                   `Total Uses: ${ctx.parsed.y}`,
