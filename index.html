@@ -114,7 +114,7 @@ button{cursor:pointer;}
 <!-- ================= PLAYER VIEW ================= -->
 <div id="playerView">
 
-<h2>Player Details</h2>
+<h2 id="playerDetailsTitle">Player Details</h2>
 <div id="playerStatsGrid" class="stats-grid hidden">
   <div class="stat-card">Recovery Days<br><strong id="playerRecoveryDays">0</strong></div>
   <div class="stat-card">Last Recovery Date<br><strong id="playerLastDate">N/A</strong></div>
@@ -407,6 +407,8 @@ let playerModuleChart=null;
 function showPlayer(){
   const p=playerData.find(x=>x.name===playerFilter.value);
   if(!p)return;
+  document.getElementById("playerDetailsTitle").textContent =
+  `Player Details – ${p.name}`;
   playerStatsGrid.classList.remove("hidden");
   playerRecoveryDays.textContent=uniqueDates(p).length;
   playerLastDate.textContent=uniqueDates(p).sort().pop()||"N/A";
@@ -761,6 +763,11 @@ function renderMonthlyAvgChart(){
 /* ================= EVENTS ================= */
 positionFilter.onchange=()=>{populatePlayers();renderModules();};
 playerFilter.onchange=showPlayer;
+if(!playerFilter.value){
+  document.getElementById("playerDetailsTitle").textContent = "Player Details";
+  playerStatsGrid.classList.add("hidden");
+  return;
+}
 dateFilter.onchange = () => {
   // Update player-view module participation
   renderModules();
