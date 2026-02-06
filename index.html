@@ -122,7 +122,7 @@ button{cursor:pointer;}
   <div class="stat-card">Rank in Position<br><strong id="playerRank">-</strong></div>
 </div>
 
-<h2>Position Module Participation (Selected Date)</h2>
+<h2 id="positionModuleTitle">Module Participation</h2>
 <div id="selectedDateLabel" style="text-align:center;font-weight:bold;"></div>
 <div id="moduleGrid" class="module-grid"></div>
 
@@ -430,8 +430,19 @@ function showPlayer(){
 /* ================= MODULE PARTICIPATION ================= */
 function renderModules(){
   moduleGrid.innerHTML="";
-  if(!positionFilter.value||!dateFilter.value)return;
-  selectedDateLabel.textContent=`${dateFilter.value} — ${positionFilter.value}`;
+
+const pos = positionFilter.value;
+const date = dateFilter.value;
+
+// Reset title if missing inputs
+if(!pos || !date){
+  document.getElementById("positionModuleTitle").textContent =
+    "Module Participation";
+  return;
+}
+
+document.getElementById("positionModuleTitle").textContent =
+  `${pos} Module Participation – ${fmtDate(date)}`;
 
   modules.forEach(mod=>{
     const card=document.createElement("div");
