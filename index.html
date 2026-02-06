@@ -763,11 +763,6 @@ function renderMonthlyAvgChart(){
 /* ================= EVENTS ================= */
 positionFilter.onchange=()=>{populatePlayers();renderModules();};
 playerFilter.onchange=showPlayer;
-if(!playerFilter.value){
-  document.getElementById("playerDetailsTitle").textContent = "Player Details";
-  playerStatsGrid.classList.add("hidden");
-  return;
-}
 dateFilter.onchange = () => {
   // Update player-view module participation
   renderModules();
