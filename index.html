@@ -131,10 +131,11 @@ button{cursor:pointer;}
 <h2>Average Daily Participation by Position (%)</h2>
 <div style="text-align:center;margin-bottom:10px;">
   <select id="avgPeriodFilter">
-    <option value="day">Daily</option>
+    <option value="day">Daily (All Dates)</option>
     <option value="week">Weekly</option>
     <option value="month">Monthly</option>
   </select>
+  <select id="avgPeriodValueFilter" class="hidden"></select>
 </div>
 <div class="chart-box"><canvas id="avgChart"></canvas></div>
 
@@ -340,7 +341,7 @@ function populatePlayers(){
       playerFilter.appendChild(o);
     });
 }
-/* ================= MONTH DROPDOWN ================= */
+/* ================= MONTH DROPDOWN (TEAM MODULES) ================= */
 
 function populateMonths(){
   const months = [...new Set(
@@ -356,7 +357,6 @@ function populateMonths(){
     teamMonthFilter.appendChild(o);
   });
 }
-
 /* ================= PLAYER DETAILS ================= */
 let playerModuleChart=null;
 function showPlayer(){
@@ -542,24 +542,30 @@ function getMonthKey(dateStr){
 let avgChart=null,teamChart=null;
 function renderCharts(){
   /* ================= AVERAGE DAILY PARTICIPATION ================= */
+const period = avgPeriodFilter.value;
+const selectedValue = avgPeriodValueFilter.value;
+const posSet = {};
 
-  const period = avgPeriodFilter?.value || "day"; // day | week | month
-  const posPeriod = {};
+playerData.forEach(p=>{
+  p.sessions.forEach(s=>{
+    let key;
+    if(period === "day") key = "all";
+    if(period === "week") key = getWeekKey(s.date);
+    if(period === "month") key = getMonthKey(s.date);
 
-  playerData.forEach(p=>{
-    p.sessions.forEach(s=>{
-      let key;
-      if(period === "day") key = s.date;
-      if(period === "week") key = getWeekKey(s.date);
-      if(period === "month") key = getMonthKey(s.date);
+    // For week/month, only include selected period
+    if(period !== "day" && key !== selectedValue) return;
 
-      if(!key) return;
-
-      posPeriod[p.position] ??= {};
-      posPeriod[p.position][key] ??= new Set();
-      posPeriod[p.position][key].add(p.name);
-    });
+    posSet[p.position] ??= new Set();
+    posSet[p.position].add(p.name);
   });
+});
+
+const values = labels.map(pos=>{
+  const total = roster.filter(r=>r.position===pos).length;
+  const set = posSet[pos];
+  return set && total ? ((set.size / total) * 100).toFixed(1) : 0;
+});
 
   const labels = positions.slice(); // use all positions in fixed order
 
@@ -712,17 +718,23 @@ function renderPlayerModuleChart(p){
 }
 
 /* ================= EVENTS ================= */
-positionFilter.onchange=()=>{populatePlayers();renderModules();};
-playerFilter.onchange=showPlayer;
+positionFilter.onchange = () => {
+  populatePlayers();
+  renderModules();
+};
+
+playerFilter.onchange = showPlayer;
+
 dateFilter.onchange = () => {
   // Update player-view module participation
   renderModules();
 
-  // ✅ ALSO update team-view module participation if Team View is active
+  // Update team-view module participation if Team View is active
   if (!teamView.classList.contains("hidden")) {
     renderTeamView();
   }
 };
+
 toggleView.onclick = () => {
   const toTeam = teamView.classList.contains("hidden");
 
@@ -742,10 +754,19 @@ toggleView.onclick = () => {
     renderTeamView();
   }
 };
-weekFilter.onchange=renderLeaderboards;
-avgPeriodFilter.onchange = renderCharts;
-teamMonthFilter.onchange = renderCharts;
 
+weekFilter.onchange = renderLeaderboards;
+
+// ✅ Average Participation controls
+avgPeriodFilter.onchange = () => {
+  populateAvgPeriodValues();
+  renderCharts();
+};
+
+avgPeriodValueFilter.onchange = renderCharts;
+
+// ✅ Team module monthly filter
+teamMonthFilter.onchange = renderCharts;
 
 });
 </script>
