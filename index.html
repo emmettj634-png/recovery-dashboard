@@ -128,15 +128,17 @@ button{cursor:pointer;}
 <h2>Cumulative Module Usage (Selected Player)</h2>
 <div class="chart-box"><canvas id="playerModuleChart"></canvas></div>
 
-<h2>Average Daily Participation by Position (%)</h2>
+<h2>Position Averages (%)</h2>
 <div style="text-align:center;margin-bottom:10px;">
-  <select id="avgPeriodFilter">
+  <select id="avgModeFilter">
     <option value="day">Daily (All Dates)</option>
-    <option value="week">Weekly</option>
     <option value="month">Monthly</option>
+    <option value="week">Weekly</option>
   </select>
-  <select id="avgPeriodValueFilter" class="hidden"></select>
+  <select id="avgMonthFilter" class="hidden"></select>
+  <select id="avgWeekFilter" class="hidden"></select>
 </div>
+
 <div class="chart-box"><canvas id="avgChart"></canvas></div>
 
 <h2>Total Team Module Usage (All Dates)</h2>
@@ -357,6 +359,52 @@ function populateMonths(){
     teamMonthFilter.appendChild(o);
   });
 }
+function populateAvgMonths(){
+  const months = [...new Set(
+    playerData.flatMap(p => p.sessions.map(s => getMonthKey(s.date)))
+  )].sort((a,b)=>b.localeCompare(a));
+
+  avgMonthFilter.innerHTML = "";
+  months.forEach(m=>{
+    const o = document.createElement("option");
+    o.value = m;
+    o.textContent = m;
+    avgMonthFilter.appendChild(o);
+  });
+
+  if(months.length){
+    avgMonthFilter.value = months[0];
+  }
+}
+function populateAvgWeeks(){
+  const month = avgMonthFilter.value;
+  if(!month) return;
+
+  const weeks = {};
+  playerData.forEach(p=>{
+    p.sessions.forEach(s=>{
+      if(getMonthKey(s.date) === month){
+        const w = getWeekKey(s.date);
+        weeks[w] = w;
+      }
+    });
+  });
+
+  const sortedWeeks = Object.values(weeks)
+    .sort((a,b)=>b.localeCompare(a));
+
+  avgWeekFilter.innerHTML = "";
+  sortedWeeks.forEach(w=>{
+    const o = document.createElement("option");
+    o.value = w;
+    o.textContent = w;
+    avgWeekFilter.appendChild(o);
+  });
+
+  if(sortedWeeks.length){
+    avgWeekFilter.value = sortedWeeks[0];
+  }
+}
 /* ================= PLAYER DETAILS ================= */
 let playerModuleChart=null;
 function showPlayer(){
@@ -542,64 +590,35 @@ function getMonthKey(dateStr){
 let avgChart=null,teamChart=null;
 function renderCharts(){
 
-  /* ================= AVERAGE DAILY PARTICIPATION ================= */
+/* ================= POSITION AVERAGES (%) ================= */
 
-  const period = avgPeriodFilter.value;           // day | week | month
-  const selectedValue = avgPeriodValueFilter.value;
-  const labels = positions.slice();               // positions on x-axis
-  const posSet = {};
+const mode = avgModeFilter.value;     // day | month | week
+const month = avgMonthFilter.value;
+const week = avgWeekFilter.value;
 
-  playerData.forEach(p=>{
-    p.sessions.forEach(s=>{
-      let key;
-      if(period === "day") key = "all";
-      if(period === "week") key = getWeekKey(s.date);
-      if(period === "month") key = getMonthKey(s.date);
+const labels = positions.slice();
+const posSet = {};
 
-      // For week/month, only include selected period
-      if(period !== "day" && key !== selectedValue) return;
+playerData.forEach(p=>{
+  p.sessions.forEach(s=>{
+    let include = false;
 
-      posSet[p.position] ??= new Set();
-      posSet[p.position].add(p.name);
-    });
+    if(mode === "day") include = true;
+    if(mode === "month" && getMonthKey(s.date) === month) include = true;
+    if(mode === "week" && getWeekKey(s.date) === week) include = true;
+
+    if(!include) return;
+
+    posSet[p.position] ??= new Set();
+    posSet[p.position].add(p.name);
   });
+});
 
-  const avgValues = labels.map(pos=>{
-    const total = roster.filter(r=>r.position === pos).length;
-    const set = posSet[pos];
-    return set && total
-      ? ((set.size / total) * 100).toFixed(1)
-      : 0;
-  });
-
-  avgChart?.destroy();
-  avgChart = new Chart(
-    document.getElementById("avgChart"),
-    {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          label: "%",
-          data: avgValues,
-          backgroundColor: cream
-        }]
-      },
-      options: {
-        scales: {
-          x: { ticks: { color: cream } },
-          y: {
-            ticks: { color: cream, callback: v => v + "%" },
-            beginAtZero: true,
-            max: 100
-          }
-        },
-        plugins: {
-          legend: { labels: { color: cream } }
-        }
-      }
-    }
-  );
+const avgValues = labels.map(pos=>{
+  const total = roster.filter(r=>r.position===pos).length;
+  const set = posSet[pos];
+  return set && total ? ((set.size / total) * 100).toFixed(1) : 0;
+});
 
   /* ================= TOTAL TEAM MODULE USAGE (MONTHLY) ================= */
 
@@ -760,6 +779,27 @@ avgPeriodValueFilter.onchange = renderCharts;
 
 // ✅ Team module monthly filter
 teamMonthFilter.onchange = renderCharts;
+
+avgModeFilter.onchange = () => {
+  avgMonthFilter.classList.toggle("hidden", avgModeFilter.value === "day");
+  avgWeekFilter.classList.add("hidden");
+
+  if(avgModeFilter.value !== "day"){
+    populateAvgMonths();
+  }
+
+  renderCharts();
+};
+
+avgMonthFilter.onchange = () => {
+  if(avgModeFilter.value === "week"){
+    populateAvgWeeks();
+    avgWeekFilter.classList.remove("hidden");
+  }
+  renderCharts();
+};
+
+avgWeekFilter.onchange = renderCharts;
 
 });
 </script>
