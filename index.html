@@ -341,19 +341,26 @@ async function loadCSV(){
 loadCSV();
 
 /* ================= DROPDOWNS ================= */
+let mostRecentDate = null;
 function populateDates(){
   const dates = [...new Set(
     playerData.flatMap(p => p.sessions.map(s => s.date))
-  )]
-  .sort((a,b) => new Date(b) - new Date(a)); // 🔥 newest first
+  )].sort((a,b) => new Date(b) - new Date(a));
+
   dateFilter.innerHTML = '<option value="">Select Date</option>';
+
   dates.forEach(d=>{
     const o = document.createElement("option");
     o.value = d;
-    o.textContent = d; // or fmtDate(d) if you’re formatting dates
+    o.textContent = fmtDate(d);
     dateFilter.appendChild(o);
   });
+
+  if(dates.length){
+    mostRecentDate = dates[0]; // 🔥 save newest date
+  }
 }
+
 function populatePlayers(){
   playerFilter.innerHTML='<option value="">Select Player</option>';
   if(!positionFilter.value)return;
@@ -790,7 +797,17 @@ function renderMonthlyAvgChart(){
 }
 
 /* ================= EVENTS ================= */
-positionFilter.onchange=()=>{populatePlayers();renderModules();};
+positionFilter.onchange = () => {
+  populatePlayers();
+
+  // 🔥 Auto-select most recent date if none selected
+  if(!dateFilter.value && mostRecentDate){
+    dateFilter.value = mostRecentDate;
+  }
+
+  renderModules();
+};
+
 playerFilter.onchange=showPlayer;
 dateFilter.onchange = () => {
   // Update player-view module participation
