@@ -715,9 +715,10 @@ function renderLeaderboards(){
   const start=new Date(s), end=new Date(e);
   const earliestWeekStart = getEarliestWeekStart();
 
-  const weeklyLeaderboard = [];
+const weeklyLeaderboard = [];
 
 console.log("about to render positions");
+
 positions.forEach(pos => {
   const group = playerData.filter(p => p.position === pos);
 
@@ -741,7 +742,6 @@ positions.forEach(pos => {
           thisWeekDays > 0
         ) {
           trend = trendIndicator(thisWeekDays, lastWeekDays);
-       
         }
 
         return {
@@ -758,44 +758,46 @@ positions.forEach(pos => {
         }
       ];
 
-  // ✅ Always push the position — even if empty
+  // store for charts if needed
   weeklyLeaderboard.push({
     position: pos,
     players: ranked
   });
-});
 
-    // 2️⃣ Top performers (only players with activity)
-    const top = ranked
-      .filter(p => p.days > 0)
-      .sort((a,b)=>b.days - a.days)
-      .slice(0,5);
+  /* =====================
+     LEADERBOARD RENDER
+  ====================== */
 
-    // 3️⃣ Bottom performers (exclude top players)
-    const bottom = ranked
-      .filter(p => !top.some(t => t.name === p.name))
-      .sort((a,b)=>a.days - b.days)
-      .slice(0,5);
+  const top = ranked
+    .filter(p => p.days > 0)
+    .sort((a, b) => b.days - a.days)
+    .slice(0, 5);
 
-    // 4️⃣ Build HTML
-    const div = document.createElement("div");
-    div.className = "leaderboard";
+  const bottom = ranked
+    .filter(p => !top.some(t => t.name === p.name))
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 5);
 
-    let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
-    top.forEach(p => html += `<li>${p.name}${p.trend || ""}</li>`);
-    html += `</ol>`;
+  const div = document.createElement("div");
+  div.className = "leaderboard";
 
-    // 5️⃣ Only show bottom if group is large enough
-    if(group.length > 5){
-      html += `<strong>Bottom Performers</strong><ol>`;
-      bottom.forEach(p => html += `<li>${p.name}${p.trend || ""}</li>`);
-      html += `</ol>`;
-    }
-
-    div.innerHTML = html;
-    leaderboardContainer.appendChild(div);
+  let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
+  top.forEach(p => {
+    html += `<li>${p.name}${p.trend || ""}</li>`;
   });
-}
+  html += `</ol>`;
+
+  if (group.length > 5) {
+    html += `<strong>Bottom Performers</strong><ol>`;
+    bottom.forEach(p => {
+      html += `<li>${p.name}${p.trend || ""}</li>`;
+    });
+    html += `</ol>`;
+  }
+
+  div.innerHTML = html;
+  leaderboardContainer.appendChild(div);
+});
 
 /* ================= CHARTS ================= */
 let avgChart=null,teamChart=null;
