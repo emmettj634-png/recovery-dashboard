@@ -9,6 +9,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+/* === Trend arrows === */
+.trend-up.light { color: #9BE7A6; }    /* light green */
+.trend-up.medium { color: #4CAF50; }  /* medium green */
+.trend-up.dark { color: #1B5E20; }    /* dark green */
+
+.trend-down.light { color: #F4A6A6; }  /* light red */
+.trend-down.medium { color: #E53935; } /* medium red */
+.trend-down.dark { color: #8E0000; }   /* dark red */
+
 .empty-state{
   text-align:center;
   font-style:italic;
@@ -181,6 +190,70 @@ button{cursor:pointer;}
 
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
+function trendIndicator(current, previous){
+
+  // No data either week
+  if(previous === 0 && current === 0) return "";
+
+  /* =====================
+     SPECIAL CASES
+  ====================== */
+
+  // 0 → 1 = light green improvement
+  if(previous === 0 && current === 1){
+    return `<span class="trend-up light"> ▲</span>`;
+  }
+
+  // 2 → 3 = light green improvement
+  if(previous === 2 && current === 3){
+    return `<span class="trend-up light"> ▲</span>`;
+  }
+
+  // 2 → 0 = explicit decline exception
+  if(previous === 2 && current === 0){
+    return `<span class="trend-down light"> ▼</span>`;
+  }
+
+  /* =====================
+     DECLINE LOGIC (RED)
+  ====================== */
+
+  // Only evaluate decline if previous > 2
+  if(previous > 2 && current < previous){
+    const change = (current - previous) / previous;
+
+    // Hard cutoff −40%
+    if(change <= -0.4){
+      const absChange = Math.abs(change);
+      let level = "light";
+      if(absChange >= 0.75) level = "dark";
+      else if(absChange >= 0.5) level = "medium";
+
+      return `<span class="trend-down ${level}"> ▼</span>`;
+    }
+  }
+
+  /* =====================
+     IMPROVEMENT LOGIC (GREEN)
+  ====================== */
+
+  // Only evaluate improvement if current > 2
+  if(current > 2 && current > previous){
+    const change = previous === 0 ? 1 : (current - previous) / previous;
+
+    // Cutoff +16%
+    if(change >= 0.16){
+      let level = "light";
+      if(change >= 0.75) level = "dark";
+      else if(change >= 0.5) level = "medium";
+
+      return `<span class="trend-up ${level}"> ▲</span>`;
+    }
+  }
+
+  return "";
+}
+
 function fmtDate(d){
   const x = new Date(d);
   return `${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}-${x.getFullYear()}`;
@@ -573,6 +646,17 @@ function populateWeeks(){
     weekFilter.value = sortedWeeks[0].label;
   }
 }
+function uniqueDaysInRange(player, start, end){
+  return new Set(
+    player.sessions
+      .filter(s => {
+        const d = new Date(s.date);
+        return d >= start && d <= end;
+      })
+      .map(s => s.date)
+  ).size;
+}
+
 
 function renderLeaderboards(){
   leaderboardContainer.innerHTML="";
@@ -585,16 +669,23 @@ function renderLeaderboards(){
     const group = playerData.filter(p=>p.position===pos);
     if(!group.length) return;
 
-    // 1️⃣ Build ranked list FIRST
-    const ranked = group.map(p=>{
-      const days = [...new Set(
-        p.sessions.filter(x=>{
-          const d=new Date(x.date);
-          return d>=start && d<=end;
-        }).map(x=>x.date)
-      )].length;
-      return { name:p.name, days };
-    });
+  const ranked = group.map(p=>{
+  const thisWeekDays = uniqueDaysInRange(p, start, end);
+
+  const lastWeekStart = new Date(start);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const lastWeekEnd = new Date(end);
+  lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+
+  const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+
+  return {
+    name: p.name,
+    days: thisWeekDays,
+    trend: trendIndicator(thisWeekDays, lastWeekDays)
+  };
+});
+
 
     // 2️⃣ Top performers (only players with activity)
     const top = ranked
@@ -613,13 +704,13 @@ function renderLeaderboards(){
     div.className = "leaderboard";
 
     let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
-    top.forEach(p => html += `<li>${p.name}</li>`);
+    top.forEach(p => html += `<li>${p.name}${p.trend || ""}</li>`);
     html += `</ol>`;
 
     // 5️⃣ Only show bottom if group is large enough
     if(group.length > 5){
       html += `<strong>Bottom Performers</strong><ol>`;
-      bottom.forEach(p => html += `<li>${p.name}</li>`);
+      bottom.forEach(p => html += `<li>${p.name}${p.trend || ""}</li>`);
       html += `</ol>`;
     }
 
