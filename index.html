@@ -192,10 +192,36 @@ button{cursor:pointer;}
 
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
-function trendIndicator(current, previous){
+function inputDatesAllowDecline(prevInputs, currentInputs) {
+  // Current week must exist visually
+  if (currentInputs === 0) return false;
+
+  // Same input counts allowed (down to 2 → 2)
+  if (prevInputs === currentInputs && prevInputs >= 2) {
+    return true;
+  }
+
+  // -1 pattern allowed from 7 down to 3
+  if (
+    prevInputs >= 3 &&
+    prevInputs <= 7 &&
+    prevInputs - currentInputs === 1
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function trendIndicator(
+  current,
+  previous,
+  currentInputs,
+  previousInputs
+){
 
   // No data either week
-  if(previous === 0 && current === 0) return "";
+  if (previous === 0 && current === 0) return "";
 
   /* =====================
      SPECIAL CASES
@@ -207,28 +233,29 @@ function trendIndicator(current, previous){
   }
 
   // 0 → 2 = small positive momentum
-if(previous === 0 && current === 2){
-  return `<span class="trend-up light"> ▲</span>`;
-}
-
+  if(previous === 0 && current === 2){
+    return `<span class="trend-up light"> ▲</span>`;
+  }
 
   // 2 → 3 = light green improvement
   if(previous === 2 && current === 3){
     return `<span class="trend-up light"> ▲</span>`;
   }
 
-  // 2 → 0 = explicit decline exception (escalated)
-if(previous === 2 && current === 0){
-  return `<span class="trend-down medium"> ▼</span>`;
-}
-
+  // 2 → 0 = explicit decline exception (UNCHANGED)
+  if(previous === 2 && current === 0){
+    return `<span class="trend-down medium"> ▼</span>`;
+  }
 
   /* =====================
      DECLINE LOGIC (RED)
   ====================== */
 
-  // Only evaluate decline if previous > 2
-  if(previous > 2 && current < previous){
+  if (
+    previous > 2 &&
+    current < previous &&
+    inputDatesAllowDecline(previousInputs, currentInputs)
+  ) {
     const change = (current - previous) / previous;
 
     // Hard cutoff −40%
@@ -246,7 +273,6 @@ if(previous === 2 && current === 0){
      IMPROVEMENT LOGIC (GREEN)
   ====================== */
 
-  // Only evaluate improvement if current > 2
   if(current > 2 && current > previous){
     const change = previous === 0 ? 1 : (current - previous) / previous;
 
@@ -689,36 +715,57 @@ function renderLeaderboards(){
   const start=new Date(s), end=new Date(e);
   const earliestWeekStart = getEarliestWeekStart();
 
-  positions.forEach(pos=>{
-    const group = playerData.filter(p=>p.position===pos);
-    if(!group.length) return;
+  const weeklyLeaderboard = [];
 
-  const ranked = group.map(p => {
-  const thisWeekDays = uniqueDaysInRange(p, start, end);
+positions.forEach(pos => {
+  const group = playerData.filter(p => p.position === pos);
 
-  const lastWeekStart = new Date(start);
-  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const ranked = group.length
+    ? group.map(p => {
+        const thisWeekDays = uniqueDaysInRange(p, start, end);
 
-  const lastWeekEnd = new Date(end);
-  lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+        const lastWeekStart = new Date(start);
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
 
-  const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+        const lastWeekEnd = new Date(end);
+        lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
 
-  let trend = "";
+        const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
-  // 🚫 Absolute first-week guard
-  if (
-    earliestWeekStart &&
-    start.getTime() !== earliestWeekStart.getTime()
-  ) {
-    trend = trendIndicator(thisWeekDays, lastWeekDays);
-  }
+        let trend = "";
 
-  return {
-    name: p.name,
-    days: thisWeekDays,
-    trend
-  };
+        if (
+          earliestWeekStart &&
+          start.getTime() !== earliestWeekStart.getTime() &&
+          thisWeekDays > 0
+        ) {
+          trend = trendIndicator(
+            thisWeekDays,
+            lastWeekDays,
+            thisWeekDays,   // input dates THIS week
+            lastWeekDays    // input dates LAST week
+          );
+        }
+
+        return {
+          name: p.name,
+          days: thisWeekDays,
+          trend
+        };
+      })
+    : [
+        {
+          name: "—",
+          days: 0,
+          trend: ""
+        }
+      ];
+
+  // ✅ Always push the position — even if empty
+  weeklyLeaderboard.push({
+    position: pos,
+    players: ranked
+  });
 });
 
     // 2️⃣ Top performers (only players with activity)
