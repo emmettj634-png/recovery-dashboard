@@ -209,10 +209,11 @@ function trendIndicator(current, previous){
     return `<span class="trend-up light"> ▲</span>`;
   }
 
-  // 2 → 0 = explicit decline exception
-  if(previous === 2 && current === 0){
-    return `<span class="trend-down light"> ▼</span>`;
-  }
+  // 2 → 0 = explicit decline exception (escalated)
+if(previous === 2 && current === 0){
+  return `<span class="trend-down medium"> ▼</span>`;
+}
+
 
   /* =====================
      DECLINE LOGIC (RED)
