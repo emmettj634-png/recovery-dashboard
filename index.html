@@ -261,35 +261,41 @@ function trendIndicator(
     return `<span class="trend-down medium"> ▼</span>`;
   }
 
-  /* =====================
+/* =====================
    DECLINE LOGIC (RED)
 ====================== */
 
-// 🔴 Explicit recovery-day exception (bypasses all gates)
+// 🔴 Dark red: 3 → 0 recovery days
+if (previous === 3 && current === 0) {
+  return `<span class="trend-down dark"> ▼</span>`;
+}
+
+// 🔴 Medium red: 2 → 0 recovery days
 if (previous === 2 && current === 0) {
   return `<span class="trend-down medium"> ▼</span>`;
 }
 
-// ❌ Explicit no-arrow recovery cases
+// ❌ Block low-level single-step noise
 if (
   (previous === 3 && current === 2) ||
-  (previous === 2 && current === 1)
+  (previous === 2 && current === 1) ||
+  (previous === 1 && current === 0)
 ) {
   return "";
 }
 
-// Standard decline logic (after input-date eligibility)
+// Standard decline (after input-date eligibility)
 if (
   current < previous &&
   inputDatesAllowDecline(previousInputs, currentInputs)
 ) {
   const percentDrop = (previous - current) / previous;
 
-  // 🔻 28.57% threshold
   if (percentDrop >= 0.2857) {
     return `<span class="trend-down light"> ▼</span>`;
   }
 }
+
 
 
   /* =====================
