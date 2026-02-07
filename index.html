@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,7 +129,6 @@ button{cursor:pointer;}
   </select>
 
   <button id="toggleView">Team View</button>
-  <button id="toggleLeaderboard">Leaderboard</button>
 </div>
 
 <!-- ================= PLAYER VIEW ================= -->
@@ -176,19 +176,14 @@ button{cursor:pointer;}
 <h2 style="text-align:center;">Team Module Participation (Selected Date)</h2>
 <div id="teamModuleGrid"></div>
 
-<!-- ================= LEADERBOARD VIEW ================= -->
-<div id="leaderboardView" class="hidden">
+<hr style="margin:40px 0;opacity:.4;">
 
-  <h2 style="text-align:center;">Weekly Participation Leaderboard</h2>
-
-  <div style="text-align:center;margin-bottom:15px;">
-    <select id="weekFilter"></select>
-  </div>
-
-  <div id="leaderboardContainer" class="leaderboard-grid"></div>
-
+<h2 style="text-align:center;">Weekly Participation Leaderboard</h2>
+<div style="text-align:center;margin-bottom:15px;">
+  <select id="weekFilter"></select>
 </div>
 
+<div id="leaderboardContainer" class="leaderboard-grid"></div>
 
 </div>
 
@@ -622,21 +617,12 @@ function renderTeamView(){
 }
 
 /* ================= WEEKLY LEADERBOARD ================= */
-
 function getWeekRange(dateStr){
-  const d = new Date(dateStr);
-  const start = new Date(d);
-  start.setDate(d.getDate() - d.getDay());
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-
-  return {
-    label: `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`,
-    start,
-    end
-  };
+  const d=new Date(dateStr);
+  const start=new Date(d);start.setDate(d.getDate()-d.getDay());
+  const end=new Date(start);end.setDate(start.getDate()+6);
+  return{label:`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`,start,end};
 }
-
 function populateWeeks(){
   weekFilter.innerHTML = "";
   const weeks = {};
@@ -658,12 +644,10 @@ function populateWeeks(){
     weekFilter.appendChild(o);
   });
 
-  // ✅ THIS MUST BE INSIDE THE FUNCTION
   if(sortedWeeks.length){
     weekFilter.value = sortedWeeks[0].label;
   }
 }
-
 function uniqueDaysInRange(player, start, end){
   return new Set(
     player.sessions
@@ -675,45 +659,49 @@ function uniqueDaysInRange(player, start, end){
   ).size;
 }
 
-function renderLeaderboards(){
-  leaderboardContainer.innerHTML = "";
-  if(!weekFilter.value) return;
 
-  const [s, e] = weekFilter.value.split(" - ");
-  const start = new Date(s);
-  const end = new Date(e);
+function renderLeaderboards(){
+  leaderboardContainer.innerHTML="";
+  if(!weekFilter.value)return;
+
+  const [s,e]=weekFilter.value.split(" - ");
+  const start=new Date(s), end=new Date(e);
 
   positions.forEach(pos=>{
-    const group = playerData.filter(p => p.position === pos);
+    const group = playerData.filter(p=>p.position===pos);
     if(!group.length) return;
 
-    const ranked = group.map(p=>{
-      const thisWeekDays = uniqueDaysInRange(p, start, end);
+  const ranked = group.map(p=>{
+  const thisWeekDays = uniqueDaysInRange(p, start, end);
 
-      const lastWeekStart = new Date(start);
-      lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-      const lastWeekEnd = new Date(end);
-      lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+  const lastWeekStart = new Date(start);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const lastWeekEnd = new Date(end);
+  lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
 
-      const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+  const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
-      return {
-        name: p.name,
-        days: thisWeekDays,
-        trend: trendIndicator(thisWeekDays, lastWeekDays)
-      };
-    });
+  return {
+    name: p.name,
+    days: thisWeekDays,
+    trend: trendIndicator(thisWeekDays, lastWeekDays)
+  };
+});
 
+
+    // 2️⃣ Top performers (only players with activity)
     const top = ranked
       .filter(p => p.days > 0)
-      .sort((a,b) => b.days - a.days)
+      .sort((a,b)=>b.days - a.days)
       .slice(0,5);
 
+    // 3️⃣ Bottom performers (exclude top players)
     const bottom = ranked
       .filter(p => !top.some(t => t.name === p.name))
-      .sort((a,b) => a.days - b.days)
+      .sort((a,b)=>a.days - b.days)
       .slice(0,5);
 
+    // 4️⃣ Build HTML
     const div = document.createElement("div");
     div.className = "leaderboard";
 
@@ -721,6 +709,7 @@ function renderLeaderboards(){
     top.forEach(p => html += `<li>${p.name}${p.trend || ""}</li>`);
     html += `</ol>`;
 
+    // 5️⃣ Only show bottom if group is large enough
     if(group.length > 5){
       html += `<strong>Bottom Performers</strong><ol>`;
       bottom.forEach(p => html += `<li>${p.name}${p.trend || ""}</li>`);
@@ -929,45 +918,12 @@ function renderMonthlyAvgChart(){
     }
   );
 }
-/* ================= VIEW SWITCHER ================= */
-function showView(view){
-
-  // Hide all views
-  playerView.classList.add("hidden");
-  teamView.classList.add("hidden");
-  leaderboardView.classList.add("hidden");
-
-  // Reset Team View button label
-  toggleView.textContent = "Team View";
-
-  // Ensure filters are visible by default
-  positionFilter.classList.remove("hidden");
-  playerFilter.classList.remove("hidden");
-
-  if(view === "player"){
-    playerView.classList.remove("hidden");
-  }
-
-  if(view === "team"){
-    teamView.classList.remove("hidden");
-    toggleView.textContent = "Player View";
-    renderTeamView();
-  }
-
-  if(view === "leaderboard"){
-    leaderboardView.classList.remove("hidden");
-    populateWeeks();
-    renderLeaderboards();
-  }
-}
 
 /* ================= EVENTS ================= */
-
-// Position change
 positionFilter.onchange = () => {
   populatePlayers();
 
-  // Auto-select most recent date if none selected
+  // 🔥 Auto-select most recent date if none selected
   if(!dateFilter.value && mostRecentDate){
     dateFilter.value = mostRecentDate;
   }
@@ -975,61 +931,66 @@ positionFilter.onchange = () => {
   renderModules();
 };
 
-// Player change
 playerFilter.onchange = () => {
 
+  // 🔄 Player cleared
   if(!playerFilter.value){
+    // Reset titles
     document.getElementById("playerDetailsTitle").textContent = "Player Details";
     document.getElementById("playerModuleTitle").textContent = "Cumulative Module Usage";
 
+    // Hide player stats
     playerStatsGrid.classList.add("hidden");
+
+    // Hide chart, show empty state
     document.getElementById("playerModuleChart").style.display = "none";
     document.querySelector("#playerModuleContainer .empty-state").style.display = "block";
+
     return;
   }
 
+  // ✅ Player selected
   showPlayer();
 };
 
-// Date change
 dateFilter.onchange = () => {
+  // Update player-view module participation
   renderModules();
 
-  if(!teamView.classList.contains("hidden")){
+  // ✅ ALSO update team-view module participation if Team View is active
+  if (!teamView.classList.contains("hidden")) {
     renderTeamView();
   }
 };
-
-// Team View button
 toggleView.onclick = () => {
-  if(teamView.classList.contains("hidden")){
-    showView("team");
-  } else {
-    showView("player");
+  const toTeam = teamView.classList.contains("hidden");
+
+  // Toggle views
+  playerView.classList.toggle("hidden");
+  teamView.classList.toggle("hidden");
+
+  // Hide irrelevant dropdowns in Team View
+  playerFilter.classList.toggle("hidden");
+  positionFilter.classList.toggle("hidden");
+
+  // Update button label
+  toggleView.textContent = toTeam ? "Player View" : "Team View";
+
+  // Render team modules immediately when entering Team View
+  if (toTeam) {
+    renderTeamView();
   }
 };
-
-// Leaderboard button
-toggleLeaderboard.onclick = () => {
-  showView("leaderboard");
-};
-
-// Week dropdown
-weekFilter.onchange = renderLeaderboards;
-
-// Month dropdown (if applicable)
+weekFilter.onchange=renderLeaderboards;
 monthFilter.onchange = () => {
   populateMonthWeeks();
   renderMonthlyAvgChart();
 };
-// Month → Week dropdown
+
 monthWeekFilter.onchange = renderMonthlyAvgChart;
 
-// 👇 default view on page load (IMPORTANT)
-showView("player");
 
-}); // closes DOMContentLoaded
-
+});
 </script>
 
 </body>
