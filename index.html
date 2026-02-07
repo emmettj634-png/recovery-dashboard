@@ -191,6 +191,27 @@ button{cursor:pointer;}
 
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
+function inputDatesAllowDecline(prevInputs, currentInputs) {
+  // Current week must exist
+  if (currentInputs === 0) return false;
+
+  // Same input counts allowed (down to 2 → 2)
+  if (prevInputs === currentInputs && prevInputs >= 2) {
+    return true;
+  }
+
+  // -1 pattern allowed from 7 down to 3
+  if (
+    prevInputs >= 3 &&
+    prevInputs <= 7 &&
+    prevInputs - currentInputs === 1
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function trendIndicator(current, previous){
 
   // No data either week
@@ -226,8 +247,12 @@ if(previous === 2 && current === 0){
      DECLINE LOGIC (RED)
   ====================== */
 
-  // Only evaluate decline if previous > 2
-  if(previous > 2 && current < previous){
+// Only evaluate decline if input-date rules allow it
+if (
+  previous > 2 &&
+  current < previous &&
+  inputDatesAllowDecline(prevInputDates, currentInputDates)
+){
     const change = (current - previous) / previous;
 
     // Hard cutoff −40%
