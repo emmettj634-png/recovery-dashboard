@@ -671,22 +671,31 @@ function renderLeaderboards(){
     const group = playerData.filter(p=>p.position===pos);
     if(!group.length) return;
 
-  const ranked = group.map(p=>{
+  const ranked = group.map(p => {
   const thisWeekDays = uniqueDaysInRange(p, start, end);
 
   const lastWeekStart = new Date(start);
   lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
   const lastWeekEnd = new Date(end);
   lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
 
   const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
+  let trend = "";
+
+  // ⛔ First-week guard (no baseline = no arrow)
+  if (lastWeekDays > 0 || thisWeekDays > 0) {
+    trend = trendIndicator(thisWeekDays, lastWeekDays);
+  }
+
   return {
     name: p.name,
     days: thisWeekDays,
-    trend: trendIndicator(thisWeekDays, lastWeekDays)
+    trend
   };
 });
+
 
 
     // 2️⃣ Top performers (only players with activity)
