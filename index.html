@@ -659,6 +659,20 @@ function uniqueDaysInRange(player, start, end){
   ).size;
 }
 
+function getEarliestWeekStart(){
+  const dates = playerData.flatMap(p =>
+    p.sessions.map(s => new Date(s.date))
+  );
+
+  if(!dates.length) return null;
+
+  const earliest = new Date(Math.min(...dates));
+  earliest.setDate(earliest.getDate() - earliest.getDay()); // normalize to week start
+  earliest.setHours(0,0,0,0);
+
+  return earliest;
+}
+
 
 function renderLeaderboards(){
   leaderboardContainer.innerHTML="";
@@ -666,6 +680,7 @@ function renderLeaderboards(){
 
   const [s,e]=weekFilter.value.split(" - ");
   const start=new Date(s), end=new Date(e);
+  const earliestWeekStart = getEarliestWeekStart();
 
   positions.forEach(pos=>{
     const group = playerData.filter(p=>p.position===pos);
@@ -684,8 +699,11 @@ function renderLeaderboards(){
 
   let trend = "";
 
-  // ⛔ First-week guard (no baseline = no arrow)
-  if (lastWeekDays > 0 || thisWeekDays > 0) {
+  // 🚫 Absolute first-week guard
+  if (
+    earliestWeekStart &&
+    start.getTime() !== earliestWeekStart.getTime()
+  ) {
     trend = trendIndicator(thisWeekDays, lastWeekDays);
   }
 
@@ -695,8 +713,6 @@ function renderLeaderboards(){
     trend
   };
 });
-
-
 
     // 2️⃣ Top performers (only players with activity)
     const top = ranked
