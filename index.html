@@ -213,6 +213,22 @@ function inputDatesAllowDecline(prevInputs, currentInputs) {
   return false;
 }
 
+function teamInputDatesInRange(start, end) {
+  const dates = new Set();
+
+  playerData.forEach(p => {
+    p.sessions.forEach(s => {
+      const d = new Date(s.date);
+      if (d >= start && d <= end) {
+        dates.add(s.date);
+      }
+    });
+  });
+
+  return dates.size;
+}
+
+  
 function trendIndicator(
   current,
   previous,
@@ -718,18 +734,36 @@ function getEarliestWeekStart(){
 
 function renderLeaderboards(){
   leaderboardContainer.innerHTML="";
-  if(!weekFilter.value)return;
+  if(!weekFilter.value) return;
 
-  const [s,e]=weekFilter.value.split(" - ");
-  const start=new Date(s), end=new Date(e);
+  const [s, e] = weekFilter.value.split(" - ");
+  const start = new Date(s);
+  const end = new Date(e);
+
   const earliestWeekStart = getEarliestWeekStart();
 
-const weeklyLeaderboard = [];
+  /* =====================
+     STEP 3 — TEAM INPUT DATES
+  ====================== */
 
-console.log("about to render positions");
+  const thisWeekInputs = teamInputDatesInRange(start, end);
 
-positions.forEach(pos => {
-  const group = playerData.filter(p => p.position === pos);
+  const lastWeekStart = new Date(start);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
+  const lastWeekEnd = new Date(end);
+  lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+
+  const lastWeekInputs = teamInputDatesInRange(lastWeekStart, lastWeekEnd);
+
+  /* =====================
+     LEADERBOARD LOOP
+  ====================== */
+
+  positions.forEach(pos => {
+    const group = playerData.filter(p => p.position === pos);
+
+    // ... rest of your existing code
 
   const ranked = group.length
     ? group.map(p => {
@@ -751,10 +785,10 @@ positions.forEach(pos => {
           thisWeekDays > 0
         ) {
         trend = trendIndicator(
-  thisWeekDays,   // recovery DAYS this week
-  lastWeekDays,   // recovery DAYS last week
-  thisWeekDays,   // input dates this week
-  lastWeekDays    // input dates last week
+  thisWeekDays,     // recovery days (player)
+  lastWeekDays,     // recovery days (player)
+  thisWeekInputs,   // input dates (TEAM)
+  lastWeekInputs    // input dates (TEAM)
 );
 
         }
