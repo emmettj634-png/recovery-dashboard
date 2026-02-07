@@ -717,6 +717,7 @@ function renderLeaderboards(){
 
   const weeklyLeaderboard = [];
 
+console.log("about to render positions");
 positions.forEach(pos => {
   const group = playerData.filter(p => p.position === pos);
 
