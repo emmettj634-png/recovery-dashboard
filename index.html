@@ -137,7 +137,11 @@ button{cursor:pointer;}
 <div id="moduleGrid" class="module-grid"></div>
 
 <h2 id="playerModuleTitle">Cumulative Module Usage</h2>
-<div class="chart-box"><canvas id="playerModuleChart"></canvas></div>
+<div class="chart-box" id="playerModuleContainer">
+  <div class="empty-state">Select a player to view cumulative module usage</div>
+  <canvas id="playerModuleChart" style="display:none;"></canvas>
+</div>
+
 
 <h2>Average Daily Participation by Position (%)</h2>
 <div class="chart-box"><canvas id="avgChart"></canvas></div>
@@ -428,6 +432,14 @@ let playerModuleChart=null;
 function showPlayer(){
   const p=playerData.find(x=>x.name===playerFilter.value);
   if(!p)return;
+  // Show chart, hide empty state
+document.querySelector("#playerModuleContainer .empty-state").style.display = "none";
+document.getElementById("playerModuleChart").style.display = "block";
+
+// Update title
+document.getElementById("playerModuleTitle").textContent =
+  `Cumulative Module Usage – ${p.name}`;
+
   document.getElementById("playerDetailsTitle").textContent =
   `Player Details – ${p.name}`;
   playerStatsGrid.classList.remove("hidden");
@@ -674,6 +686,15 @@ function renderCharts(){
   );
 }
 function renderPlayerModuleChart(p){
+  // 🔎 Check if player has any usage at all
+if(p.sessions.length === 0){
+  document.getElementById("playerModuleChart").style.display = "none";
+  document.querySelector("#playerModuleContainer .empty-state").style.display = "block";
+  document.querySelector("#playerModuleContainer .empty-state").textContent =
+    "No module usage yet for this player";
+  return;
+}
+
   const totals = {};
   const latestDates = {};
 
@@ -817,7 +838,28 @@ positionFilter.onchange = () => {
   renderModules();
 };
 
-playerFilter.onchange=showPlayer;
+playerFilter.onchange = () => {
+
+  // 🔄 Player cleared
+  if(!playerFilter.value){
+    // Reset titles
+    document.getElementById("playerDetailsTitle").textContent = "Player Details";
+    document.getElementById("playerModuleTitle").textContent = "Cumulative Module Usage";
+
+    // Hide player stats
+    playerStatsGrid.classList.add("hidden");
+
+    // Hide chart, show empty state
+    document.getElementById("playerModuleChart").style.display = "none";
+    document.querySelector("#playerModuleContainer .empty-state").style.display = "block";
+
+    return;
+  }
+
+  // ✅ Player selected
+  showPlayer();
+};
+
 dateFilter.onchange = () => {
   // Update player-view module participation
   renderModules();
