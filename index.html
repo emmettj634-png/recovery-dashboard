@@ -1015,14 +1015,14 @@ weekFilter.onchange = renderLeaderboards;
 monthFilter.onchange = () => {
   populateMonthWeeks();
   renderMonthlyAvgChart();
-};
-
-};
-
+// Month → Week dropdown
 monthWeekFilter.onchange = renderMonthlyAvgChart;
 
+// 👇 default view on page load (IMPORTANT)
+showView("player");
 
-});
+}); // closes DOMContentLoaded
+
 </script>
 
 </body>
