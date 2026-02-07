@@ -779,16 +779,17 @@ function renderLeaderboards(){
         let trend = "";
 
         if (
-          earliestWeekStart &&
-          start.getTime() !== earliestWeekStart.getTime() &&
-    
-        ) {
-        trend = trendIndicator(
-  thisWeekDays,     // recovery days (player)
-  lastWeekDays,     // recovery days (player)
-  thisWeekInputs,   // input dates (TEAM)
-  lastWeekInputs    // input dates (TEAM)
-);
+  earliestWeekStart &&
+  start.getTime() !== earliestWeekStart.getTime()
+) {
+  trend = trendIndicator(
+    thisWeekDays,
+    lastWeekDays,
+    thisWeekInputs,
+    lastWeekInputs
+  );
+}
+
 
         }
 
