@@ -622,12 +622,21 @@ function renderTeamView(){
 }
 
 /* ================= WEEKLY LEADERBOARD ================= */
+
 function getWeekRange(dateStr){
-  const d=new Date(dateStr);
-  const start=new Date(d);start.setDate(d.getDate()-d.getDay());
-  const end=new Date(start);end.setDate(start.getDate()+6);
-  return{label:`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`,start,end};
+  const d = new Date(dateStr);
+  const start = new Date(d);
+  start.setDate(d.getDate() - d.getDay());
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  return {
+    label: `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`,
+    start,
+    end
+  };
 }
+
 function populateWeeks(){
   weekFilter.innerHTML = "";
   const weeks = {};
@@ -648,11 +657,13 @@ function populateWeeks(){
     o.textContent = w.label;
     weekFilter.appendChild(o);
   });
-}
+
+  // ✅ THIS MUST BE INSIDE THE FUNCTION
   if(sortedWeeks.length){
     weekFilter.value = sortedWeeks[0].label;
   }
 }
+
 function uniqueDaysInRange(player, start, end){
   return new Set(
     player.sessions
@@ -664,49 +675,45 @@ function uniqueDaysInRange(player, start, end){
   ).size;
 }
 
-
 function renderLeaderboards(){
-  leaderboardContainer.innerHTML="";
-  if(!weekFilter.value)return;
+  leaderboardContainer.innerHTML = "";
+  if(!weekFilter.value) return;
 
-  const [s,e]=weekFilter.value.split(" - ");
-  const start=new Date(s), end=new Date(e);
+  const [s, e] = weekFilter.value.split(" - ");
+  const start = new Date(s);
+  const end = new Date(e);
 
   positions.forEach(pos=>{
-    const group = playerData.filter(p=>p.position===pos);
+    const group = playerData.filter(p => p.position === pos);
     if(!group.length) return;
 
-  const ranked = group.map(p=>{
-  const thisWeekDays = uniqueDaysInRange(p, start, end);
+    const ranked = group.map(p=>{
+      const thisWeekDays = uniqueDaysInRange(p, start, end);
 
-  const lastWeekStart = new Date(start);
-  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-  const lastWeekEnd = new Date(end);
-  lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+      const lastWeekStart = new Date(start);
+      lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+      const lastWeekEnd = new Date(end);
+      lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
 
-  const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+      const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
-  return {
-    name: p.name,
-    days: thisWeekDays,
-    trend: trendIndicator(thisWeekDays, lastWeekDays)
-  };
-});
+      return {
+        name: p.name,
+        days: thisWeekDays,
+        trend: trendIndicator(thisWeekDays, lastWeekDays)
+      };
+    });
 
-
-    // 2️⃣ Top performers (only players with activity)
     const top = ranked
       .filter(p => p.days > 0)
-      .sort((a,b)=>b.days - a.days)
+      .sort((a,b) => b.days - a.days)
       .slice(0,5);
 
-    // 3️⃣ Bottom performers (exclude top players)
     const bottom = ranked
       .filter(p => !top.some(t => t.name === p.name))
-      .sort((a,b)=>a.days - b.days)
+      .sort((a,b) => a.days - b.days)
       .slice(0,5);
 
-    // 4️⃣ Build HTML
     const div = document.createElement("div");
     div.className = "leaderboard";
 
@@ -714,7 +721,6 @@ function renderLeaderboards(){
     top.forEach(p => html += `<li>${p.name}${p.trend || ""}</li>`);
     html += `</ol>`;
 
-    // 5️⃣ Only show bottom if group is large enough
     if(group.length > 5){
       html += `<strong>Bottom Performers</strong><ol>`;
       bottom.forEach(p => html += `<li>${p.name}${p.trend || ""}</li>`);
