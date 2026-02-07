@@ -128,9 +128,8 @@ button{cursor:pointer;}
   </select>
 
   <button id="toggleView">Team View</button>
-</div>
   <button id="toggleLeaderboard">Leaderboard</button>
-
+</div>
 
 <!-- ================= PLAYER VIEW ================= -->
 <div id="playerView">
@@ -924,12 +923,45 @@ function renderMonthlyAvgChart(){
     }
   );
 }
+/* ================= VIEW SWITCHER ================= */
+function showView(view){
+
+  // Hide all views
+  playerView.classList.add("hidden");
+  teamView.classList.add("hidden");
+  leaderboardView.classList.add("hidden");
+
+  // Reset Team View button label
+  toggleView.textContent = "Team View";
+
+  // Ensure filters are visible by default
+  positionFilter.classList.remove("hidden");
+  playerFilter.classList.remove("hidden");
+
+  if(view === "player"){
+    playerView.classList.remove("hidden");
+  }
+
+  if(view === "team"){
+    teamView.classList.remove("hidden");
+    toggleView.textContent = "Player View";
+    renderTeamView();
+  }
+
+  if(view === "leaderboard"){
+    leaderboardView.classList.remove("hidden");
+    populateWeeks();
+    renderLeaderboards();
+  }
+}
 
 /* ================= EVENTS ================= */
+
+// Position change
 positionFilter.onchange = () => {
   populatePlayers();
 
-  // 🔥 Auto-select most recent date if none selected
+  // Auto-select most recent date if none selected
   if(!dateFilter.value && mostRecentDate){
     dateFilter.value = mostRecentDate;
   }
@@ -937,76 +969,54 @@ positionFilter.onchange = () => {
   renderModules();
 };
 
+// Player change
 playerFilter.onchange = () => {
 
-  // 🔄 Player cleared
   if(!playerFilter.value){
-    // Reset titles
     document.getElementById("playerDetailsTitle").textContent = "Player Details";
     document.getElementById("playerModuleTitle").textContent = "Cumulative Module Usage";
 
-    // Hide player stats
     playerStatsGrid.classList.add("hidden");
-
-    // Hide chart, show empty state
     document.getElementById("playerModuleChart").style.display = "none";
     document.querySelector("#playerModuleContainer .empty-state").style.display = "block";
-
     return;
   }
 
-  // ✅ Player selected
   showPlayer();
 };
 
+// Date change
 dateFilter.onchange = () => {
-  // Update player-view module participation
   renderModules();
 
-  // ✅ ALSO update team-view module participation if Team View is active
-  if (!teamView.classList.contains("hidden")) {
+  if(!teamView.classList.contains("hidden")){
     renderTeamView();
   }
 };
+
+// Team View button
 toggleView.onclick = () => {
-  const toTeam = teamView.classList.contains("hidden");
-
-  // Hide leaderboard always
-  leaderboardView.classList.add("hidden");
-
-  // Toggle views
-  playerView.classList.toggle("hidden");
-  teamView.classList.toggle("hidden");
-
-  // Toggle filters
-  playerFilter.classList.toggle("hidden");
-  positionFilter.classList.toggle("hidden");
-
-  toggleView.textContent = toTeam ? "Player View" : "Team View";
-
-  if (toTeam) {
-    renderTeamView();
+  if(teamView.classList.contains("hidden")){
+    showView("team");
+  } else {
+    showView("player");
   }
 };
 
-weekFilter.onchange=renderLeaderboards;
+// Leaderboard button
 toggleLeaderboard.onclick = () => {
-
-  // Hide other views
-  playerView.classList.add("hidden");
-  teamView.classList.add("hidden");
-
-  // Show leaderboard view
-  leaderboardView.classList.remove("hidden");
-
-  // Make sure leaderboard is populated
-  populateWeeks();
-  renderLeaderboards();
+  showView("leaderboard");
 };
 
+// Week dropdown
+weekFilter.onchange = renderLeaderboards;
+
+// Month dropdown (if applicable)
 monthFilter.onchange = () => {
   populateMonthWeeks();
   renderMonthlyAvgChart();
+};
+
 };
 
 monthWeekFilter.onchange = renderMonthlyAvgChart;
