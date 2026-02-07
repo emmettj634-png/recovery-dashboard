@@ -205,6 +205,12 @@ function trendIndicator(current, previous){
     return `<span class="trend-up light"> ▲</span>`;
   }
 
+  // 0 → 2 = small positive momentum
+if(previous === 0 && current === 2){
+  return `<span class="trend-up light"> ▲</span>`;
+}
+
+
   // 2 → 3 = light green improvement
   if(previous === 2 && current === 3){
     return `<span class="trend-up light"> ▲</span>`;
