@@ -9,6 +9,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+.empty-state{
+  text-align:center;
+  font-style:italic;
+  opacity:0.8;
+  padding:20px;
+}
+
   :root{
   --bg:#841617;
   --card:rgba(255,255,255,.15);
@@ -443,27 +450,27 @@ function showPlayer(){
 
 /* ================= MODULE PARTICIPATION ================= */
 function renderModules(){
-  console.log("renderModules:", {
-  position: positionFilter.value,
-  date: dateFilter.value
-});
-  moduleGrid.innerHTML = "";
+  moduleGrid.innerHTML="";
 
   const pos = positionFilter.value;
   const date = dateFilter.value;
 
-  // Reset title if missing inputs
-  if(!pos || !date){
+  if(!pos){
     document.getElementById("positionModuleTitle").textContent =
       "Module Participation";
+    moduleGrid.innerHTML =
+      `<div class="empty-state">Select a position to view module participation</div>`;
     return;
   }
 
-  // ✅ Title update (this part you added)
-  document.getElementById("positionModuleTitle").textContent =
-    `${pos} Module Participation – ${fmtDate(date)}`;
+  let activeDate = date;
+  if(!activeDate && mostRecentDate){
+    activeDate = mostRecentDate;
+  }
 
-  // ✅ THIS PART MUST EXIST OR NOTHING SHOWS
+  document.getElementById("positionModuleTitle").textContent =
+    `${pos} Module Participation – ${fmtDate(activeDate)}`;
+
   modules.forEach(mod=>{
     const card = document.createElement("div");
     card.className = "module-card";
@@ -474,7 +481,7 @@ function renderModules(){
       .filter(p => p.position === pos)
       .forEach(p=>{
         const count = p.sessions.filter(
-          s => s.module === mod && s.date === date
+          s => s.module === mod && s.date === activeDate
         ).length;
 
         if(count > 0){
@@ -487,7 +494,6 @@ function renderModules(){
     moduleGrid.appendChild(card);
   });
 }
-
 
 /* ================= TEAM VIEW ================= */
 function renderTeamView(){
