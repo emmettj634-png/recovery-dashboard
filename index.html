@@ -739,12 +739,8 @@ positions.forEach(pos => {
           start.getTime() !== earliestWeekStart.getTime() &&
           thisWeekDays > 0
         ) {
-          trend = trendIndicator(
-            thisWeekDays,
-            lastWeekDays,
-            thisWeekDays,   // input dates THIS week
-            lastWeekDays    // input dates LAST week
-          );
+          trend = trendIndicator(thisWeekDays, lastWeekDays);
+       
         }
 
         return {
