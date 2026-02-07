@@ -129,6 +129,8 @@ button{cursor:pointer;}
 
   <button id="toggleView">Team View</button>
 </div>
+  <button id="toggleLeaderboard">Leaderboard</button>
+
 
 <!-- ================= PLAYER VIEW ================= -->
 <div id="playerView">
@@ -175,14 +177,19 @@ button{cursor:pointer;}
 <h2 style="text-align:center;">Team Module Participation (Selected Date)</h2>
 <div id="teamModuleGrid"></div>
 
-<hr style="margin:40px 0;opacity:.4;">
+<!-- ================= LEADERBOARD VIEW ================= -->
+<div id="leaderboardView" class="hidden">
 
-<h2 style="text-align:center;">Weekly Participation Leaderboard</h2>
-<div style="text-align:center;margin-bottom:15px;">
-  <select id="weekFilter"></select>
+  <h2 style="text-align:center;">Weekly Participation Leaderboard</h2>
+
+  <div style="text-align:center;margin-bottom:15px;">
+    <select id="weekFilter"></select>
+  </div>
+
+  <div id="leaderboardContainer" class="leaderboard-grid"></div>
+
 </div>
 
-<div id="leaderboardContainer" class="leaderboard-grid"></div>
 
 </div>
 
@@ -964,23 +971,39 @@ dateFilter.onchange = () => {
 toggleView.onclick = () => {
   const toTeam = teamView.classList.contains("hidden");
 
+  // Hide leaderboard always
+  leaderboardView.classList.add("hidden");
+
   // Toggle views
   playerView.classList.toggle("hidden");
   teamView.classList.toggle("hidden");
 
-  // Hide irrelevant dropdowns in Team View
+  // Toggle filters
   playerFilter.classList.toggle("hidden");
   positionFilter.classList.toggle("hidden");
 
-  // Update button label
   toggleView.textContent = toTeam ? "Player View" : "Team View";
 
-  // Render team modules immediately when entering Team View
   if (toTeam) {
     renderTeamView();
   }
 };
+
 weekFilter.onchange=renderLeaderboards;
+toggleLeaderboard.onclick = () => {
+
+  // Hide other views
+  playerView.classList.add("hidden");
+  teamView.classList.add("hidden");
+
+  // Show leaderboard view
+  leaderboardView.classList.remove("hidden");
+
+  // Make sure leaderboard is populated
+  populateWeeks();
+  renderLeaderboards();
+};
+
 monthFilter.onchange = () => {
   populateMonthWeeks();
   renderMonthlyAvgChart();
