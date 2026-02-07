@@ -735,6 +735,7 @@ function getEarliestWeekStart(){
 function renderLeaderboards(){
   leaderboardContainer.innerHTML="";
   if(!weekFilter.value) return;
+  const weeklyLeaderboard = [];
 
   const [s, e] = weekFilter.value.split(" - ");
   const start = new Date(s);
