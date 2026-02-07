@@ -713,37 +713,50 @@ function renderLeaderboards(){
   const start=new Date(s), end=new Date(e);
   const earliestWeekStart = getEarliestWeekStart();
 
-  positions.forEach(pos=>{
-    const group = playerData.filter(p=>p.position===pos);
-    if(!group.length) return;
+  positions.forEach(pos => {
+  const group = playerData.filter(p => p.position === pos);
 
-  const ranked = group.map(p => {
-  const thisWeekDays = uniqueDaysInRange(p, start, end);
+  const ranked = group.length
+    ? group.map(p => {
+        const thisWeekDays = uniqueDaysInRange(p, start, end);
 
-  const lastWeekStart = new Date(start);
-  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+        const lastWeekStart = new Date(start);
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
 
-  const lastWeekEnd = new Date(end);
-  lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+        const lastWeekEnd = new Date(end);
+        lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
 
-  const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+        const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
-  let trend = "";
+        let trend = "";
 
-  // 🚫 Absolute first-week guard
-  if (
-    earliestWeekStart &&
-    start.getTime() !== earliestWeekStart.getTime()
-  ) {
-    trend = trendIndicator(thisWeekDays, lastWeekDays);
-  }
+        if (
+          earliestWeekStart &&
+          start.getTime() !== earliestWeekStart.getTime()
+        ) {
+          trend =
+            thisWeekDays === 0
+              ? ""
+              : trendIndicator(thisWeekDays, lastWeekDays);
+        }
 
-  return {
-    name: p.name,
-    days: thisWeekDays,
-    trend
-  };
+        return {
+          name: p.name,
+          days: thisWeekDays,
+          trend
+        };
+      })
+    : [
+        {
+          name: "—",
+          days: 0,
+          trend: ""
+        }
+      ];
+
+  // ⬇️ render this position using `ranked`
 });
+
 
     // 2️⃣ Top performers (only players with activity)
     const top = ranked
