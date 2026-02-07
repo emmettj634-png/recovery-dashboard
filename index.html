@@ -248,26 +248,35 @@ function trendIndicator(
   }
 
   /* =====================
-     DECLINE LOGIC (RED)
-  ====================== */
+   DECLINE LOGIC (RED)
+====================== */
 
-  if (
-    previous > 2 &&
-    current < previous &&
-    inputDatesAllowDecline(previousInputs, currentInputs)
-  ) {
-    const change = (current - previous) / previous;
+// 🔴 Explicit recovery-day exception (bypasses all gates)
+if (previous === 2 && current === 0) {
+  return `<span class="trend-down medium"> ▼</span>`;
+}
 
-    // Hard cutoff −40%
-    if(change <= -0.4){
-      const absChange = Math.abs(change);
-      let level = "light";
-      if(absChange >= 0.75) level = "dark";
-      else if(absChange >= 0.5) level = "medium";
+// ❌ Explicit no-arrow recovery cases
+if (
+  (previous === 3 && current === 2) ||
+  (previous === 2 && current === 1)
+) {
+  return "";
+}
 
-      return `<span class="trend-down ${level}"> ▼</span>`;
-    }
+// Standard decline logic (after input-date eligibility)
+if (
+  current < previous &&
+  inputDatesAllowDecline(previousInputs, currentInputs)
+) {
+  const percentDrop = (previous - current) / previous;
+
+  // 🔻 28.57% threshold
+  if (percentDrop >= 0.2857) {
+    return `<span class="trend-down light"> ▼</span>`;
   }
+}
+
 
   /* =====================
      IMPROVEMENT LOGIC (GREEN)
