@@ -9,6 +9,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+.header{
+  background: rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
 
 
 /* === Trend arrows === */
@@ -57,7 +63,7 @@ body::before{
 <filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/></filter>\
 <rect width='120' height='120' filter='url(%23n)' opacity='0.03'/></svg>");
   pointer-events:none;
-  z-index:-1;
+  z-index:-2;
 }
 
 
