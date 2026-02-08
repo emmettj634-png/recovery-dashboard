@@ -49,6 +49,23 @@ body{
   position: relative;
 }
 
+/* =====================
+   DESKTOP STRONGER GRADIENT
+====================== */
+@media (min-width: 769px){
+  body{
+    background:
+      radial-gradient(
+        circle at 50% 18%,
+        #9A1F21 0%,
+        #7A1416 35%,
+        #4A0C0D 100%
+      );
+    background-attachment: fixed;
+  }
+}
+
+
 body::before{
   content:"";
   position: fixed;
