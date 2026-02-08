@@ -26,9 +26,8 @@
 }
 
 :root{
-  --bg-top:#8E1B1C;
-  --bg-mid:#6F1213;
-  --bg-bottom:#5A0E0F;
+  --bg-core:#8E1B1C;
+  --bg-edge:#5A0E0F;
   --card:rgba(255,255,255,.15);
   --text:#FDF9D8;
 }
@@ -36,19 +35,16 @@
 body{
   background:
     radial-gradient(
-      circle at top,
-      rgba(255,255,255,0.05),
-      rgba(0,0,0,0.35)
-    ),
-    linear-gradient(
-      180deg,
-      #8E1B1C 0%,
-      #6F1213 60%,
-      #5A0E0F 100%
+      circle at top center,
+      var(--bg-core) 0%,
+      #6F1213 45%,
+      var(--bg-edge) 100%
     );
   color:var(--text);
   font-family:Arial, sans-serif;
+  position: relative;
 }
+
 
 
 .container{
