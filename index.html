@@ -34,15 +34,22 @@
 }
 
 body{
-  background: linear-gradient(
-    180deg,
-    var(--bg-top) 0%,
-    var(--bg-mid) 60%,
-    var(--bg-bottom) 100%
-  );
+  background:
+    radial-gradient(
+      circle at top,
+      rgba(255,255,255,0.05),
+      rgba(0,0,0,0.35)
+    ),
+    linear-gradient(
+      180deg,
+      #8E1B1C 0%,
+      #6F1213 60%,
+      #5A0E0F 100%
+    );
   color:var(--text);
   font-family:Arial, sans-serif;
 }
+
 
 .container{
   max-width:1400px;
