@@ -25,16 +25,25 @@
   padding:20px;
 }
 
-  :root{
-  --bg:#841617;
+:root{
+  --bg-top:#8E1B1C;
+  --bg-mid:#6F1213;
+  --bg-bottom:#5A0E0F;
   --card:rgba(255,255,255,.15);
   --text:#FDF9D8;
 }
+
 body{
-  background:var(--bg);
+  background: linear-gradient(
+    180deg,
+    var(--bg-top) 0%,
+    var(--bg-mid) 60%,
+    var(--bg-bottom) 100%
+  );
   color:var(--text);
   font-family:Arial, sans-serif;
 }
+
 .container{
   max-width:1400px;
   margin:auto;
