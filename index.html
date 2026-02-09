@@ -812,8 +812,9 @@ function weekIsMatureEnough(currentInputs, previousInputs){
 }
 
 function renderLeaderboards(){
-  leaderboardContainer.innerHTML="";
-  if(!weekFilter.value) return;
+  leaderboardContainer.innerHTML = "";
+  if (!weekFilter.value) return;
+
   const weeklyLeaderboard = [];
 
   const [s, e] = weekFilter.value.split(" - ");
@@ -823,7 +824,7 @@ function renderLeaderboards(){
   const earliestWeekStart = getEarliestWeekStart();
 
   /* =====================
-     STEP 3 — TEAM INPUT DATES
+     TEAM INPUT DATE COUNTS (ONCE)
   ====================== */
 
   const thisWeekInputs = teamInputDatesInRange(start, end);
@@ -836,117 +837,93 @@ function renderLeaderboards(){
 
   const lastWeekInputs = teamInputDatesInRange(lastWeekStart, lastWeekEnd);
 
+  // 🔒 Week maturity gate (71.3%)
+  const weekIsReady =
+    weekIsMatureEnough(thisWeekInputs, lastWeekInputs);
+
   /* =====================
      LEADERBOARD LOOP
   ====================== */
 
-  const thisWeekInputs = teamInputDatesInRange(start, end);
-
-const lastWeekStart = new Date(start);
-lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-
-const lastWeekEnd = new Date(end);
-lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
-
-const lastWeekInputs = teamInputDatesInRange(lastWeekStart, lastWeekEnd);
-
-// 🔒 maturity gate
-const weekIsReady =
-  weekIsMatureEnough(thisWeekInputs, lastWeekInputs);
-  
   positions.forEach(pos => {
     const group = playerData.filter(p => p.position === pos);
 
-    // ... rest of your existing code
+    const ranked = group.length
+      ? group.map(p => {
+          const thisWeekDays = uniqueDaysInRange(p, start, end);
+          const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
-  const ranked = group.length
-    ? group.map(p => {
-        const thisWeekDays = uniqueDaysInRange(p, start, end);
+          let trend = "";
 
-        const lastWeekStart = new Date(start);
-        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+          if (
+            earliestWeekStart &&
+            start.getTime() !== earliestWeekStart.getTime() &&
+            weekIsReady
+          ) {
+            trend = trendIndicator(
+              thisWeekDays,
+              lastWeekDays,
+              thisWeekInputs,
+              lastWeekInputs
+            );
+          }
 
-        const lastWeekEnd = new Date(end);
-        lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+          return {
+            name: p.name,
+            days: thisWeekDays,
+            trend
+          };
+        })
+      : [
+          {
+            name: "—",
+            days: 0,
+            trend: ""
+          }
+        ];
 
-        const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+    // store for charts if needed
+    weeklyLeaderboard.push({
+      position: pos,
+      players: ranked
+    });
 
-        let trend = "";
+    /* =====================
+       LEADERBOARD RENDER
+    ====================== */
 
-if (
-  earliestWeekStart &&
-  start.getTime() !== earliestWeekStart.getTime() &&
-  weekIsReady
-) {
-  trend = trendIndicator(
-    thisWeekDays,
-    lastWeekDays,
-    thisWeekInputs,
-    lastWeekInputs
-  );
-}
+    const top = ranked
+      .filter(p => p.days > 0)
+      .sort((a, b) => b.days - a.days)
+      .slice(0, 5);
 
+    const bottom = ranked
+      .filter(p => !top.some(t => t.name === p.name))
+      .sort((a, b) => a.days - b.days)
+      .slice(0, 5);
 
+    const div = document.createElement("div");
+    div.className = "leaderboard";
 
-        
-
-        return {
-          name: p.name,
-          days: thisWeekDays,
-          trend
-        };
-      })
-    : [
-        {
-          name: "—",
-          days: 0,
-          trend: ""
-        }
-      ];
-
-  // store for charts if needed
-  weeklyLeaderboard.push({
-    position: pos,
-    players: ranked
-  });
-
-  /* =====================
-     LEADERBOARD RENDER
-  ====================== */
-
-  const top = ranked
-    .filter(p => p.days > 0)
-    .sort((a, b) => b.days - a.days)
-    .slice(0, 5);
-
-  const bottom = ranked
-    .filter(p => !top.some(t => t.name === p.name))
-    .sort((a, b) => a.days - b.days)
-    .slice(0, 5);
-
-  const div = document.createElement("div");
-  div.className = "leaderboard";
-
-  let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
-  top.forEach(p => {
-    html += `<li>${p.name}${p.trend || ""}</li>`;
-  });
-  html += `</ol>`;
-
-  if (group.length > 5) {
-    html += `<strong>Bottom Performers</strong><ol>`;
-    bottom.forEach(p => {
+    let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
+    top.forEach(p => {
       html += `<li>${p.name}${p.trend || ""}</li>`;
     });
     html += `</ol>`;
-  }
 
-  div.innerHTML = html;
-  leaderboardContainer.appendChild(div);
-});
+    if (group.length > 5) {
+      html += `<strong>Bottom Performers</strong><ol>`;
+      bottom.forEach(p => {
+        html += `<li>${p.name}${p.trend || ""}</li>`;
+      });
+      html += `</ol>`;
+    }
 
+    div.innerHTML = html;
+    leaderboardContainer.appendChild(div);
+  });
 }
-  
+
 /* ================= CHARTS ================= */
 let avgChart=null,teamChart=null;
 function renderCharts(){
