@@ -806,6 +806,10 @@ function getEarliestWeekStart(){
   return earliest;
 }
 
+function weekIsMatureEnough(currentInputs, previousInputs){
+  if (previousInputs === 0) return false;
+  return (currentInputs / previousInputs) >= 0.713;
+}
 
 function renderLeaderboards(){
   leaderboardContainer.innerHTML="";
@@ -836,6 +840,20 @@ function renderLeaderboards(){
      LEADERBOARD LOOP
   ====================== */
 
+  const thisWeekInputs = teamInputDatesInRange(start, end);
+
+const lastWeekStart = new Date(start);
+lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
+const lastWeekEnd = new Date(end);
+lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+
+const lastWeekInputs = teamInputDatesInRange(lastWeekStart, lastWeekEnd);
+
+// 🔒 maturity gate
+const weekIsReady =
+  weekIsMatureEnough(thisWeekInputs, lastWeekInputs);
+  
   positions.forEach(pos => {
     const group = playerData.filter(p => p.position === pos);
 
@@ -855,9 +873,10 @@ function renderLeaderboards(){
 
         let trend = "";
 
-        if (
+if (
   earliestWeekStart &&
-  start.getTime() !== earliestWeekStart.getTime()
+  start.getTime() !== earliestWeekStart.getTime() &&
+  weekIsReady
 ) {
   trend = trendIndicator(
     thisWeekDays,
@@ -866,6 +885,7 @@ function renderLeaderboards(){
     lastWeekInputs
   );
 }
+
 
 
         
