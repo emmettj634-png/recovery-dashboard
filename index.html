@@ -432,6 +432,19 @@ const weekOfMonth = d => {
 const cream="#FDF9D8";
 const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
+const positionColors = {
+  QB: "#FDF9D8",
+  RB: "#E53935",
+  WR: "#C62828",
+  TE: "#AD1457",
+  OL: "#8E0000",
+  DT: "#6F1213",
+  DE: "#B71C1C",
+  CB: "#D32F2F",
+  S: "#9A1F21",
+  LB: "#7A1416",
+  Specialists: "#4A0C0D"
+};
 const monthFilter = document.getElementById("monthFilter");
 const monthWeekFilter = document.getElementById("monthWeekFilter");
 const moduleBreakdownSelect =
@@ -1194,8 +1207,11 @@ function renderModuleBreakdownChart(){
       data: {
         labels,
         datasets: [{
-          data: values
-        }]
+  data: values,
+  backgroundColor: labels.map(pos => positionColors[pos]),
+  borderColor: "rgba(0,0,0,0.2)",
+borderWidth: 1
+}]
       },
       options: {
         cutout: "60%",
