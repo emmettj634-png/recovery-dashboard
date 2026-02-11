@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -846,13 +847,6 @@ function uniqueDaysInRange(player, start, end){
   ).size;
 }
 
-function totalModulesInRange(player, start, end){
-  return player.sessions.filter(s => {
-    const d = new Date(s.date);
-    return d >= start && d <= end;
-  }).length;
-}
-
 function getEarliestWeekStart(){
   const dates = playerData.flatMap(p =>
     p.sessions.map(s => new Date(s.date))
@@ -909,55 +903,39 @@ function renderLeaderboards(){
   positions.forEach(pos => {
     const group = playerData.filter(p => p.position === pos);
 
-   const ranked = group.length
-  ? group.map(p => {
+    const ranked = group.length
+      ? group.map(p => {
+          const thisWeekDays = uniqueDaysInRange(p, start, end);
+          const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
-      const thisWeekDays =
-        uniqueDaysInRange(p, start, end);
+          let trend = "";
 
-      const lastWeekDays =
-        uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+          if (
+            earliestWeekStart &&
+            start.getTime() !== earliestWeekStart.getTime() &&
+            weekIsReady
+          ) {
+            trend = trendIndicator(
+              thisWeekDays,
+              lastWeekDays,
+              thisWeekInputs,
+              lastWeekInputs
+            );
+          }
 
-      const totalModules =
-        totalModulesInRange(p, start, end);
-
-      let trend = "";
-      let moduleLabel = "";
-
-      if (
-        earliestWeekStart &&
-        start.getTime() !== earliestWeekStart.getTime() &&
-        weekIsReady
-      ) {
-        trend = trendIndicator(
-          thisWeekDays,
-          lastWeekDays,
-          thisWeekInputs,
-          lastWeekInputs
-        );
-      }
-
-      if(!weekIsReady && totalModules > 0){
-        moduleLabel = ` - ${totalModules} modules`;
-      }
-
-      return {
-        name: p.name,
-        days: thisWeekDays,
-        trend,
-        moduleLabel
-      };
-    })
-  : [
-      {
-        name: "—",
-        days: 0,
-        trend: "",
-        moduleLabel: ""
-      }
-    ];
-
-
+          return {
+            name: p.name,
+            days: thisWeekDays,
+            trend
+          };
+        })
+      : [
+          {
+            name: "—",
+            days: 0,
+            trend: ""
+          }
+        ];
 
     // store for charts if needed
     weeklyLeaderboard.push({
@@ -984,14 +962,14 @@ function renderLeaderboards(){
 
     let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
     top.forEach(p => {
-      html += `<li>${p.name}${p.moduleLabel || ""}${p.trend || ""}</li>`;
+      html += `<li>${p.name}${p.trend || ""}</li>`;
     });
     html += `</ol>`;
 
     if (group.length > 5) {
       html += `<strong>Bottom Performers</strong><ol>`;
       bottom.forEach(p => {
-        html += `<li>${p.name}${p.moduleLabel || ""}${p.trend || ""}</li>`;
+        html += `<li>${p.name}${p.trend || ""}</li>`;
       });
       html += `</ol>`;
     }
