@@ -846,6 +846,13 @@ function uniqueDaysInRange(player, start, end){
   ).size;
 }
 
+function totalModulesInRange(player, start, end){
+  return player.sessions.filter(s => {
+    const d = new Date(s.date);
+    return d >= start && d <= end;
+  }).length;
+}
+
 function getEarliestWeekStart(){
   const dates = playerData.flatMap(p =>
     p.sessions.map(s => new Date(s.date))
@@ -903,38 +910,46 @@ function renderLeaderboards(){
     const group = playerData.filter(p => p.position === pos);
 
     const ranked = group.length
-      ? group.map(p => {
-          const thisWeekDays = uniqueDaysInRange(p, start, end);
-          const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+  ? group.map(p => {
 
-          let trend = "";
+      const thisWeekDays =
+        uniqueDaysInRange(p, start, end);
 
-          if (
-            earliestWeekStart &&
-            start.getTime() !== earliestWeekStart.getTime() &&
-            weekIsReady
-          ) {
-            trend = trendIndicator(
-              thisWeekDays,
-              lastWeekDays,
-              thisWeekInputs,
-              lastWeekInputs
-            );
-          }
+      const lastWeekDays =
+        uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
-          return {
-            name: p.name,
-            days: thisWeekDays,
-            trend
-          };
-        })
-      : [
-          {
-            name: "—",
-            days: 0,
-            trend: ""
-          }
-        ];
+      const totalModules =
+        totalModulesInRange(p, start, end);
+
+      let trend = "";
+      let moduleLabel = "";
+
+      if (
+        earliestWeekStart &&
+        start.getTime() !== earliestWeekStart.getTime() &&
+        weekIsReady
+      ) {
+        trend = trendIndicator(
+          thisWeekDays,
+          lastWeekDays,
+          thisWeekInputs,
+          lastWeekInputs
+        );
+      }
+
+      // 🔥 If week is NOT ready, show module totals
+      if(!weekIsReady && totalModules > 0){
+        moduleLabel = ` - ${totalModules} modules`;
+      }
+
+      return {
+        name: p.name,
+        days: thisWeekDays,
+        trend,
+        moduleLabel
+      };
+    })
+
 
     // store for charts if needed
     weeklyLeaderboard.push({
@@ -961,14 +976,14 @@ function renderLeaderboards(){
 
     let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
     top.forEach(p => {
-      html += `<li>${p.name}${p.trend || ""}</li>`;
+      html += `<li>${p.name}${p.moduleLabel || ""}${p.trend || ""}</li>`;
     });
     html += `</ol>`;
 
     if (group.length > 5) {
       html += `<strong>Bottom Performers</strong><ol>`;
       bottom.forEach(p => {
-        html += `<li>${p.name}${p.trend || ""}</li>`;
+        html += `<li>${p.name}${p.moduleLabel || ""}${p.trend || ""}</li>`;
       });
       html += `</ol>`;
     }
