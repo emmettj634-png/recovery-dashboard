@@ -909,7 +909,7 @@ function renderLeaderboards(){
   positions.forEach(pos => {
     const group = playerData.filter(p => p.position === pos);
 
-    const ranked = group.length
+   const ranked = group.length
   ? group.map(p => {
 
       const thisWeekDays =
@@ -937,7 +937,6 @@ function renderLeaderboards(){
         );
       }
 
-      // 🔥 If week is NOT ready, show module totals
       if(!weekIsReady && totalModules > 0){
         moduleLabel = ` - ${totalModules} modules`;
       }
@@ -949,6 +948,15 @@ function renderLeaderboards(){
         moduleLabel
       };
     })
+  : [
+      {
+        name: "—",
+        days: 0,
+        trend: "",
+        moduleLabel: ""
+      }
+    ];
+
 
 
     // store for charts if needed
