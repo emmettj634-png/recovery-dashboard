@@ -652,7 +652,13 @@ document.getElementById("playerModuleTitle").textContent =
   `Player Details – ${p.name}`;
   playerStatsGrid.classList.remove("hidden");
   playerRecoveryDays.textContent=uniqueDates(p).length;
-  playerLastDate.textContent=uniqueDates(p).sort().pop()||"N/A";
+  const lastDate = uniqueDates(p)
+  .map(d => new Date(d))
+  .sort((a, b) => b - a)[0];
+
+playerLastDate.textContent = lastDate
+  ? fmtDate(lastDate)
+  : "N/A";
   document.getElementById("playerModuleTitle").textContent =
   `Cumulative Module Usage – ${p.name}`;
  
