@@ -211,7 +211,7 @@ button{cursor:pointer;}
   <div class="stat-card">Most Popular Module<br><strong id="playerMostModule">-</strong></div>
   <div class="stat-card">Rank in Position<br><strong id="playerRank">-</strong></div>
 </div>
-
+  
 <h2 id="positionModuleTitle">Module Participation</h2>
 <div id="selectedDateLabel" style="text-align:center;font-weight:bold;"></div>
 <div id="moduleGrid" class="module-grid"></div>
@@ -222,10 +222,6 @@ button{cursor:pointer;}
   <canvas id="playerModuleChart" style="display:none;"></canvas>
 </div>
 
-
-<h2>Average Daily Participation by Position (%)</h2>
-<div class="chart-box"><canvas id="avgChart"></canvas></div>
-
   <h2>Average Monthly Participation by Position (%)</h2>
 <div class="controls">
   <select id="monthFilter"></select>
@@ -234,6 +230,19 @@ button{cursor:pointer;}
 <div class="chart-box">
   <canvas id="monthlyAvgChart"></canvas>
 </div>
+
+<h2>Module Usage by Position (%)</h2>
+
+<div class="controls" style="justify-content:center;">
+  <select id="moduleBreakdownSelect">
+    <option value="">Select Module</option>
+  </select>
+</div>
+
+<div class="chart-box">
+  <canvas id="moduleBreakdownChart"></canvas>
+</div>
+
 
 <h2>Total Team Module Usage (All Dates)</h2>
 <div class="chart-box"><canvas id="moduleChart"></canvas></div>
@@ -425,6 +434,9 @@ const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual M
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
 const monthFilter = document.getElementById("monthFilter");
 const monthWeekFilter = document.getElementById("monthWeekFilter");
+const moduleBreakdownSelect =
+  document.getElementById("moduleBreakdownSelect");
+
 
 /* ================= FULL ROSTER ================= */
 const roster = [
@@ -542,15 +554,17 @@ const uniqueDates=p=>[...new Set(p.sessions.map(s=>s.date))];
 
 /* ================= CSV LOAD ================= */
 async function loadCSV(){
-  const res=await fetch("eliterecoverykey.csv?v="+Date.now());
-  const text=await res.text();
-  playerData.forEach(p=>p.sessions=[]);
+  const res = await fetch("eliterecoverykey.csv?v=" + Date.now());
+  const text = await res.text();
+
+  playerData.forEach(p => p.sessions = []);
 
   text.split("\n").slice(1).forEach(r=>{
-    if(!r.trim())return;
-    const[n,m,d]=r.split(",").map(x=>x.trim());
-    const p=playerData.find(x=>x.name===n);
-    if(p)p.sessions.push({module:m,date:d});
+    if(!r.trim()) return;
+
+    const [n, m, d] = r.split(",").map(x => x.trim());
+    const p = playerData.find(x => x.name === n);
+    if(p) p.sessions.push({ module: m, date: d });
   });
 
   populateDates();
@@ -559,7 +573,28 @@ async function loadCSV(){
   renderCharts();
   populateMonths();
   renderMonthlyAvgChart();
+
+  /* =========================
+     Populate Module Dropdown
+  ========================== */
+
+  moduleBreakdownSelect.innerHTML =
+    '<option value="">Select Module</option>';
+
+  modules.forEach(m => {
+    const o = document.createElement("option");
+    o.value = m;
+    o.textContent = m;
+    moduleBreakdownSelect.appendChild(o);
+  });
+
+  // Auto-select first module
+  if(modules.length){
+    moduleBreakdownSelect.value = modules[0];
+    renderModuleBreakdownChart();
+  }
 }
+
 loadCSV();
 
 /* ================= DROPDOWNS ================= */
@@ -931,7 +966,7 @@ function renderLeaderboards(){
 }
 
 /* ================= CHARTS ================= */
-let avgChart=null,teamChart=null;
+teamChart=null;
 function renderCharts(){
   const posDay={};
   playerData.forEach(p=>{
@@ -948,21 +983,6 @@ function renderCharts(){
     return days.length?(days.reduce((a,b)=>a+b)/days.length).toFixed(1):0;
   });
 
-  avgChart?.destroy();
-  avgChart=new Chart(
-    document.getElementById("avgChart"),
-    {
-      type:"bar",
-      data:{labels,datasets:[{label:"%",data:values,backgroundColor:cream}]},
-      options:{
-        scales:{
-          x:{ticks:{color:cream}},
-          y:{ticks:{color:cream,callback:v=>v+"%"},beginAtZero:true,max:100}
-        },
-        plugins:{legend:{labels:{color:cream}}}
-      }
-    }
-  );
 
   const totals={};
   modules.forEach(m=>totals[m]=0);
@@ -1128,6 +1148,73 @@ function renderMonthlyAvgChart(){
   );
 }
 
+let moduleBreakdownChart = null;
+
+function renderModuleBreakdownChart(){
+
+  const selectedModule = moduleBreakdownSelect.value;
+  if(!selectedModule) return;
+
+  const positionCounts = {};
+  let totalUses = 0;
+
+  positions.forEach(pos => {
+    positionCounts[pos] = 0;
+  });
+
+  playerData.forEach(p => {
+    p.sessions.forEach(s => {
+      if(s.module === selectedModule){
+        positionCounts[p.position]++;
+        totalUses++;
+      }
+    });
+  });
+
+  if(totalUses === 0) return;
+
+  const labels = [];
+  const values = [];
+
+  Object.entries(positionCounts).forEach(([pos, count]) => {
+    if(count > 0){
+      labels.push(pos);
+      values.push(
+        ((count / totalUses) * 100).toFixed(1)
+      );
+    }
+  });
+
+  moduleBreakdownChart?.destroy();
+
+  moduleBreakdownChart = new Chart(
+    document.getElementById("moduleBreakdownChart"),
+    {
+      type: "doughnut",   // ← looks better than pie
+      data: {
+        labels,
+        datasets: [{
+          data: values
+        }]
+      },
+      options: {
+        cutout: "60%",
+        plugins: {
+          legend: {
+            labels: { color: cream }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) =>
+                `${ctx.label}: ${ctx.parsed}%`
+            }
+          }
+        }
+      }
+    }
+  );
+}
+
 /* ================= EVENTS ================= */
 positionFilter.onchange = () => {
   populatePlayers();
@@ -1195,6 +1282,9 @@ monthFilter.onchange = () => {
   populateMonthWeeks();
   renderMonthlyAvgChart();
 };
+
+moduleBreakdownSelect.onchange =
+  renderModuleBreakdownChart;
 
 monthWeekFilter.onchange = renderMonthlyAvgChart;
 });
