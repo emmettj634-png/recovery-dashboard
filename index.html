@@ -279,12 +279,22 @@ button{cursor:pointer;}
 
 
 
-<h2 style="text-align:center;">Weekly Participation Leaderboard</h2>
-<div style="text-align:center;margin-bottom:15px;">
-  <select id="weekFilter"></select>
+<div id="weeklyLeaderboardSection">
+
+  <h2 style="text-align:center;">
+    Weekly Participation Leaderboard
+  </h2>
+
+  <div style="text-align:center;margin-bottom:15px;">
+    <select id="weekFilter"></select>
+  </div>
+
+  <div id="leaderboardContainer"
+       class="leaderboard-grid"></div>
+<div id="weeklyLeaderboardSection" class="hidden">
+
 </div>
 
-<div id="leaderboardContainer" class="leaderboard-grid"></div>
 
 </div>
 
@@ -1487,6 +1497,9 @@ const teamModuleSection =
 
 const teamRankSection =
   document.getElementById("teamRankSection");
+const weeklyLeaderboardSection =
+  document.getElementById("weeklyLeaderboardSection");
+
 
 let showingTeamRank = false;
 let showFullTeamRank = false;
@@ -1497,28 +1510,31 @@ teamRankToggleBtn.onclick = () => {
 
   if(showingTeamRank){
 
-    // Hide module participation
-    teamModuleSection.classList.add("hidden");
+  teamModuleSection.classList.add("hidden");
 
-    // Render and show team rank
-    renderTeamRank();
-    teamRankSection.classList.remove("hidden");
+  // 🔥 SHOW weekly leaderboard here
+  weeklyLeaderboardSection.classList.remove("hidden");
 
-    // Change button label
-    teamRankToggleBtn.textContent =
-      "Back to Team View";
+  renderTeamRank();
+  teamRankSection.classList.remove("hidden");
+
+  teamRankToggleBtn.textContent =
+    "Back to Team View";
+
 
   } else {
 
-    // Hide team rank
-    teamRankSection.classList.add("hidden");
+  teamRankSection.classList.add("hidden");
 
-    // Show module participation
-    teamModuleSection.classList.remove("hidden");
+  // 🔥 HIDE weekly leaderboard again
+  weeklyLeaderboardSection.classList.add("hidden");
 
-    teamRankToggleBtn.textContent =
-      "Team Rank";
-  }
+  teamModuleSection.classList.remove("hidden");
+
+  teamRankToggleBtn.textContent =
+    "Team Rank";
+}
+
 };
 
 
