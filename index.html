@@ -760,9 +760,39 @@ playerLastDate.textContent = lastDate
   playerMostModule.textContent=Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0]||"N/A";
 
   const group=playerData.filter(x=>x.position===p.position);
-  const rank=group.sort((a,b)=>uniqueDates(b).length-uniqueDates(a).length)
-    .findIndex(x=>x.name===p.name)+1;
-  playerRank.textContent=`#${rank} out of ${group.length}`;
+  const sortedGroup = group
+  .map(player => ({
+    name: player.name,
+    days: uniqueDates(player).length
+  }))
+  .sort((a,b)=>b.days - a.days);
+
+let rank = 1;
+
+for(let i = 0; i < sortedGroup.length; i++){
+
+  if(i > 0 && sortedGroup[i].days < sortedGroup[i-1].days){
+    rank = i + 1;
+  }
+
+  if(sortedGroup[i].name === p.name){
+    break;
+  }
+}
+
+const playerDays = uniqueDates(p).length;
+
+const tieCount = sortedGroup.filter(x =>
+  x.days === playerDays
+).length;
+
+const rankLabel = tieCount > 1
+  ? `T-${rank}`
+  : `#${rank}`;
+
+playerRank.textContent =
+  `${rankLabel} out of ${group.length}`;
+
 
   renderPlayerModuleChart(p);
 }
@@ -1148,9 +1178,32 @@ function renderLeaderboards(){
     div.className = "leaderboard";
 
     let html = `<h3>${pos}</h3><strong>Top Performers</strong><ol>`;
-    top.forEach(p => {
-      html += `<li>${p.name}${p.trend || ""}</li>`;
-    });
+    let prevValue = null;
+let displayRank = 0;
+
+top.forEach((p, index) => {
+
+  if(prevValue === null || p.days < prevValue){
+    displayRank = index + 1;
+  }
+
+  const tieCount = top.filter(x =>
+    x.days === p.days
+  ).length;
+
+  const rankLabel = tieCount > 1
+    ? `T-${displayRank}`
+    : `#${displayRank}`;
+
+  prevValue = p.days;
+
+  html += `
+    <li>
+      ${rankLabel} ${p.name}
+      ${p.trend || ""}
+    </li>
+  `;
+});
     html += `</ol>`;
 
     if (group.length > 5) {
