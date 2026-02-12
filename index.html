@@ -172,6 +172,15 @@ button{cursor:pointer;}
   }
 }
 
+/* =========================
+   TEAM RANK MOBILE STACK
+========================= */
+
+@media (max-width: 900px) {
+  #teamRankSection .leaderboard {
+    grid-template-columns: 1fr !important;
+  }
+}
 
 </style>
 </head>
@@ -253,17 +262,38 @@ button{cursor:pointer;}
 <!-- ================= TEAM VIEW ================= -->
 <div id="teamView" class="hidden">
 
-<h2 style="text-align:center;">Team Module Participation (Selected Date)</h2>
-<div id="teamModuleGrid"></div>
+<div style="text-align:center; margin:20px 0;">
+  <button id="teamRankToggleBtn">Team Ranks</button>
+</div>
+
+<div id="teamModuleSection">
+  <h2 style="text-align:center;">
+    Team Module Participation (Selected Date)
+  </h2>
+  <div id="teamModuleGrid"></div>
+</div>
+
+<div id="teamRankSection" class="hidden"></div>
 
 <hr style="margin:40px 0;opacity:.4;">
 
-<h2 style="text-align:center;">Weekly Participation Leaderboard</h2>
-<div style="text-align:center;margin-bottom:15px;">
-  <select id="weekFilter"></select>
+
+
+<div id="weeklyLeaderboardSection" class="hidden">
+
+  <h2 style="text-align:center;">
+    Weekly Participation Leaderboard
+  </h2>
+
+  <div style="text-align:center;margin-bottom:15px;">
+    <select id="weekFilter"></select>
+  </div>
+
+  <div id="leaderboardContainer"
+       class="leaderboard-grid"></div>
+
 </div>
 
-<div id="leaderboardContainer" class="leaderboard-grid"></div>
 
 </div>
 
@@ -433,6 +463,19 @@ const weekOfMonth = d => {
 const cream="#FDF9D8";
 const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
+const positionNotes = {
+  QB: "",
+  RB: "",
+  WR: "",
+  TE: "",
+  OL: "",
+  DT: "",
+  DE: "",
+  CB: "",
+  S: "",
+  LB: "",
+  Specialists: ""
+};
 const positionColors = {
   QB: "#FDF9D8",
   RB: "#E53935",
@@ -450,6 +493,7 @@ const monthFilter = document.getElementById("monthFilter");
 const monthWeekFilter = document.getElementById("monthWeekFilter");
 const moduleBreakdownSelect =
   document.getElementById("moduleBreakdownSelect");
+
 
 
 /* ================= FULL ROSTER ================= */
@@ -803,6 +847,149 @@ function renderTeamView(){
   populateWeeks();
   renderLeaderboards();
 }
+
+function renderTeamRank(){
+
+  teamRankSection.innerHTML = "";
+
+  const card = document.createElement("div");
+  card.className = "leaderboard";
+
+  // 🔥 Make the inside split into two columns
+  card.style.display = "grid";
+  card.style.gridTemplateColumns = "1fr 1fr";
+  card.style.gap = "40px";
+  card.style.alignItems = "start";
+
+
+  /* =========================
+     LEFT COLUMN — TEAM RANK
+  ========================== */
+
+  const rankDiv = document.createElement("div");
+  rankDiv.style.borderRight =
+  "1px solid rgba(253,249,216,.3)";
+rankDiv.style.paddingRight = "20px";
+
+
+  const rankedRoster = playerData
+    .map(p => ({
+      name: p.name,
+      totalModules: p.sessions.length
+    }))
+    .sort((a,b) => b.totalModules - a.totalModules);
+  const displayRoster = showFullTeamRank
+  ? rankedRoster
+  : rankedRoster.slice(0, 25);
+
+
+  let rankHTML = `
+    <h3>Team Rank – Total Modules (All Time)</h3>
+    <ol>
+  `;
+
+  displayRoster.forEach(p=>{
+    rankHTML += `
+      <li>
+        ${p.name}
+        <span style="opacity:.7;">
+          (${p.totalModules})
+        </span>
+      </li>
+    `;
+  });
+
+  rankHTML += "</ol>";
+  if(rankedRoster.length > 25){
+
+  rankHTML += `
+    <div style="margin-top:15px; text-align:center;">
+      <button id="teamRankExpandBtn">
+        ${showFullTeamRank ? "Show Less" : "Show More"}
+      </button>
+    </div>
+  `;
+}
+
+
+  rankDiv.innerHTML = rankHTML;
+  const expandBtn =
+  rankDiv.querySelector("#teamRankExpandBtn");
+
+if(expandBtn){
+  expandBtn.onclick = () => {
+    showFullTeamRank = !showFullTeamRank;
+    renderTeamRank();
+  };
+}
+
+
+
+  /* =========================
+     RIGHT COLUMN — LEADERS & NOTES
+  ========================== */
+
+  const leadersDiv = document.createElement("div");
+leadersDiv.style.paddingLeft = "20px";
+
+  let leaderHTML = `
+    <h3>Individual Leaders & Notes</h3>
+    <table style="
+  width:100%;
+  border-collapse:collapse;
+  font-size:1rem;
+">
+      <thead>
+        <tr>
+          <th style="text-align:left;">Position</th>
+          <th style="text-align:left;">Days</th>
+          <th style="text-align:left;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  positions.forEach(pos => {
+
+    const group = playerData.filter(p => p.position === pos);
+    if(!group.length) return;
+
+    const leader = group
+      .map(p => ({
+        name: p.name,
+        days: new Set(p.sessions.map(s=>s.date)).size
+      }))
+      .sort((a,b)=>b.days - a.days)[0];
+
+    leaderHTML += `
+      <tr>
+        <td>
+  ${pos}
+  <div style="font-size:.85rem; opacity:.75;">
+    ${leader.name}
+  </div>
+</td>
+        <td>${leader.days}</td>
+        <td style="opacity:.8;">
+  ${positionNotes[pos] || ""}
+</td>
+      </tr>
+    `;
+  });
+
+  leaderHTML += `
+      </tbody>
+    </table>
+  `;
+
+  leadersDiv.innerHTML = leaderHTML;
+
+  card.appendChild(rankDiv);
+  card.appendChild(leadersDiv);
+
+  teamRankSection.appendChild(card);
+}
+
 
 /* ================= WEEKLY LEADERBOARD ================= */
 function getWeekRange(dateStr){
@@ -1286,8 +1473,10 @@ toggleView.onclick = () => {
   playerFilter.classList.toggle("hidden");
   positionFilter.classList.toggle("hidden");
 
-  // Update button label
-  toggleView.textContent = toTeam ? "Player View" : "Team View";
+ // Update button label
+toggleView.textContent =
+  toTeam ? "Back to Player View" : "Team View";
+
 
   // Render team modules immediately when entering Team View
   if (toTeam) {
@@ -1299,6 +1488,54 @@ monthFilter.onchange = () => {
   populateMonthWeeks();
   renderMonthlyAvgChart();
 };
+const teamRankToggleBtn =
+  document.getElementById("teamRankToggleBtn");
+
+const teamModuleSection =
+  document.getElementById("teamModuleSection");
+
+const teamRankSection =
+  document.getElementById("teamRankSection");
+const weeklyLeaderboardSection =
+  document.getElementById("weeklyLeaderboardSection");
+
+
+let showingTeamRank = false;
+let showFullTeamRank = false;
+
+teamRankToggleBtn.onclick = () => {
+
+  showingTeamRank = !showingTeamRank;
+
+  if(showingTeamRank){
+
+  teamModuleSection.classList.add("hidden");
+
+  // 🔥 SHOW weekly leaderboard here
+  weeklyLeaderboardSection.classList.remove("hidden");
+
+  renderTeamRank();
+  teamRankSection.classList.remove("hidden");
+
+  teamRankToggleBtn.textContent =
+    "Back to Team View";
+
+
+  } else {
+
+  teamRankSection.classList.add("hidden");
+
+  // 🔥 HIDE weekly leaderboard again
+  weeklyLeaderboardSection.classList.add("hidden");
+
+  teamModuleSection.classList.remove("hidden");
+
+  teamRankToggleBtn.textContent =
+    "Team Rank";
+}
+
+};
+
 
 moduleBreakdownSelect.onchange =
   renderModuleBreakdownChart;
