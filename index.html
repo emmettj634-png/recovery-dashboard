@@ -779,7 +779,11 @@ playerLastDate.textContent = lastDate
   const sortedGroup = group
   .map(player => ({
     name: player.name,
-    days: uniqueDates(player).length
+    days: uniqueDaysInRange(
+      player,
+      currentWeekStart,
+      currentWeekEnd
+    )
   }))
   .sort((a,b)=>b.days - a.days);
 
@@ -796,7 +800,11 @@ for(let i = 0; i < sortedGroup.length; i++){
   }
 }
 
-const playerDays = uniqueDates(p).length;
+const playerDays = uniqueDaysInRange(
+  p,
+  currentWeekStart,
+  currentWeekEnd
+);
 
 const tieCount = sortedGroup.filter(x =>
   x.days === playerDays
