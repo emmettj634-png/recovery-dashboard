@@ -253,8 +253,18 @@ button{cursor:pointer;}
 <!-- ================= TEAM VIEW ================= -->
 <div id="teamView" class="hidden">
 
-<h2 style="text-align:center;">Team Module Participation (Selected Date)</h2>
-<div id="teamModuleGrid"></div>
+<div style="text-align:center; margin:20px 0;">
+  <button id="teamRankToggleBtn">Team Rank</button>
+</div>
+
+<div id="teamModuleSection">
+  <h2 style="text-align:center;">
+    Team Module Participation (Selected Date)
+  </h2>
+  <div id="teamModuleGrid"></div>
+</div>
+
+<div id="teamRankSection" class="hidden"></div>
 
 <hr style="margin:40px 0;opacity:.4;">
 
@@ -812,7 +822,7 @@ function renderTeamView(){
 
 function renderTeamRank(){
 
-  leaderboardContainer.innerHTML = "";
+  teamRankSection.innerHTML = "";
 
   // Build ranking list
   const rankedRoster = playerData
@@ -834,7 +844,7 @@ function renderTeamRank(){
   html += `</ol>`;
 
   div.innerHTML = html;
-  leaderboardContainer.appendChild(div);
+ teamRankSection.appendChild(div);
 }
 
 /* ================= WEEKLY LEADERBOARD ================= */
@@ -1332,6 +1342,47 @@ monthFilter.onchange = () => {
   populateMonthWeeks();
   renderMonthlyAvgChart();
 };
+const teamRankToggleBtn =
+  document.getElementById("teamRankToggleBtn");
+
+const teamModuleSection =
+  document.getElementById("teamModuleSection");
+
+const teamRankSection =
+  document.getElementById("teamRankSection");
+
+let showingTeamRank = false;
+
+teamRankToggleBtn.onclick = () => {
+
+  showingTeamRank = !showingTeamRank;
+
+  if(showingTeamRank){
+
+    // Hide module participation
+    teamModuleSection.classList.add("hidden");
+
+    // Render and show team rank
+    renderTeamRank();
+    teamRankSection.classList.remove("hidden");
+
+    // Change button label
+    teamRankToggleBtn.textContent =
+      "Back to Team View";
+
+  } else {
+
+    // Hide team rank
+    teamRankSection.classList.add("hidden");
+
+    // Show module participation
+    teamModuleSection.classList.remove("hidden");
+
+    teamRankToggleBtn.textContent =
+      "Team Rank";
+  }
+};
+
 const teamRankBtn =
   document.getElementById("teamRankBtn");
 
