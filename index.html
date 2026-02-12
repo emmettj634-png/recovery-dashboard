@@ -732,6 +732,17 @@ function populateMonthWeeks(){
 let playerModuleChart=null;
 function showPlayer(){
   const p=playerData.find(x=>x.name===playerFilter.value);
+  // Get current week (Sunday–Saturday)
+const today = new Date();
+
+const currentWeekStart = new Date(today);
+currentWeekStart.setDate(today.getDate() - today.getDay());
+currentWeekStart.setHours(0,0,0,0);
+
+const currentWeekEnd = new Date(currentWeekStart);
+currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+currentWeekEnd.setHours(23,59,59,999);
+
   if(!p)return;
   // Show chart, hide empty state
 document.querySelector("#playerModuleContainer .empty-state").style.display = "none";
@@ -744,7 +755,12 @@ document.getElementById("playerModuleTitle").textContent =
   document.getElementById("playerDetailsTitle").textContent =
   `Player Details – ${p.name}`;
   playerStatsGrid.classList.remove("hidden");
-  playerRecoveryDays.textContent=uniqueDates(p).length;
+  playerRecoveryDays.textContent =
+  uniqueDaysInRange(
+    p,
+    currentWeekStart,
+    currentWeekEnd
+  );
   const lastDate = uniqueDates(p)
   .map(d => new Date(d))
   .sort((a, b) => b - a)[0];
