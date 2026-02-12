@@ -922,19 +922,9 @@ function renderTeamRank(){
       <tr>
         <td>${pos}</td>
         <td>${leader.days}</td>
-        <td>
-          <textarea 
-            rows="2"
-            style="
-              width:100%;
-              background:rgba(255,255,255,.1);
-              color:#FDF9D8;
-              border:none;
-              border-radius:6px;
-              padding:6px;
-            ">
-          </textarea>
-        </td>
+        <td style="opacity:.8;">
+  ${positionNotes[pos] || ""}
+</td>
       </tr>
     `;
   });
