@@ -869,13 +869,17 @@ rankDiv.style.paddingRight = "20px";
       totalModules: p.sessions.length
     }))
     .sort((a,b) => b.totalModules - a.totalModules);
+  const displayRoster = showFullTeamRank
+  ? rankedRoster
+  : rankedRoster.slice(0, 25);
+
 
   let rankHTML = `
     <h3>Team Rank – Total Modules (All Time)</h3>
     <ol>
   `;
 
-  rankedRoster.forEach(p=>{
+  displayRoster.forEach(p=>{
     rankHTML += `
       <li>
         ${p.name}
@@ -887,8 +891,29 @@ rankDiv.style.paddingRight = "20px";
   });
 
   rankHTML += "</ol>";
+  if(rankedRoster.length > 25){
+
+  rankHTML += `
+    <div style="margin-top:15px; text-align:center;">
+      <button id="teamRankExpandBtn">
+        ${showFullTeamRank ? "Show Less" : "Show More"}
+      </button>
+    </div>
+  `;
+}
+
 
   rankDiv.innerHTML = rankHTML;
+  const expandBtn =
+  rankDiv.querySelector("#teamRankExpandBtn");
+
+if(expandBtn){
+  expandBtn.onclick = () => {
+    showFullTeamRank = !showFullTeamRank;
+    renderTeamRank();
+  };
+}
+
 
 
   /* =========================
@@ -1464,6 +1489,7 @@ const teamRankSection =
   document.getElementById("teamRankSection");
 
 let showingTeamRank = false;
+let showFullTeamRank = false;
 
 teamRankToggleBtn.onclick = () => {
 
