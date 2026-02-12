@@ -172,6 +172,15 @@ button{cursor:pointer;}
   }
 }
 
+/* =========================
+   TEAM RANK MOBILE STACK
+========================= */
+
+@media (max-width: 900px) {
+  #teamRankSection .leaderboard {
+    grid-template-columns: 1fr !important;
+  }
+}
 
 </style>
 </head>
@@ -821,7 +830,22 @@ function renderTeamRank(){
 
   teamRankSection.innerHTML = "";
 
-  // Build ranking list
+  const card = document.createElement("div");
+  card.className = "leaderboard";
+
+  // 🔥 Make the inside split into two columns
+  card.style.display = "grid";
+  card.style.gridTemplateColumns = "1fr 1fr";
+  card.style.gap = "40px";
+  card.style.alignItems = "start";
+
+
+  /* =========================
+     LEFT COLUMN — TEAM RANK
+  ========================== */
+
+  const rankDiv = document.createElement("div");
+
   const rankedRoster = playerData
     .map(p => ({
       name: p.name,
@@ -829,20 +853,92 @@ function renderTeamRank(){
     }))
     .sort((a,b) => b.totalModules - a.totalModules);
 
-  const div = document.createElement("div");
-  div.className = "leaderboard";
+  let rankHTML = `
+    <h3>Team Rank – Total Modules (All Time)</h3>
+    <ol>
+  `;
 
-  let html = `<h3>Team Rank – Total Modules (All Time)</h3><ol>`;
-
-  rankedRoster.forEach(p => {
-    html += `<li>${p.name} <span style="opacity:.7">(${p.totalModules})</span></li>`;
+  rankedRoster.forEach(p=>{
+    rankHTML += `
+      <li>
+        ${p.name}
+        <span style="opacity:.7;">
+          (${p.totalModules})
+        </span>
+      </li>
+    `;
   });
 
-  html += `</ol>`;
+  rankHTML += "</ol>";
 
-  div.innerHTML = html;
- teamRankSection.appendChild(div);
+  rankDiv.innerHTML = rankHTML;
+
+
+  /* =========================
+     RIGHT COLUMN — LEADERS & NOTES
+  ========================== */
+
+  const leadersDiv = document.createElement("div");
+
+  let leaderHTML = `
+    <h3>Individual Leaders & Notes</h3>
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left;">Position</th>
+          <th style="text-align:left;">Days</th>
+          <th style="text-align:left;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  positions.forEach(pos => {
+
+    const group = playerData.filter(p => p.position === pos);
+    if(!group.length) return;
+
+    const leader = group
+      .map(p => ({
+        name: p.name,
+        days: new Set(p.sessions.map(s=>s.date)).size
+      }))
+      .sort((a,b)=>b.days - a.days)[0];
+
+    leaderHTML += `
+      <tr>
+        <td>${pos}</td>
+        <td>${leader.days}</td>
+        <td>
+          <textarea 
+            rows="2"
+            style="
+              width:100%;
+              background:rgba(255,255,255,.1);
+              color:#FDF9D8;
+              border:none;
+              border-radius:6px;
+              padding:6px;
+            ">
+          </textarea>
+        </td>
+      </tr>
+    `;
+  });
+
+  leaderHTML += `
+      </tbody>
+    </table>
+  `;
+
+  leadersDiv.innerHTML = leaderHTML;
+
+  card.appendChild(rankDiv);
+  card.appendChild(leadersDiv);
+
+  teamRankSection.appendChild(card);
 }
+
 
 /* ================= WEEKLY LEADERBOARD ================= */
 function getWeekRange(dateStr){
