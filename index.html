@@ -858,6 +858,10 @@ function renderTeamRank(){
   ========================== */
 
   const rankDiv = document.createElement("div");
+  rankDiv.style.borderRight =
+  "1px solid rgba(253,249,216,.3)";
+rankDiv.style.paddingRight = "20px";
+
 
   const rankedRoster = playerData
     .map(p => ({
@@ -892,6 +896,7 @@ function renderTeamRank(){
   ========================== */
 
   const leadersDiv = document.createElement("div");
+leadersDiv.style.paddingLeft = "20px";
 
   let leaderHTML = `
     <h3>Individual Leaders & Notes</h3>
@@ -920,7 +925,12 @@ function renderTeamRank(){
 
     leaderHTML += `
       <tr>
-        <td>${pos}</td>
+        <td>
+  ${pos}
+  <div style="font-size:.85rem; opacity:.75;">
+    ${leader.name}
+  </div>
+</td>
         <td>${leader.days}</td>
         <td style="opacity:.8;">
   ${positionNotes[pos] || ""}
