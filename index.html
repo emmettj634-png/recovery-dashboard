@@ -258,6 +258,11 @@ button{cursor:pointer;}
 
 <hr style="margin:40px 0;opacity:.4;">
 
+<div style="text-align:center; margin:20px 0;">
+  <button id="teamRankBtn">Team Rank</button>
+</div>
+
+
 <h2 style="text-align:center;">Weekly Participation Leaderboard</h2>
 <div style="text-align:center;margin-bottom:15px;">
   <select id="weekFilter"></select>
@@ -450,6 +455,7 @@ const monthFilter = document.getElementById("monthFilter");
 const monthWeekFilter = document.getElementById("monthWeekFilter");
 const moduleBreakdownSelect =
   document.getElementById("moduleBreakdownSelect");
+
 
 
 /* ================= FULL ROSTER ================= */
@@ -802,6 +808,33 @@ function renderTeamView(){
 
   populateWeeks();
   renderLeaderboards();
+}
+
+function renderTeamRank(){
+
+  leaderboardContainer.innerHTML = "";
+
+  // Build ranking list
+  const rankedRoster = playerData
+    .map(p => ({
+      name: p.name,
+      totalModules: p.sessions.length
+    }))
+    .sort((a,b) => b.totalModules - a.totalModules);
+
+  const div = document.createElement("div");
+  div.className = "leaderboard";
+
+  let html = `<h3>Team Rank – Total Modules (All Time)</h3><ol>`;
+
+  rankedRoster.forEach(p => {
+    html += `<li>${p.name} <span style="opacity:.7">(${p.totalModules})</span></li>`;
+  });
+
+  html += `</ol>`;
+
+  div.innerHTML = html;
+  leaderboardContainer.appendChild(div);
 }
 
 /* ================= WEEKLY LEADERBOARD ================= */
@@ -1299,6 +1332,10 @@ monthFilter.onchange = () => {
   populateMonthWeeks();
   renderMonthlyAvgChart();
 };
+const teamRankBtn =
+  document.getElementById("teamRankBtn");
+
+teamRankBtn.onclick = renderTeamRank;
 
 moduleBreakdownSelect.onchange =
   renderModuleBreakdownChart;
