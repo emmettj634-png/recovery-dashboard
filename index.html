@@ -1296,7 +1296,8 @@ fullRanked.forEach((p,i)=>{
 // ACTUAL BOTTOM 5
 const bottom = fullRanked
   .slice(-5)
-  .reverse();
+  .sort((a,b)=>a.trueRank - b.trueRank);
+
 
     const div = document.createElement("div");
     div.className = "leaderboard";
