@@ -792,9 +792,6 @@ const end =
     ? lastWeekEnd
     : currentWeekEnd;
 
-  // Get current week (Sunday–Saturday)
-const today = new Date();
-
 const currentWeekStart = new Date(today);
 currentWeekStart.setDate(today.getDate() - today.getDay());
 currentWeekStart.setHours(0,0,0,0);
