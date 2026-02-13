@@ -1383,23 +1383,27 @@ top.forEach((p, index) => {
 
   bottom.forEach(p => {
 
-  const tieGroup =
+ const lowestDays =
+  Math.min(...fullRanked.map(x => x.days));
+
+const tieGroup =
   fullRanked.filter(x =>
     x.days === p.days
   );
 
 const positionSize = fullRanked.length;
 
-const isLastPlaceTie =
-  tieGroup.every(x =>
-    x.trueRank === positionSize
-  );
+// 🔒 tied for worst?
+const isWorstTie =
+  p.days === lowestDays &&
+  tieGroup.length > 1;
 
-const rankText = isLastPlaceTie
+const rankText = isWorstTie
   ? `T-${positionSize}`
   : (tieGroup.length > 1
       ? `T-${p.trueRank}`
       : `${p.trueRank}`);
+
 
   html += `
     <li>
