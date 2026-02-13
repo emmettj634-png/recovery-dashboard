@@ -1172,6 +1172,13 @@ function uniqueDaysInRange(player, start, end){
       .map(s => s.date)
   ).size;
 }
+function totalModulesInRange(player, start, end){
+  return player.sessions.filter(s=>{
+    const d = new Date(s.date);
+    return d >= start && d <= end;
+  }).length;
+}
+
 
 function getEarliestWeekStart(){
   const dates = playerData.flatMap(p =>
