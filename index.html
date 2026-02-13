@@ -862,12 +862,14 @@ const tieCount = sortedGroup.filter(x =>
   x.days === playerDays
 ).length;
 
-const rankLabel = tieCount > 1
+const rankText = tieCount > 1
   ? `T-${rank}`
-  : `#${rank}`;
+  : `${rank}`;
+
 
 playerRank.textContent =
-  `${rankLabel} out of ${group.length}`;
+  `${rankText} out of ${group.length}`;
+
 
 
   renderPlayerModuleChart(p);
