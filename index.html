@@ -1229,46 +1229,47 @@ function renderLeaderboards(){
   positions.forEach(pos => {
     const group = playerData.filter(p => p.position === pos);
 
-    const ranked = group.length
-      ? group.map(p => {
-          const thisWeekDays = uniqueDaysInRange(p, start, end);
-          const lastWeekDays = uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+   const ranked = group.length
+  ? group.map(p => {
 
-          let trend = "";
+      const thisWeekDays =
+        uniqueDaysInRange(p, start, end);
 
-          if (
-            earliestWeekStart &&
-            start.getTime() !== earliestWeekStart.getTime() &&
-            weekIsReady
-          ) {
-            trend = trendIndicator(
-              thisWeekDays,
-              lastWeekDays,
-              thisWeekInputs,
-              lastWeekInputs
-            );
-          }
+      const lastWeekDays =
+        uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
-        // 🔒 All tied this week?
+      let trend = "";
+
+      if(
+        earliestWeekStart &&
+        start.getTime() !== earliestWeekStart.getTime() &&
+        weekIsReady
+      ){
+        trend = trendIndicator(
+          thisWeekDays,
+          lastWeekDays,
+          thisWeekInputs,
+          lastWeekInputs
+        );
+      }
+
+      return {
+        name: p.name,
+        days: thisWeekDays,
+        trend
+      };
+
+    })
+  : [];
+
+
+// 🔒 All tied this week?
 const uniqueWeeklyValues =
   new Set(ranked.map(p => p.days));
 
 const allWeeklyTied =
   uniqueWeeklyValues.size === 1;
 
-          return {
-            name: p.name,
-            days: thisWeekDays,
-            trend
-          };
-        })
-      : [
-          {
-            name: "—",
-            days: 0,
-            trend: ""
-          }
-        ];
 
     // store for charts if needed
     weeklyLeaderboard.push({
