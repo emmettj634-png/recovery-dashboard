@@ -791,15 +791,6 @@ const end =
   showingLastWeek
     ? lastWeekEnd
     : currentWeekEnd;
-
-const currentWeekStart = new Date(today);
-currentWeekStart.setDate(today.getDate() - today.getDay());
-currentWeekStart.setHours(0,0,0,0);
-
-const currentWeekEnd = new Date(currentWeekStart);
-currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
-currentWeekEnd.setHours(23,59,59,999);
-
   if(!p)return;
   // Show chart, hide empty state
 document.querySelector("#playerModuleContainer .empty-state").style.display = "none";
