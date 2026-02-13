@@ -871,14 +871,26 @@ for(let i = 0; i < sortedGroup.length; i++){
 const playerDays =
   uniqueDaysInRange(p,start,end);
 
+const tieGroup =
+  sortedGroup.filter(x =>
+    x.days === playerDays
+  );
 
-const tieCount = sortedGroup.filter(x =>
-  x.days === playerDays
-).length;
+const lowestDays =
+  Math.min(...sortedGroup.map(x => x.days));
 
-const rankText = tieCount > 1
-  ? `T-${rank}`
-  : `${rank}`;
+const positionSize =
+  sortedGroup.length;
+
+const isWorstTie =
+  playerDays === lowestDays &&
+  tieGroup.length > 1;
+
+const rankText = isWorstTie
+  ? `T-${positionSize}`
+  : (tieGroup.length > 1
+      ? `T-${rank}`
+      : `${rank}`);
 
 
 playerRank.textContent =
