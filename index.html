@@ -1343,14 +1343,23 @@ top.forEach((p, index) => {
 
   bottom.forEach(p => {
 
-  const tieCount =
-    fullRanked.filter(x =>
-      x.days === p.days
-    ).length;
+  const tieGroup =
+  fullRanked.filter(x =>
+    x.days === p.days
+  );
 
-  const rankText = tieCount > 1
-    ? `T-${p.trueRank}`
-    : `${p.trueRank}`;
+const positionSize = fullRanked.length;
+
+const isLastPlaceTie =
+  tieGroup.every(x =>
+    x.trueRank === positionSize
+  );
+
+const rankText = isLastPlaceTie
+  ? `T-${positionSize}`
+  : (tieGroup.length > 1
+      ? `T-${p.trueRank}`
+      : `${p.trueRank}`);
 
   html += `
     <li>
