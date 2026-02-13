@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1330,51 +1331,9 @@ const bottom = fullRanked
     const div = document.createElement("div");
     div.className = "leaderboard";
 
-  let html = `<h3>${pos}</h3>`;
-
-if(nobodyActive){
-
-  html += `
-    <div style="opacity:.7; margin:6px 0;">
-      No ${pos} players recorded recovery this week
-    </div>
-  `;
-
-} else {
-
-  html += `
-    <strong>Top Performers</strong>
-    <ul style="list-style:none; padding-left:0;">
-  `;
-
-  let prevValue = null;
-  let displayRank = 0;
-
-  top.forEach((p,index)=>{
-
-    if(prevValue === null || p.days < prevValue){
-      displayRank = index+1;
-    }
-
-    const tieCount =
-      top.filter(x => x.days === p.days).length;
-
-    const rankText = tieCount > 1
-      ? `T-${displayRank}`
-      : `${displayRank}`;
-
-    prevValue = p.days;
-
-    html += `
-      <li>
-        ${rankText}. ${p.name}
-        ${p.trend || ""}
-      </li>
-    `;
-  });
-
-  html += `</ul>`;
-}
+  let html = `<h3>${pos}</h3>
+            <strong>Top Performers</strong>
+            <ul style="list-style:none; padding-left:0;">`;
 
 if(top.length > 0){
 
@@ -1846,5 +1805,3 @@ monthWeekFilter.onchange =
 
 </body>
 </html>
-
-
