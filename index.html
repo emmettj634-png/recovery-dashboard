@@ -1572,7 +1572,7 @@ function renderMonthlyAvgChart(){
     });
   });
 
- const labels = positions;
+const labels = positions;
 
 const values = positions.map(pos=>{
 
@@ -1581,6 +1581,28 @@ const values = positions.map(pos=>{
 
   if(!posDay[pos]) return 0;
 
+  // 🔒 WEEK SELECTED → use INPUT DAYS
+  if(monthWeekFilter.value !== "all"){
+
+    const parts = monthWeekFilter.value.split("-");
+    const start = new Date(`${parts[0]}-${parts[1]}-${parts[2]}`);
+    const end   = new Date(`${parts[3]}-${parts[4]}-${parts[5]}`);
+
+    const inputDays =
+      teamInputDatesInRange(start, end);
+
+    if(inputDays === 0) return 0;
+
+    const totalUses =
+      Object.values(posDay[pos])
+        .reduce((a,b)=>a+b,0);
+
+    return (
+      (totalUses / (rosterSize * inputDays)) * 100
+    ).toFixed(1);
+  }
+
+  // 📅 MONTH ONLY → normal monthly avg
   const days =
     Object.values(posDay[pos])
       .map(c => (c / rosterSize) * 100);
