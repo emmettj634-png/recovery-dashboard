@@ -1395,29 +1395,27 @@ html += `</ul>`;
   let prevValue = null;
   let displayRank = 0;
 
-  bottom.forEach(p => {
+bottom.forEach(p => {
 
- const lowestDays =
-  Math.min(...fullRanked.map(x => x.days));
+  const lowestDays =
+    Math.min(...fullRanked.map(x => x.days));
 
-const tieGroup =
-  fullRanked.filter(x =>
-    x.days === p.days
-  );
+  const tieGroup =
+    fullRanked.filter(x =>
+      x.days === p.days
+    );
 
-const positionSize = fullRanked.length;
+  const positionSize = fullRanked.length;
 
-// 🔒 tied for worst?
-const isWorstTie =
-  p.days === lowestDays &&
-  tieGroup.length > 1;
+  const isWorstTie =
+    p.days === lowestDays &&
+    tieGroup.length > 1;
 
-const rankText = isWorstTie
-  ? `T-${positionSize}`
-  : (tieGroup.length > 1
-      ? `T-${p.trueRank}`
-      : `${p.trueRank}`);
-
+  const rankText = isWorstTie
+    ? `T-${positionSize}`
+    : (tieGroup.length > 1
+        ? `T-${p.trueRank}`
+        : `${p.trueRank}`);
 
   html += `
     <li>
@@ -1425,15 +1423,8 @@ const rankText = isWorstTie
       ${p.trend || ""}
     </li>
   `;
-}
+});
 
-
-  html += `</ul>`;
-}
-    div.innerHTML = html;
-    leaderboardContainer.appendChild(div);
-  });
-}
 
 /* ================= CHARTS ================= */
 teamChart=null;
