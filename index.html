@@ -216,7 +216,27 @@ button{cursor:pointer;}
 
 <h2 id="playerDetailsTitle">Player Details</h2>
 <div id="playerStatsGrid" class="stats-grid hidden">
-  <div class="stat-card">Recovery Days (Current Week)<br><strong id="playerRecoveryDays">0</strong></div>
+  <div class="stat-card">
+
+  <span id="recoveryDaysLabel">
+    Recovery Days (This Week)
+  </span><br>
+
+  <span
+    id="weekToggleLink"
+    style="
+      font-size:.75rem;
+      opacity:.7;
+      cursor:pointer;
+      text-decoration:underline;
+    ">
+    show last week
+  </span><br>
+
+  <strong id="playerRecoveryDays">0</strong>
+
+</div>
+
   <div class="stat-card">Last Recovery Date<br><strong id="playerLastDate">N/A</strong></div>
   <div class="stat-card">Most Popular Module<br><strong id="playerMostModule">-</strong></div>
   <div class="stat-card">Rank in Position<br><strong id="playerRank">-</strong></div>
@@ -301,6 +321,20 @@ button{cursor:pointer;}
 
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
+let showingLastWeek = false;
+
+const weekToggleLink =
+  document.getElementById("weekToggleLink");
+
+const recoveryDaysLabel =
+  document.getElementById("recoveryDaysLabel");
+
+weekToggleLink.onclick = () => {
+
+  showingLastWeek = !showingLastWeek;
+
+  showPlayer(); // re-render stats
+};
 function inputDatesAllowDecline(prevInputs, currentInputs) {
   // Current week must exist visually
   if (currentInputs === 0) return false;
@@ -732,6 +766,32 @@ function populateMonthWeeks(){
 let playerModuleChart=null;
 function showPlayer(){
   const p=playerData.find(x=>x.name===playerFilter.value);
+  const today = new Date();
+
+const currentWeekStart = new Date(today);
+currentWeekStart.setDate(today.getDate() - today.getDay());
+currentWeekStart.setHours(0,0,0,0);
+
+const currentWeekEnd = new Date(currentWeekStart);
+currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+currentWeekEnd.setHours(23,59,59,999);
+
+const lastWeekStart = new Date(currentWeekStart);
+lastWeekStart.setDate(currentWeekStart.getDate() - 7);
+
+const lastWeekEnd = new Date(currentWeekEnd);
+lastWeekEnd.setDate(currentWeekEnd.getDate() - 7);
+
+const start =
+  showingLastWeek
+    ? lastWeekStart
+    : currentWeekStart;
+
+const end =
+  showingLastWeek
+    ? lastWeekEnd
+    : currentWeekEnd;
+
   // Get current week (Sunday–Saturday)
 const today = new Date();
 
@@ -756,11 +816,8 @@ document.getElementById("playerModuleTitle").textContent =
   `Player Details – ${p.name}`;
   playerStatsGrid.classList.remove("hidden");
   playerRecoveryDays.textContent =
-  uniqueDaysInRange(
-    p,
-    currentWeekStart,
-    currentWeekEnd
-  );
+  uniqueDaysInRange(p,start,end);
+
   const lastDate = uniqueDates(p)
   .map(d => new Date(d))
   .sort((a, b) => b - a)[0];
@@ -779,11 +836,8 @@ playerLastDate.textContent = lastDate
   const sortedGroup = group
   .map(player => ({
     name: player.name,
-    days: uniqueDaysInRange(
-      player,
-      currentWeekStart,
-      currentWeekEnd
-    )
+    days: uniqueDaysInRange(player,start,end)
+
   }))
   .sort((a,b)=>b.days - a.days);
 
@@ -800,11 +854,9 @@ for(let i = 0; i < sortedGroup.length; i++){
   }
 }
 
-const playerDays = uniqueDaysInRange(
-  p,
-  currentWeekStart,
-  currentWeekEnd
-);
+const playerDays =
+  uniqueDaysInRange(p,start,end);
+
 
 const tieCount = sortedGroup.filter(x =>
   x.days === playerDays
@@ -819,6 +871,21 @@ playerRank.textContent =
 
 
   renderPlayerModuleChart(p);
+  recoveryDaysLabel.textContent =
+  showingLastWeek
+    ? "Recovery Days (Last Week)"
+    : "Recovery Days (This Week)";
+
+playerRank.previousElementSibling.textContent =
+  showingLastWeek
+    ? "Rank in Position (Last Week)"
+    : "Rank in Position (This Week)";
+
+weekToggleLink.textContent =
+  showingLastWeek
+    ? "show current week"
+    : "show last week";
+
 }
 
 /* ================= MODULE PARTICIPATION ================= */
