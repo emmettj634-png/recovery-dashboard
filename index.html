@@ -1290,26 +1290,19 @@ const allWeeklyTied =
 
  let top;
 
-// 🔒 remove zero-day players first
 const eligibleWeekly =
   ranked.filter(p => p.days > 0);
 
-// 🔒 if nobody has any recovery this week
 const nobodyActive =
   eligibleWeekly.length === 0;
 
-if(nobodyActive){
+let top = [];
 
-  top = []; // show nothing
-
-} else {
-
+if(!nobodyActive){
   top = eligibleWeekly
     .sort((a,b)=>b.days - a.days)
     .slice(0,5);
-
 }
-
 
     // FULL POSITION RANKING
 const fullRanked = [...ranked]
