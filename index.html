@@ -1589,12 +1589,7 @@ const values = positions.map(pos=>{
     ? (days.reduce((a,b)=>a+b) / days.length).toFixed(1)
     : 0;
 });
-    const rosterSize = roster.filter(r=>r.position===pos).length;
-    const days = Object.values(posDay[pos]).map(c => (c/rosterSize)*100);
-    return days.length
-      ? (days.reduce((a,b)=>a+b)/days.length).toFixed(1)
-      : 0;
-  });
+
 
   monthlyAvgChart?.destroy();
   monthlyAvgChart = new Chart(
