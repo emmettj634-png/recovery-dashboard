@@ -1288,35 +1288,28 @@ const allWeeklyTied =
        LEADERBOARD RENDER
     ====================== */
 
-   let top;
+ let top;
 
-if(allWeeklyTied){
+// 🔒 remove zero-day players first
+const eligibleWeekly =
+  ranked.filter(p => p.days > 0);
 
-  // 🔁 fallback to cumulative modules
-  top = ranked
-    .map(p => ({
-      ...p,
-      modules:
-        totalModulesInRange(
-          playerData.find(x =>
-            x.name === p.name
-          ),
-          new Date(0),
-          new Date()
-        )
-    }))
-    .sort((a,b)=>b.modules - a.modules)
-    .slice(0,5);
+// 🔒 if nobody has any recovery this week
+const nobodyActive =
+  eligibleWeekly.length === 0;
+
+if(nobodyActive){
+
+  top = []; // show nothing
 
 } else {
 
-  // normal weekly ranking
-  top = ranked
-    .filter(p => p.days > 0)
+  top = eligibleWeekly
     .sort((a,b)=>b.days - a.days)
     .slice(0,5);
 
 }
+
 
     // FULL POSITION RANKING
 const fullRanked = [...ranked]
@@ -1344,34 +1337,49 @@ const bottom = fullRanked
     const div = document.createElement("div");
     div.className = "leaderboard";
 
-   let html = `<h3>${pos}</h3><strong>Top Performers</strong><ul style="list-style:none; padding-left:0;">`;
-    let prevValue = null;
-let displayRank = 0;
+  let html = `<h3>${pos}</h3>
+            <strong>Top Performers</strong>
+            <ul style="list-style:none; padding-left:0;">`;
 
-top.forEach((p, index) => {
+if(top.length === 0){
 
-  if(prevValue === null || p.days < prevValue){
-    displayRank = index + 1;
-  }
+  html += `<li style="opacity:.7;">
+             No recovery days this week
+           </li>`;
 
-  const tieCount = top.filter(x =>
-    x.days === p.days
-  ).length;
+} else {
 
-  const rankLabel = tieCount > 1
-    ? `T-${displayRank}`
-    : `${displayRank}`;
+  let prevValue = null;
+  let displayRank = 0;
 
-  prevValue = p.days;
+  top.forEach((p,index)=>{
 
-  html += `
-    <li>
-      ${rankLabel}. ${p.name}
-      ${p.trend || ""}
-    </li>
-  `;
-});
-   html += `</ul>`;
+    if(prevValue === null || p.days < prevValue){
+      displayRank = index+1;
+    }
+
+    const tieCount =
+      top.filter(x =>
+        x.days === p.days
+      ).length;
+
+    const rankText = tieCount > 1
+      ? `T-${displayRank}`
+      : `${displayRank}`;
+
+    prevValue = p.days;
+
+    html += `
+      <li>
+        ${rankText}. ${p.name}
+        ${p.trend || ""}
+      </li>
+    `;
+  });
+
+}
+
+html += `</ul>`;
 
   if(group.length > 5 && !allWeeklyTied){
 
