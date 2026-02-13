@@ -1293,8 +1293,10 @@ fullRanked.forEach((p,i)=>{
   p.trueRank = trueRank;
 });
 
-// ACTUAL BOTTOM 5
 const bottom = fullRanked
+  .filter(p =>
+    !top.some(t => t.name === p.name)
+  )
   .slice(-5)
   .sort((a,b)=>a.trueRank - b.trueRank);
 
