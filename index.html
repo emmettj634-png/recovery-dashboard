@@ -823,7 +823,7 @@ document.getElementById("playerModuleTitle").textContent =
   `Cumulative Module Usage – ${p.name}`;
 
   document.getElementById("playerDetailsTitle").textContent =
-  `Player Details – ${p.name}`;
+  `Player Details: ${p.name}`;
   playerStatsGrid.classList.remove("hidden");
   playerRecoveryDays.textContent =
   uniqueDaysInRange(p,start,end);
@@ -836,7 +836,7 @@ playerLastDate.textContent = lastDate
   ? fmtDate(lastDate)
   : "N/A";
   document.getElementById("playerModuleTitle").textContent =
-  `Cumulative Module Usage – ${p.name}`;
+  `Cumulative Module Usage: ${p.name}`;
  
   const mods={};
   p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
