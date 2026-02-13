@@ -1424,6 +1424,8 @@ bottom.forEach(p => {
 
 html += `</ul>`;
 }
+div.innerHTML = html;
+leaderboardContainer.appendChild(div);
 });   // closes positions.forEach
 
 }   // 🔥 ADD THIS LINE (closes renderLeaderboards)
