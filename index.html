@@ -1342,9 +1342,14 @@ const bottom = fullRanked
             <ul style="list-style:none; padding-left:0;">`;
 
 if(top.length === 0){
+let html = `<h3>${pos}</h3>
+            <strong>Top Performers</strong>
+            <ul style="list-style:none; padding-left:0;">`;
+
+if(allWeeklyTied){
 
   html += `<li style="opacity:.7;">
-             No recovery days this week
+             All ${pos} players have equal recovery days this week
            </li>`;
 
 } else {
@@ -1380,6 +1385,7 @@ if(top.length === 0){
 }
 
 html += `</ul>`;
+
 
   if(group.length > 5 && !allWeeklyTied){
 
