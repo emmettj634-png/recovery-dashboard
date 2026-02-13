@@ -1602,20 +1602,30 @@ const values = positions.map(pos=>{
     ).toFixed(1);
   }
 
-// 📅 ALL WEEKS → weighted by input days
+// 📅 ALL WEEKS → TEAM INPUT OPPORTUNITY DAYS
 
-const totalUses =
-  Object.values(posDay[pos])
-    .reduce((a,b)=>a+b,0);
+const teamMonthInputDates = new Set();
 
-const inputDays =
-  Object.keys(posDay[pos]).length;
+playerData.forEach(p=>{
+  p.sessions.forEach(s=>{
+    if(monthKey(s.date) === monthFilter.value){
+      teamMonthInputDates.add(s.date);
+    }
+  });
+});
+
+const inputDays = teamMonthInputDates.size;
 
 if(inputDays === 0) return 0;
+
+const totalUses =
+  Object.values(posDay[pos] || {})
+    .reduce((a,b)=>a+b,0);
 
 return (
   (totalUses / (rosterSize * inputDays)) * 100
 ).toFixed(1);
+
 });
 
 
