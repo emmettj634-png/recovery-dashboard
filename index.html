@@ -1278,10 +1278,25 @@ function renderLeaderboards(){
       .sort((a, b) => b.days - a.days)
       .slice(0, 5);
 
-    const bottom = ranked
-      .filter(p => !top.some(t => t.name === p.name))
-      .sort((a, b) => a.days - b.days)
-      .slice(0, 5);
+    // FULL POSITION RANKING
+const fullRanked = [...ranked]
+  .sort((a,b)=>b.days - a.days);
+
+let trueRank = 1;
+
+fullRanked.forEach((p,i)=>{
+
+  if(i>0 && p.days < fullRanked[i-1].days){
+    trueRank = i+1;
+  }
+
+  p.trueRank = trueRank;
+});
+
+// ACTUAL BOTTOM 5
+const bottom = fullRanked
+  .slice(-5)
+  .reverse();
 
     const div = document.createElement("div");
     div.className = "leaderboard";
@@ -1323,29 +1338,25 @@ top.forEach((p, index) => {
   let prevValue = null;
   let displayRank = 0;
 
-  bottom.forEach((p, index) => {
+  bottom.forEach(p => {
 
-    if(prevValue === null || p.days > prevValue){
-      displayRank = index + 1;
-    }
-
-    const tieCount = bottom.filter(x =>
+  const tieCount =
+    fullRanked.filter(x =>
       x.days === p.days
     ).length;
 
-    const rankLabel = tieCount > 1
-      ? `T-${displayRank}`
-      : `${displayRank}`;
+  const rankText = tieCount > 1
+    ? `T-${p.trueRank}`
+    : `${p.trueRank}`;
 
-    prevValue = p.days;
+  html += `
+    <li>
+      ${rankText}. ${p.name}
+      ${p.trend || ""}
+    </li>
+  `;
+});
 
-    html += `
-      <li>
-        ${rankLabel}. ${p.name}
-        ${p.trend || ""}
-      </li>
-    `;
-  });
 
   html += `</ul>`;
 }
