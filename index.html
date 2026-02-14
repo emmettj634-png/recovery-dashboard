@@ -1857,8 +1857,11 @@ teamRankToggleBtn.onclick = () => {
 moduleBreakdownSelect.onchange =
   renderModuleBreakdownChart;
 
-monthWeekFilter.onchange =
-  renderMonthlyAvgChart;
+monthWeekFilter.onchange = () => {
+  setTimeout(() => {
+    renderMonthlyAvgChart();
+  }, 150);
+};
   });  
 </script>
 
