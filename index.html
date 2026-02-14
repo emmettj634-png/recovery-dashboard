@@ -1632,6 +1632,7 @@ return (
   monthlyAvgChart?.destroy();
   monthlyAvgChart = new Chart(
     document.getElementById("monthlyAvgChart"),
+
     {
       type:"bar",
       data:{
@@ -1665,7 +1666,11 @@ return (
     }
   );
 }
-
+ requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    monthlyAvgChart.resize();
+  });
+});
 let moduleBreakdownChart = null;
 
 function renderModuleBreakdownChart(){
