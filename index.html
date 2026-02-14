@@ -231,6 +231,9 @@ button{cursor:pointer;}
 <div id="playerView">
 
 <h2 id="playerDetailsTitle">Player Details</h2>
+<div id="playerDetailsEmpty" class="empty-state">
+  Select a player to view details
+</div>
 <div id="playerStatsGrid" class="stats-grid hidden">
 <div class="stat-card">
 
@@ -795,8 +798,8 @@ function populateMonthWeeks(){
     .sort((a,b)=>b.start - a.start) // most recent first
     .forEach(w=>{
       const o = document.createElement("option");
-      o.value = w.label;       // store label as value
-      o.textContent = w.label;
+     o.value = w.label;
+o.textContent = w.label;
       monthWeekFilter.appendChild(o);
     });
 }
@@ -805,6 +808,8 @@ function populateMonthWeeks(){
 /* ================= PLAYER DETAILS ================= */
 let playerModuleChart=null;
 function showPlayer(){
+document.getElementById("playerDetailsEmpty")
+  .classList.add("hidden");
   const p=playerData.find(x=>x.name===playerFilter.value);
   const today = new Date();
 
@@ -1232,7 +1237,7 @@ function renderLeaderboards(){
 
   const weeklyLeaderboard = [];
 
-  const [s, e] = weekFilter.value.split("-");
+  const [s, e] = weekFilter.value.split(" - ");
   const start = new Date(s);
   const end = new Date(e);
 
@@ -1814,6 +1819,8 @@ playerFilter.onchange = () => {
 
   // 🔄 Player cleared
   if(!playerFilter.value){
+  document.getElementById("playerDetailsEmpty")
+  .classList.remove("hidden");
     // Reset titles
     document.getElementById("playerDetailsTitle").textContent = "Player Details";
     document.getElementById("playerModuleTitle").textContent = "Cumulative Module Usage";
@@ -1830,6 +1837,7 @@ playerFilter.onchange = () => {
 
   // ✅ Player selected
   showPlayer();
+
 };
 
 dateFilter.onchange = () => {
