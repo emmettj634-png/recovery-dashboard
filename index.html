@@ -1651,7 +1651,6 @@ waitForChartBox(() => {
   const canvas =
     document.getElementById("monthlyAvgChart");
 
-  // 🔥 THIS is what mobile needs
   canvas.style.height = "380px";
   canvas.height = 380;
 
@@ -1693,11 +1692,13 @@ waitForChartBox(() => {
     }
   );
 
-});
- requestAnimationFrame(() => {
+  // 🔥 NOW safe to resize AFTER it exists
   requestAnimationFrame(() => {
-    monthlyAvgChart.resize();
+    requestAnimationFrame(() => {
+      monthlyAvgChart.resize();
+    });
   });
+
 });
 let moduleBreakdownChart = null;
 
