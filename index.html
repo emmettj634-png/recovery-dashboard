@@ -10,6 +10,18 @@
 
 <style>
 
+.chart-box {
+  position: relative;
+}
+
+.chart-box canvas {
+  min-height: 380px !important;
+}
+@media (max-width: 768px){
+  .chart-box{
+    display:block !important;
+  }
+}
 
 /* === Trend arrows === */
 .trend-up.light { color: #9BE7A6; }    /* light green */
