@@ -1608,9 +1608,6 @@ function renderMonthlyAvgChart(){
 const labels = positions;
 
 const values = positions.map(pos=>{
-setTimeout(()=>{
-  alert("Monthly values:\n" + values.join(", "));
-}, 500);
   const rosterSize =
     roster.filter(r => r.position === pos).length;
 
