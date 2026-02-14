@@ -1910,11 +1910,14 @@ teamRankToggleBtn.onclick = () => {
 moduleBreakdownSelect.onchange =
   renderModuleBreakdownChart;
 
-monthWeekFilter.onchange = () => {
-  setTimeout(() => {
-    renderMonthlyAvgChart();
-  }, 150);
-};
+monthWeekFilter.addEventListener("input", () => {
+  renderMonthlyAvgChart();
+});
+
+monthWeekFilter.addEventListener("change", () => {
+  renderMonthlyAvgChart();
+});
+
   });  
 </script>
 
