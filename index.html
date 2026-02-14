@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1436,6 +1434,24 @@ leaderboardContainer.appendChild(div);
 }   // 🔥 ADD THIS LINE (closes renderLeaderboards)
 
 /* ================= CHARTS ================= */
+function waitForChartBox(callback){
+
+  const box =
+    document.querySelector("#monthlyAvgChart")
+      .parentElement;
+
+  const check = () => {
+
+    if(box.offsetHeight > 0){
+      callback();
+    } else {
+      requestAnimationFrame(check);
+    }
+
+  };
+
+  check();
+}
 teamChart=null;
 function renderCharts(){
   const posDay={};
@@ -1628,11 +1644,12 @@ return (
 
 });
 
+monthlyAvgChart?.destroy();
 
-  monthlyAvgChart?.destroy();
+waitForChartBox(() => {
+
   monthlyAvgChart = new Chart(
     document.getElementById("monthlyAvgChart"),
-
     {
       type:"bar",
       data:{
@@ -1643,6 +1660,9 @@ return (
         }]
       },
       options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        animation:false,
         scales:{
           x:{ ticks:{ color:cream }},
           y:{
@@ -1665,7 +1685,8 @@ return (
       }
     }
   );
-}
+
+});
  requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     monthlyAvgChart.resize();
