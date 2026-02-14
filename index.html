@@ -112,7 +112,12 @@ select,button{
   font-weight:bold;
 }
 button{cursor:pointer;}
-.hidden{display:none;}
+.hidden{
+  visibility:hidden;
+  position:absolute;
+  left:-9999px;
+}
+
 
 .stats-grid,.module-grid{
   display:grid;
