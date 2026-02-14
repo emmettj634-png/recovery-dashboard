@@ -1629,9 +1629,9 @@ const values = positions.map(pos=>{
       Object.values(posDay[pos])
         .reduce((a,b)=>a+b,0);
 
-    return (
-      (totalUses / (rosterSize * inputDays)) * 100
-    ).toFixed(1);
+    return Number(
+  ((totalUses / (rosterSize * inputDays)) * 100).toFixed(1)
+);
   }
 
 // 📅 ALL WEEKS → TEAM INPUT OPPORTUNITY DAYS
@@ -1654,9 +1654,9 @@ const totalUses =
   Object.values(posDay[pos] || {})
     .reduce((a,b)=>a+b,0);
 
-return (
-  (totalUses / (rosterSize * inputDays)) * 100
-).toFixed(1);
+return Number(
+  ((totalUses / (rosterSize * inputDays)) * 100).toFixed(1)
+);
 
 });
 
