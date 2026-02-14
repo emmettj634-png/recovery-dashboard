@@ -1648,8 +1648,15 @@ monthlyAvgChart?.destroy();
 
 waitForChartBox(() => {
 
+  const canvas =
+    document.getElementById("monthlyAvgChart");
+
+  // 🔥 THIS is what mobile needs
+  canvas.style.height = "380px";
+  canvas.height = 380;
+
   monthlyAvgChart = new Chart(
-    document.getElementById("monthlyAvgChart"),
+    canvas,
     {
       type:"bar",
       data:{
