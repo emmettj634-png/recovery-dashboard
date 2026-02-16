@@ -1638,6 +1638,24 @@ function parseWeekLabel(label){
 
 function renderMonthlyAvgChart(){
   const posDay = {};
+  const validTeamDates = new Set();
+const teamDateCounts = {};
+
+playerData.forEach(p=>{
+  p.sessions.forEach(s=>{
+    if(monthKey(s.date) !== monthFilter.value) return;
+
+    teamDateCounts[s.date] =
+      (teamDateCounts[s.date] || 0) + 1;
+  });
+});
+
+Object.entries(teamDateCounts)
+  .forEach(([date,count])=>{
+    if(count >= 10){
+      validTeamDates.add(date);
+    }
+  });
 
   playerData.forEach(p=>{
     const dates = new Set();
@@ -1686,89 +1704,32 @@ const values = positions.map(pos=>{
 
   if(rosterSize === 0) return 0;
 
-  // only count uses on VALID team dates
   let totalUses = 0;
+  let validInputDays = 0;
 
-  playerData
-    .filter(p => p.position === pos)
-    .forEach(p=>{
-      p.sessions.forEach(s=>{
-        if(validTeamDates.has(s.date)){
-          totalUses++;
-        }
-      });
-    });
+  validTeamDates.forEach(date => {
 
-  const inputDays =
-    validTeamDates.size;
+    const dayUses = playerData
+      .filter(p => p.position === pos)
+      .reduce((sum,p)=>{
+        return sum + p.sessions.filter(s =>
+          s.date === date
+        ).length;
+      },0);
 
-  if(inputDays === 0) return 0;
+    if(dayUses > 0){
+      totalUses += dayUses;
+      validInputDays++;
+    }
+
+  });
+
+  if(validInputDays === 0) return 0;
 
   return Number(
-    ((totalUses / (rosterSize * inputDays)) * 100)
+    ((totalUses / (rosterSize * validInputDays)) * 100)
       .toFixed(1)
   );
-
-});
-  const rosterSize =
-    roster.filter(r => r.position === pos).length;
-
-  if(!posDay[pos]) return 0;
-
-  // 🔒 WEEK SELECTED → use INPUT DAYS
-  if(monthWeekFilter.value !== "all"){
-
-   const {start,end} =
-  parseWeekLabel(monthWeekFilter.value);
-
-   const inputDays =
-  validTeamInputDatesInRange(start, end);
-
-
-    if(inputDays === 0) return 0;
-
-    const totalUses =
-      Object.values(posDay[pos])
-        .reduce((a,b)=>a+b,0);
-
-    return Number(
-  ((totalUses / (rosterSize * inputDays)) * 100).toFixed(1)
-);
-  }
-
-// 📅 ALL WEEKS → TEAM INPUT OPPORTUNITY DAYS
-
-const dateCounts = {};
-
-playerData.forEach(p=>{
-  p.sessions.forEach(s=>{
-    if(monthKey(s.date) === monthFilter.value){
-
-      dateCounts[s.date] ??= new Set();
-      dateCounts[s.date].add(p.name);
-
-    }
-  });
-});
-
-const teamMonthInputDates =
-  Object.values(dateCounts)
-    .filter(set => set.size >= 10);
-
-const monthInputDays =
-  teamMonthInputDates.length;
-
-const inputDays = teamMonthInputDates.size;
-
-if(monthInputDays === 0) return 0;
-
-const totalUses =
-  Object.values(posDay[pos] || {})
-    .reduce((a,b)=>a+b,0);
-
-return Number(
-  ((totalUses / (rosterSize * monthInputDays)) * 100).toFixed(1)
-);
 
 });
 
