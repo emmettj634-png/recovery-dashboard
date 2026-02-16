@@ -412,6 +412,31 @@ function teamInputDatesInRange(start, end) {
   return dates.size;
 }
 
+function validTeamInputDatesInRange(start, end){
+
+  const dateCounts = {};
+
+  playerData.forEach(p=>{
+    p.sessions.forEach(s=>{
+
+      const d = new Date(s.date);
+
+      if(d >= start && d <= end){
+
+        dateCounts[s.date] ??= new Set();
+        dateCounts[s.date].add(p.name);
+
+      }
+
+    });
+  });
+
+  // only count dates with ≥10 unique participants
+  return Object.values(dateCounts)
+    .filter(set => set.size >= 10)
+    .length;
+}
+
   
 function trendIndicator(
   current,
@@ -1632,8 +1657,9 @@ const values = positions.map(pos=>{
    const {start,end} =
   parseWeekLabel(monthWeekFilter.value);
 
-    const inputDays =
-      teamInputDatesInRange(start, end);
+   const inputDays =
+  validTeamInputDatesInRange(start, end);
+
 
     if(inputDays === 0) return 0;
 
@@ -1648,15 +1674,25 @@ const values = positions.map(pos=>{
 
 // 📅 ALL WEEKS → TEAM INPUT OPPORTUNITY DAYS
 
-const teamMonthInputDates = new Set();
+const dateCounts = {};
 
 playerData.forEach(p=>{
   p.sessions.forEach(s=>{
     if(monthKey(s.date) === monthFilter.value){
-      teamMonthInputDates.add(s.date);
+
+      dateCounts[s.date] ??= new Set();
+      dateCounts[s.date].add(p.name);
+
     }
   });
 });
+
+const teamMonthInputDates =
+  Object.values(dateCounts)
+    .filter(set => set.size >= 10);
+
+const inputDays =
+  teamMonthInputDates.length;
 
 const inputDays = teamMonthInputDates.size;
 
