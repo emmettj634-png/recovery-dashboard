@@ -830,11 +830,25 @@ o.textContent = w.label;
 
 /* ================= PLAYER DETAILS ================= */
 let playerModuleChart=null;
+function getActiveWeekBaseDate(){
+
+  const allDates = playerData.flatMap(p =>
+    p.sessions.map(s => new Date(s.date))
+  );
+
+  if(!allDates.length){
+    return new Date();
+  }
+
+  return new Date(
+    Math.max(...allDates)
+  );
+}
 function showPlayer(){
 document.getElementById("playerDetailsEmpty")
   .classList.add("hidden");
   const p=playerData.find(x=>x.name===playerFilter.value);
-  const today = new Date();
+  const today = getActiveWeekBaseDate();
 
 const currentWeekStart = new Date(today);
 currentWeekStart.setDate(today.getDate() - today.getDay());
