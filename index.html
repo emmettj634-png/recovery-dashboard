@@ -1691,19 +1691,19 @@ const teamMonthInputDates =
   Object.values(dateCounts)
     .filter(set => set.size >= 10);
 
-const inputDays =
+const monthInputDays =
   teamMonthInputDates.length;
 
 const inputDays = teamMonthInputDates.size;
 
-if(inputDays === 0) return 0;
+if(monthInputDays === 0) return 0;
 
 const totalUses =
   Object.values(posDay[pos] || {})
     .reduce((a,b)=>a+b,0);
 
 return Number(
-  ((totalUses / (rosterSize * inputDays)) * 100).toFixed(1)
+  ((totalUses / (rosterSize * monthInputDays)) * 100).toFixed(1)
 );
 
 });
