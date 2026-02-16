@@ -1638,41 +1638,61 @@ function parseWeekLabel(label){
 
 function renderMonthlyAvgChart(){
   const posDay = {};
+  const teamDateCounts = {};
   const validTeamDates = new Set();
 const teamDateCounts = {};
+const teamDateCounts = {};
+const playerDates = {};
 
+// 🔒 SINGLE PASS — count team + track player participation
 playerData.forEach(p=>{
+
+  playerDates[p.name] = new Set();
+
   p.sessions.forEach(s=>{
+
     if(monthKey(s.date) !== monthFilter.value) return;
 
+    if(monthWeekFilter.value !== "all"){
+      const w = weekRange(s.date);
+      if(w.label !== monthWeekFilter.value) return;
+    }
+
+    // count total roster participation per date
     teamDateCounts[s.date] =
       (teamDateCounts[s.date] || 0) + 1;
+
+    playerDates[p.name].add(s.date);
+
   });
+
 });
 
-Object.entries(teamDateCounts)
-  .forEach(([date,count])=>{
-    if(count >= 10){
-      validTeamDates.add(date);
-    }
-  });
+// 🔒 Only keep team input days with ≥10 participants
+const validTeamDates = new Set(
+  Object.entries(teamDateCounts)
+    .filter(([date,count]) => count >= 10)
+    .map(([date]) => date)
+);
 
-  playerData.forEach(p=>{
-    const dates = new Set();
-
-    p.sessions.forEach(s=>{
-      if(monthKey(s.date) !== monthFilter.value) return;
-      if(monthWeekFilter.value !== "all"){
-  const w = weekRange(s.date);
-  if(w.label !== monthWeekFilter.value) return;
 }
       dates.add(s.date);
     });
 
-    dates.forEach(d=>{
-      posDay[p.position] ??= {};
-      posDay[p.position][d] = (posDay[p.position][d] || 0) + 1;
-    });
+  playerData.forEach(p=>{
+
+  playerDates[p.name].forEach(d=>{
+
+    if(!validTeamDates.has(d)) return;
+
+    posDay[p.position] ??= {};
+    posDay[p.position][d] =
+      (posDay[p.position][d] || 0) + 1;
+
+  });
+
+});
+
   });
 
 const labels = positions;
