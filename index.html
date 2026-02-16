@@ -1658,8 +1658,58 @@ function renderMonthlyAvgChart(){
   });
 
 const labels = positions;
+const validTeamDates = new Set();
+
+const teamDateCounts = {};
+
+playerData.forEach(p=>{
+  p.sessions.forEach(s=>{
+    if(monthKey(s.date) !== monthFilter.value) return;
+
+    teamDateCounts[s.date] =
+      (teamDateCounts[s.date] || 0) + 1;
+  });
+});
+
+// keep only ≥10 participation days
+Object.entries(teamDateCounts)
+  .forEach(([date,count])=>{
+    if(count >= 10){
+      validTeamDates.add(date);
+    }
+  });
 
 const values = positions.map(pos=>{
+
+  const rosterSize =
+    roster.filter(r => r.position === pos).length;
+
+  if(rosterSize === 0) return 0;
+
+  // only count uses on VALID team dates
+  let totalUses = 0;
+
+  playerData
+    .filter(p => p.position === pos)
+    .forEach(p=>{
+      p.sessions.forEach(s=>{
+        if(validTeamDates.has(s.date)){
+          totalUses++;
+        }
+      });
+    });
+
+  const inputDays =
+    validTeamDates.size;
+
+  if(inputDays === 0) return 0;
+
+  return Number(
+    ((totalUses / (rosterSize * inputDays)) * 100)
+      .toFixed(1)
+  );
+
+});
   const rosterSize =
     roster.filter(r => r.position === pos).length;
 
