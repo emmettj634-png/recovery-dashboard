@@ -1637,178 +1637,151 @@ function parseWeekLabel(label){
 }
 
 function renderMonthlyAvgChart(){
+
   const posDay = {};
   const teamDateCounts = {};
-  const validTeamDates = new Set();
-const teamDateCounts = {};
-const teamDateCounts = {};
-const playerDates = {};
+  const playerDates = {};
 
-// 🔒 SINGLE PASS — count team + track player participation
-playerData.forEach(p=>{
-
-  playerDates[p.name] = new Set();
-
-  p.sessions.forEach(s=>{
-
-    if(monthKey(s.date) !== monthFilter.value) return;
-
-    if(monthWeekFilter.value !== "all"){
-      const w = weekRange(s.date);
-      if(w.label !== monthWeekFilter.value) return;
-    }
-
-    // count total roster participation per date
-    teamDateCounts[s.date] =
-      (teamDateCounts[s.date] || 0) + 1;
-
-    playerDates[p.name].add(s.date);
-
-  });
-
-});
-
-// 🔒 Only keep team input days with ≥10 participants
-const validTeamDates = new Set(
-  Object.entries(teamDateCounts)
-    .filter(([date,count]) => count >= 10)
-    .map(([date]) => date)
-);
-
-}
-      dates.add(s.date);
-    });
+  /* =========================
+     PASS 1 — TEAM COUNTS
+  ========================== */
 
   playerData.forEach(p=>{
 
-  playerDates[p.name].forEach(d=>{
+    playerDates[p.name] = new Set();
 
-    if(!validTeamDates.has(d)) return;
+    p.sessions.forEach(s=>{
 
-    posDay[p.position] ??= {};
-    posDay[p.position][d] =
-      (posDay[p.position][d] || 0) + 1;
+      if(monthKey(s.date) !== monthFilter.value) return;
 
-  });
+      if(monthWeekFilter.value !== "all"){
+        const w = weekRange(s.date);
+        if(w.label !== monthWeekFilter.value) return;
+      }
 
-});
+      teamDateCounts[s.date] =
+        (teamDateCounts[s.date] || 0) + 1;
 
-  });
+      playerDates[p.name].add(s.date);
 
-const labels = positions;
-
-playerData.forEach(p=>{
-  p.sessions.forEach(s=>{
-    if(monthKey(s.date) !== monthFilter.value) return;
-
-    teamDateCounts[s.date] =
-      (teamDateCounts[s.date] || 0) + 1;
-  });
-});
-
-// keep only ≥10 participation days
-Object.entries(teamDateCounts)
-  .forEach(([date,count])=>{
-    if(count >= 10){
-      validTeamDates.add(date);
-    }
-  });
-
-const values = positions.map(pos=>{
-
-  const rosterSize =
-    roster.filter(r => r.position === pos).length;
-
-  if(rosterSize === 0) return 0;
-
-  let totalUses = 0;
-  let validInputDays = 0;
-
-  validTeamDates.forEach(date => {
-
-    const dayUses = playerData
-      .filter(p => p.position === pos)
-      .reduce((sum,p)=>{
-        return sum + p.sessions.filter(s =>
-          s.date === date
-        ).length;
-      },0);
-
-    if(dayUses > 0){
-      totalUses += dayUses;
-      validInputDays++;
-    }
+    });
 
   });
 
-  if(validInputDays === 0) return 0;
+  /* =========================
+     ONLY KEEP ≥10 PARTICIPANTS
+  ========================== */
 
-  return Number(
-    ((totalUses / (rosterSize * validInputDays)) * 100)
-      .toFixed(1)
+  const validTeamDates = new Set(
+    Object.entries(teamDateCounts)
+      .filter(([date,count]) => count >= 10)
+      .map(([date]) => date)
   );
 
-});
+  /* =========================
+     BUILD POSITION DAY COUNTS
+  ========================== */
 
-console.log("Monthly values:", values);
-monthlyAvgChart?.destroy();
+  playerData.forEach(p=>{
 
-waitForChartBox(() => {
+    playerDates[p.name].forEach(d=>{
 
-  const canvas =
-    document.getElementById("monthlyAvgChart");
+      if(!validTeamDates.has(d)) return;
 
-  canvas.style.height = "380px";
-  canvas.height = 380;
+      posDay[p.position] ??= {};
+      posDay[p.position][d] =
+        (posDay[p.position][d] || 0) + 1;
 
-  monthlyAvgChart = new Chart(
-    canvas,
-    {
-      type:"bar",
-      data:{
-        labels,
-        datasets:[{
-          data:values,
-          backgroundColor:cream
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        animation:false,
-        scales:{
-          x:{ ticks:{ color:cream }},
-          y:{
-            min:0,
-            max:100,
-            ticks:{
-              color:cream,
-              callback:v=>v+"%"
-            }
-          }
+    });
+
+  });
+
+  /* =========================
+     CALCULATE %
+  ========================== */
+
+  const labels = positions;
+
+  const values = positions.map(pos=>{
+
+    const rosterSize =
+      roster.filter(r=>r.position===pos).length;
+
+    if(rosterSize === 0) return 0;
+
+    const inputDays =
+      validTeamDates.size;
+
+    if(inputDays === 0) return 0;
+
+    const totalUses =
+      Object.values(posDay[pos] || {})
+        .reduce((a,b)=>a+b,0);
+
+    return Number(
+      ((totalUses / (rosterSize * inputDays)) * 100)
+        .toFixed(1)
+    );
+
+  });
+
+  monthlyAvgChart?.destroy();
+
+  waitForChartBox(()=>{
+
+    const canvas =
+      document.getElementById("monthlyAvgChart");
+
+    canvas.style.height = "380px";
+    canvas.height = 380;
+
+    monthlyAvgChart = new Chart(
+      canvas,
+      {
+        type:"bar",
+        data:{
+          labels,
+          datasets:[{
+            data:values,
+            backgroundColor:cream
+          }]
         },
-        plugins:{
-          legend:{ display:false },
-          tooltip:{
-            callbacks:{
-              label:ctx=>ctx.parsed.y+"%"
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          animation:false,
+          scales:{
+            x:{ticks:{color:cream}},
+            y:{
+              min:0,
+              max:100,
+              ticks:{
+                color:cream,
+                callback:v=>v+"%"
+              }
+            }
+          },
+          plugins:{
+            legend:{display:false},
+            tooltip:{
+              callbacks:{
+                label:ctx=>ctx.parsed.y+"%"
+              }
             }
           }
         }
       }
-    }
-  );
+    );
 
-  // 🔥 NOW safe to resize AFTER it exists
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      monthlyAvgChart.resize();
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        monthlyAvgChart.resize();
+      });
     });
+
   });
 
-});
-}  
-  
+}
 let moduleBreakdownChart = null;
 
 function renderModuleBreakdownChart(){
