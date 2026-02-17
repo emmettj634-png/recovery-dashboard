@@ -1490,8 +1490,22 @@ else{
 
 if(group.length > 5 && !nobodyActive && !everyoneSameNonZero){
 
-  html += `<strong>Bottom Performers</strong>
-           <ul style="list-style:none; padding-left:0;">`;
+ html += `
+  <div style="
+    margin-top:14px;
+    margin-bottom:6px;
+    font-weight:bold;
+  ">
+    Bottom Performers
+  </div>
+
+  <ul style="
+    list-style:none;
+    padding-left:0;
+    margin-top:4px;
+    margin-bottom:14px;
+  ">
+`;
 
   let prevValue = null;
   let displayRank = 0;
