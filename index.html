@@ -1330,10 +1330,16 @@ function renderLeaderboards(){
       }
 
       return {
-        name: p.name,
-        days: thisWeekDays,
-        trend
-      };
+       const weeklyModules =
+  totalModulesInRange(p, start, end);
+
+return {
+  name: p.name,
+  days: thisWeekDays,
+  modules: weeklyModules,
+  trend
+};
+
 
     })
   : [];
@@ -1375,15 +1381,31 @@ const everyoneSameNonZero =
 top = [];
 
 if(!nobodyActive){
-  top = eligibleWeekly
-    .sort((a,b)=>b.days - a.days)
-    .slice(0,5);
+ top = eligibleWeekly
+  .sort((a,b)=>{
+
+    if(b.days !== a.days){
+      return b.days - a.days;
+    }
+
+    // 🔥 TIE BREAKER
+    return b.modules - a.modules;
+
+  })
+  .slice(0,5);
 }
 
     // FULL POSITION RANKING
 const fullRanked = [...ranked]
-  .sort((a,b)=>b.days - a.days);
+  .sort((a,b)=>{
 
+    if(b.days !== a.days){
+      return b.days - a.days;
+    }
+
+    return b.modules - a.modules;
+
+  });
 let trueRank = 1;
 
 fullRanked.forEach((p,i)=>{
