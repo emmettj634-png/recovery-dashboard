@@ -830,11 +830,25 @@ o.textContent = w.label;
 
 /* ================= PLAYER DETAILS ================= */
 let playerModuleChart=null;
+function getActiveWeekBaseDate(){
+
+  const allDates = playerData.flatMap(p =>
+    p.sessions.map(s => new Date(s.date))
+  );
+
+  if(!allDates.length){
+    return new Date();
+  }
+
+  return new Date(
+    Math.max(...allDates)
+  );
+}
 function showPlayer(){
 document.getElementById("playerDetailsEmpty")
   .classList.add("hidden");
   const p=playerData.find(x=>x.name===playerFilter.value);
-  const today = new Date();
+  const today = getActiveWeekBaseDate();
 
 const currentWeekStart = new Date(today);
 currentWeekStart.setDate(today.getDate() - today.getDay());
@@ -1623,150 +1637,151 @@ function parseWeekLabel(label){
 }
 
 function renderMonthlyAvgChart(){
+
   const posDay = {};
+  const teamDateCounts = {};
+  const playerDates = {};
+
+  /* =========================
+     PASS 1 — TEAM COUNTS
+  ========================== */
 
   playerData.forEach(p=>{
-    const dates = new Set();
+
+    playerDates[p.name] = new Set();
 
     p.sessions.forEach(s=>{
+
       if(monthKey(s.date) !== monthFilter.value) return;
+
       if(monthWeekFilter.value !== "all"){
-  const w = weekRange(s.date);
-  if(w.label !== monthWeekFilter.value) return;
-}
-      dates.add(s.date);
+        const w = weekRange(s.date);
+        if(w.label !== monthWeekFilter.value) return;
+      }
+
+      teamDateCounts[s.date] =
+        (teamDateCounts[s.date] || 0) + 1;
+
+      playerDates[p.name].add(s.date);
+
     });
 
-    dates.forEach(d=>{
-      posDay[p.position] ??= {};
-      posDay[p.position][d] = (posDay[p.position][d] || 0) + 1;
-    });
   });
 
-const labels = positions;
+  /* =========================
+     ONLY KEEP ≥10 PARTICIPANTS
+  ========================== */
 
-const values = positions.map(pos=>{
-  const rosterSize =
-    roster.filter(r => r.position === pos).length;
+  const validTeamDates = new Set(
+    Object.entries(teamDateCounts)
+      .filter(([date,count]) => count >= 10)
+      .map(([date]) => date)
+  );
 
-  if(!posDay[pos]) return 0;
+  /* =========================
+     BUILD POSITION DAY COUNTS
+  ========================== */
 
-  // 🔒 WEEK SELECTED → use INPUT DAYS
-  if(monthWeekFilter.value !== "all"){
+  playerData.forEach(p=>{
 
-   const {start,end} =
-  parseWeekLabel(monthWeekFilter.value);
+    playerDates[p.name].forEach(d=>{
 
-   const inputDays =
-  validTeamInputDatesInRange(start, end);
+      if(!validTeamDates.has(d)) return;
 
+      posDay[p.position] ??= {};
+      posDay[p.position][d] =
+        (posDay[p.position][d] || 0) + 1;
+
+    });
+
+  });
+
+  /* =========================
+     CALCULATE %
+  ========================== */
+
+  const labels = positions;
+
+  const values = positions.map(pos=>{
+
+    const rosterSize =
+      roster.filter(r=>r.position===pos).length;
+
+    if(rosterSize === 0) return 0;
+
+    const inputDays =
+      validTeamDates.size;
 
     if(inputDays === 0) return 0;
 
     const totalUses =
-      Object.values(posDay[pos])
+      Object.values(posDay[pos] || {})
         .reduce((a,b)=>a+b,0);
 
     return Number(
-  ((totalUses / (rosterSize * inputDays)) * 100).toFixed(1)
-);
-  }
+      ((totalUses / (rosterSize * inputDays)) * 100)
+        .toFixed(1)
+    );
 
-// 📅 ALL WEEKS → TEAM INPUT OPPORTUNITY DAYS
-
-const dateCounts = {};
-
-playerData.forEach(p=>{
-  p.sessions.forEach(s=>{
-    if(monthKey(s.date) === monthFilter.value){
-
-      dateCounts[s.date] ??= new Set();
-      dateCounts[s.date].add(p.name);
-
-    }
   });
-});
 
-const teamMonthInputDates =
-  Object.values(dateCounts)
-    .filter(set => set.size >= 10);
+  monthlyAvgChart?.destroy();
 
-const monthInputDays =
-  teamMonthInputDates.length;
+  waitForChartBox(()=>{
 
-const inputDays = teamMonthInputDates.size;
+    const canvas =
+      document.getElementById("monthlyAvgChart");
 
-if(monthInputDays === 0) return 0;
+    canvas.style.height = "380px";
+    canvas.height = 380;
 
-const totalUses =
-  Object.values(posDay[pos] || {})
-    .reduce((a,b)=>a+b,0);
-
-return Number(
-  ((totalUses / (rosterSize * monthInputDays)) * 100).toFixed(1)
-);
-
-});
-
-console.log("Monthly values:", values);
-monthlyAvgChart?.destroy();
-
-waitForChartBox(() => {
-
-  const canvas =
-    document.getElementById("monthlyAvgChart");
-
-  canvas.style.height = "380px";
-  canvas.height = 380;
-
-  monthlyAvgChart = new Chart(
-    canvas,
-    {
-      type:"bar",
-      data:{
-        labels,
-        datasets:[{
-          data:values,
-          backgroundColor:cream
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        animation:false,
-        scales:{
-          x:{ ticks:{ color:cream }},
-          y:{
-            min:0,
-            max:100,
-            ticks:{
-              color:cream,
-              callback:v=>v+"%"
-            }
-          }
+    monthlyAvgChart = new Chart(
+      canvas,
+      {
+        type:"bar",
+        data:{
+          labels,
+          datasets:[{
+            data:values,
+            backgroundColor:cream
+          }]
         },
-        plugins:{
-          legend:{ display:false },
-          tooltip:{
-            callbacks:{
-              label:ctx=>ctx.parsed.y+"%"
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          animation:false,
+          scales:{
+            x:{ticks:{color:cream}},
+            y:{
+              min:0,
+              max:100,
+              ticks:{
+                color:cream,
+                callback:v=>v+"%"
+              }
+            }
+          },
+          plugins:{
+            legend:{display:false},
+            tooltip:{
+              callbacks:{
+                label:ctx=>ctx.parsed.y+"%"
+              }
             }
           }
         }
       }
-    }
-  );
+    );
 
-  // 🔥 NOW safe to resize AFTER it exists
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      monthlyAvgChart.resize();
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        monthlyAvgChart.resize();
+      });
     });
+
   });
 
-});
-}  
-  
+}
 let moduleBreakdownChart = null;
 
 function renderModuleBreakdownChart(){
