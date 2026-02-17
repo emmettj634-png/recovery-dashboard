@@ -1509,8 +1509,10 @@ bottom.forEach(p => {
   const positionSize = fullRanked.length;
 
   const isWorstTie =
-    p.days === lowestDays &&
-    tieGroup.length > 1;
+  lowestDays === 0 &&     // 👈 ONLY force T-LAST if worst = ZERO
+  p.days === lowestDays &&
+  tieGroup.length > 1;
+
 
   const rankText = isWorstTie
     ? `T-${positionSize}`
