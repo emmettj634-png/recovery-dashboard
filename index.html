@@ -1306,42 +1306,40 @@ function renderLeaderboards(){
     const group = playerData.filter(p => p.position === pos);
 
    const ranked = group.length
-  ? group.map(p => {
+? group.map(p => {
 
-      const thisWeekDays =
-        uniqueDaysInRange(p, start, end);
+    const thisWeekDays =
+      uniqueDaysInRange(p, start, end);
 
-      const lastWeekDays =
-        uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+    const lastWeekDays =
+      uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
 
-      let trend = "";
+    const weeklyModules =
+      totalModulesInRange(p, start, end);
 
-      if(
-        earliestWeekStart &&
-        start.getTime() !== earliestWeekStart.getTime() &&
-        weekIsReady
-      ){
-        trend = trendIndicator(
-          thisWeekDays,
-          lastWeekDays,
-          thisWeekInputs,
-          lastWeekInputs
-        );
-      }
+    let trend = "";
 
-      return {
-       const weeklyModules =
-  totalModulesInRange(p, start, end);
+    if(
+      earliestWeekStart &&
+      start.getTime() !== earliestWeekStart.getTime() &&
+      weekIsReady
+    ){
+      trend = trendIndicator(
+        thisWeekDays,
+        lastWeekDays,
+        thisWeekInputs,
+        lastWeekInputs
+      );
+    }
 
-return {
-  name: p.name,
-  days: thisWeekDays,
-  modules: weeklyModules,
-  trend
-};
+    return {
+      name: p.name,
+      days: thisWeekDays,
+      modules: weeklyModules,
+      trend
+    };
 
-
-    })
+})
   : [];
 
 
