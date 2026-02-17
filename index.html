@@ -1080,19 +1080,53 @@ function renderTeamRank(){
 rankDiv.style.paddingRight = "20px";
 
 
-  const rankedRoster = playerData
-    .map(p => ({
-      name: p.name,
-      totalModules: p.sessions.length
-    }))
-    .sort((a,b) => b.totalModules - a.totalModules);
+  const today = new Date();
+
+const currentWeekStart = new Date(today);
+currentWeekStart.setDate(today.getDate() - today.getDay());
+currentWeekStart.setHours(0,0,0,0);
+
+const currentWeekEnd = new Date(currentWeekStart);
+currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+currentWeekEnd.setHours(23,59,59,999);
+
+const rankedRoster = playerData
+  .map(p => ({
+
+    name: p.name,
+
+    totalModules:
+      showingWeeklyTeamRank
+        ? totalModulesInRange(
+            p,
+            currentWeekStart,
+            currentWeekEnd
+          )
+        : p.sessions.length
+
+  }))
+  .sort((a,b) => b.totalModules - a.totalModules);
+
   const displayRoster = showFullTeamRank
   ? rankedRoster
   : rankedRoster.slice(0, 25);
 
 
   let rankHTML = `
-    <h3>Team Rank – Total Modules (All Time)</h3>
+    <h3>
+  Team Rank – Total Modules
+  <span
+    id="teamRankWeekToggle"
+    style="
+      font-size:.7rem;
+      margin-left:10px;
+      cursor:pointer;
+      text-decoration:underline;
+      opacity:.75;
+    ">
+    ${showingWeeklyTeamRank ? "show all time" : "show this week"}
+  </span>
+</h3>
     <ol>
   `;
 
@@ -1121,6 +1155,16 @@ rankDiv.style.paddingRight = "20px";
 
 
   rankDiv.innerHTML = rankHTML;
+  const weekToggle =
+  rankDiv.querySelector("#teamRankWeekToggle");
+
+if(weekToggle){
+  weekToggle.onclick = () => {
+    showingWeeklyTeamRank =
+      !showingWeeklyTeamRank;
+    renderTeamRank();
+  };
+}
   const expandBtn =
   rankDiv.querySelector("#teamRankExpandBtn");
 
@@ -2016,6 +2060,7 @@ const weeklyLeaderboardSection =
 
 let showingTeamRank = false;
 let showFullTeamRank = false;
+let showingWeeklyTeamRank = false;
 
 teamRankToggleBtn.onclick = () => {
 
