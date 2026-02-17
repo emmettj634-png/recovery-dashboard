@@ -1364,6 +1364,13 @@ const eligibleWeekly =
 
 const nobodyActive =
   eligibleWeekly.length === 0;
+  const uniqueActiveValues =
+  new Set(eligibleWeekly.map(p => p.days));
+
+const allActiveTied =
+  uniqueActiveValues.size === 1 &&
+  eligibleWeekly.length > 1;
+
 
 top = [];
 
@@ -1403,15 +1410,53 @@ const bottom = fullRanked
             <strong>Top Performers</strong>
             <ul style="list-style:none; padding-left:0;">`;
 
-if(top.length > 0){
-
-if(allWeeklyTied){
+if(nobodyActive){
 
   html += `<li style="opacity:.7;">
-             All ${pos} players have equal recovery days this week
+             No player has logged recovery this week
            </li>`;
 
-} else {
+}
+else if(allActiveTied){
+
+  // 🔥 rank by WEEKLY MODULES instead
+  const moduleRanked = group.map(p => ({
+    name: p.name,
+    modules: totalModulesInRange(p,start,end)
+  }))
+  .filter(p => p.modules > 0)
+  .sort((a,b)=>b.modules - a.modules)
+  .slice(0,5);
+
+  let prevVal = null;
+  let displayRank = 0;
+
+  moduleRanked.forEach((p,index)=>{
+
+    if(prevVal === null || p.modules < prevVal){
+      displayRank = index+1;
+    }
+
+    const tieCount =
+      moduleRanked.filter(x =>
+        x.modules === p.modules
+      ).length;
+
+    const rankText = tieCount > 1
+      ? `T-${displayRank}`
+      : `${displayRank}`;
+
+    prevVal = p.modules;
+
+    html += `
+      <li>
+        ${rankText}. ${p.name}
+      </li>
+    `;
+  });
+
+}
+else{
 
   let prevValue = null;
   let displayRank = 0;
@@ -1443,10 +1488,7 @@ if(allWeeklyTied){
 
 }
 
-html += `</ul>`;
-}
-
-  if(group.length > 5 && !allWeeklyTied){
+ if(group.length > 5 && !nobodyActive && !allActiveTied){
 
   html += `<strong>Bottom Performers</strong>
            <ul style="list-style:none; padding-left:0;">`;
