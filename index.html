@@ -1364,12 +1364,12 @@ const eligibleWeekly =
 
 const nobodyActive =
   eligibleWeekly.length === 0;
-  const uniqueActiveValues =
-  new Set(eligibleWeekly.map(p => p.days));
+ const fullWeeklyValues =
+  new Set(ranked.map(p => p.days));
 
-const allActiveTied =
-  uniqueActiveValues.size === 1 &&
-  eligibleWeekly.length > 1;
+const everyoneSameNonZero =
+  fullWeeklyValues.size === 1 &&
+  [...fullWeeklyValues][0] > 0;
 
 
 top = [];
@@ -1417,7 +1417,7 @@ if(nobodyActive){
            </li>`;
 
 }
-else if(allActiveTied){
+else if(everyoneSameNonZero){
 
   // 🔥 rank by WEEKLY MODULES instead
   const moduleRanked = group.map(p => ({
@@ -1488,7 +1488,7 @@ else{
 
 }
 
- if(group.length > 5 && !nobodyActive && !allActiveTied){
+if(group.length > 5 && !nobodyActive && !everyoneSameNonZero){
 
   html += `<strong>Bottom Performers</strong>
            <ul style="list-style:none; padding-left:0;">`;
