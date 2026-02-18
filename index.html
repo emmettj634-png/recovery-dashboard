@@ -886,8 +886,21 @@ document.getElementById("playerModuleTitle").textContent =
   document.getElementById("playerDetailsTitle").textContent =
   `Player Details: ${p.name}`;
   playerStatsGrid.classList.remove("hidden");
-  playerRecoveryDays.textContent =
+ const playerDays =
   uniqueDaysInRange(p,start,end);
+
+const teamDays =
+  teamInputDatesInRange(start,end);
+
+const pct =
+  teamDays === 0
+    ? 0
+    : Math.round((playerDays / teamDays) * 100);
+
+playerRecoveryDays.textContent =
+  teamDays === 0
+    ? "-"
+    : `${playerDays}/${teamDays} (${pct}%)`;
 
   const lastDate = uniqueDates(p)
   .map(d => new Date(d))
@@ -1277,6 +1290,7 @@ function populateWeeks(){
   }
 }
 function uniqueDaysInRange(player, start, end){
+
   return new Set(
     player.sessions
       .filter(s => {
@@ -1286,6 +1300,22 @@ function uniqueDaysInRange(player, start, end){
       .map(s => s.date)
   ).size;
 }
+function teamInputDatesInRange(start, end){
+
+  const dates = new Set();
+
+  playerData.forEach(p => {
+    p.sessions.forEach(s => {
+      const d = new Date(s.date);
+      if(d >= start && d <= end){
+        dates.add(s.date);
+      }
+    });
+  });
+
+  return dates.size;
+}
+
 function totalModulesInRange(player, start, end){
   return player.sessions.filter(s=>{
     const d = new Date(s.date);
