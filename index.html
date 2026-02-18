@@ -887,18 +887,6 @@ document.getElementById("playerModuleTitle").textContent =
   `Player Details: ${p.name}`;
   playerStatsGrid.classList.remove("hidden");
 
-const teamDays =
-  teamInputDatesInRange(start,end);
-
-const pct =
-  teamDays === 0
-    ? 0
-    : Math.round((playerDays / teamDays) * 100);
-
-playerRecoveryDays.textContent =
-  teamDays === 0
-    ? "-"
-    : `${playerDays}/${teamDays} (${pct}%)`;
 
   const lastDate = uniqueDates(p)
   .map(d => new Date(d))
@@ -938,6 +926,19 @@ for(let i = 0; i < sortedGroup.length; i++){
 
 const playerDays =
   uniqueDaysInRange(p,start,end);
+
+const teamDays =
+  teamInputDatesInRange(start,end);
+
+const pct =
+  teamDays === 0
+    ? 0
+    : Math.round((playerDays / teamDays) * 100);
+
+playerRecoveryDays.textContent =
+  teamDays === 0
+    ? "-"
+    : `${playerDays}/${teamDays} (${pct}%)`;
 
 const tieGroup =
   sortedGroup.filter(x =>
