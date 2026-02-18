@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -845,165 +846,135 @@ function getActiveWeekBaseDate(){
   );
 }
 function showPlayer(){
+document.getElementById("playerDetailsEmpty")
+  .classList.add("hidden");
+  const p=playerData.find(x=>x.name===playerFilter.value);
+  const today = getActiveWeekBaseDate();
 
-  const p =
-    playerData.find(x => x.name === playerFilter.value);
+const currentWeekStart = new Date(today);
+currentWeekStart.setDate(today.getDate() - today.getDay());
+currentWeekStart.setHours(0,0,0,0);
 
-  if(!p) return;   // 🔥 stops all errors when no player selected
+const currentWeekEnd = new Date(currentWeekStart);
+currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
+currentWeekEnd.setHours(23,59,59,999);
 
+const lastWeekStart = new Date(currentWeekStart);
+lastWeekStart.setDate(currentWeekStart.getDate() - 7);
 
-  /* =============================
-     FIND MOST RECENT WEEK W/ DATA
-  ============================== */
+const lastWeekEnd = new Date(currentWeekEnd);
+lastWeekEnd.setDate(currentWeekEnd.getDate() - 7);
 
-  const today = new Date();
+const start =
+  showingLastWeek
+    ? lastWeekStart
+    : currentWeekStart;
 
-  let currentWeekStart = new Date(today);
-  currentWeekStart.setDate(today.getDate() - today.getDay());
-  currentWeekStart.setHours(0,0,0,0);
+const end =
+  showingLastWeek
+    ? lastWeekEnd
+    : currentWeekEnd;
+  if(!p)return;
+  // Show chart, hide empty state
+document.querySelector("#playerModuleContainer .empty-state").style.display = "none";
+document.getElementById("playerModuleChart").style.display = "block";
 
-  let currentWeekEnd = new Date(currentWeekStart);
-  currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
-  currentWeekEnd.setHours(23,59,59,999);
+// Update title
+document.getElementById("playerModuleTitle").textContent =
+  `Cumulative Module Usage – ${p.name}`;
 
-  let start = currentWeekStart;
-  let end = currentWeekEnd;
-
-  // 🔒 If no team data yet this week → show most recent week w/ data
-  const teamInputsThisWeek =
-    teamInputDatesInRange(start,end);
-
-  if(teamInputsThisWeek === 0){
-
-    start = new Date(start);
-    start.setDate(start.getDate() - 7);
-
-    end = new Date(end);
-    end.setDate(end.getDate() - 7);
-  }
-
-
-  /* =============================
-     PLAYER DAYS + TEAM INPUT DAYS
-  ============================== */
-
-  const playerDays =
-    uniqueDaysInRange(p,start,end);
-
-  const teamInputs =
-    teamInputDatesInRange(start,end);
-
-  const percent =
-    teamInputs > 0
-      ? Math.round((playerDays / teamInputs) * 100)
-      : 0;
-
-
+  document.getElementById("playerDetailsTitle").textContent =
+  `Player Details: ${p.name}`;
+  playerStatsGrid.classList.remove("hidden");
   playerRecoveryDays.textContent =
-    teamInputs > 0
-      ? `${playerDays}/${teamInputs} (${percent}%)`
-      : "-";
-
-
-  /* =============================
-     LAST RECOVERY DATE
-  ============================== */
+  uniqueDaysInRange(p,start,end);
 
   const lastDate = uniqueDates(p)
-    .map(d => new Date(d))
-    .sort((a,b)=>b-a)[0];
+  .map(d => new Date(d))
+  .sort((a, b) => b - a)[0];
 
-  playerLastDate.textContent =
-    lastDate ? fmtDate(lastDate) : "N/A";
-
-
-  /* =============================
-     MOST POPULAR MODULE
-  ============================== */
-
+playerLastDate.textContent = lastDate
+  ? fmtDate(lastDate)
+  : "N/A";
+  document.getElementById("playerModuleTitle").textContent =
+  `Cumulative Module Usage: ${p.name}`;
+ 
   const mods={};
-  p.sessions.forEach(s=>{
-    mods[s.module]=(mods[s.module]||0)+1;
-  });
+  p.sessions.forEach(s=>mods[s.module]=(mods[s.module]||0)+1);
+  playerMostModule.textContent=Object.keys(mods).sort((a,b)=>mods[b]-mods[a])[0]||"N/A";
 
-  playerMostModule.textContent =
-    Object.keys(mods)
-      .sort((a,b)=>mods[b]-mods[a])[0] || "N/A";
-
-
-  /* =============================
-     POSITION RANKING
-  ============================== */
-
-  const group =
-    playerData.filter(x=>x.position===p.position);
-
+  const group=playerData.filter(x=>x.position===p.position);
   const sortedGroup = group
-    .map(player => ({
-      name: player.name,
-      days: uniqueDaysInRange(player,start,end)
-    }))
-    .sort((a,b)=>b.days - a.days);
+  .map(player => ({
+    name: player.name,
+    days: uniqueDaysInRange(player,start,end)
 
-  let rank = 1;
+  }))
+  .sort((a,b)=>b.days - a.days);
 
-  for(let i=0;i<sortedGroup.length;i++){
+let rank = 1;
 
-    if(i>0 && sortedGroup[i].days <
-      sortedGroup[i-1].days){
-      rank = i+1;
-    }
+for(let i = 0; i < sortedGroup.length; i++){
 
-    if(sortedGroup[i].name === p.name){
-      break;
-    }
+  if(i > 0 && sortedGroup[i].days < sortedGroup[i-1].days){
+    rank = i + 1;
   }
 
-  const tieGroup =
-    sortedGroup.filter(x =>
-      x.days === playerDays
-    );
-
-  const lowestDays =
-    Math.min(...sortedGroup.map(x=>x.days));
-
-  const positionSize =
-    sortedGroup.length;
-
-  const isWorstTie =
-    playerDays === lowestDays &&
-    tieGroup.length > 1;
-
-  const rankText = isWorstTie
-    ? `T-${positionSize}`
-    : (tieGroup.length > 1
-        ? `T-${rank}`
-        : `${rank}`);
-
-  playerRank.textContent =
-    `${rankText} out of ${group.length}`;
-
-
-  /* =============================
-     LABELS
-  ============================== */
-
-  recoveryDaysLabel.textContent =
-    "Recovery Days (Most Recent Week)";
-
-  document.getElementById("rankLabel")
-    .textContent =
-      "Rank in Position (Most Recent Week)";
-
-
-  /* =============================
-     SHOW CHART
-  ============================== */
-
-  renderPlayerModuleChart(p);
-
+  if(sortedGroup[i].name === p.name){
+    break;
+  }
 }
 
+const playerDays =
+  uniqueDaysInRange(p,start,end);
+
+const tieGroup =
+  sortedGroup.filter(x =>
+    x.days === playerDays
+  );
+
+const lowestDays =
+  Math.min(...sortedGroup.map(x => x.days));
+
+const positionSize =
+  sortedGroup.length;
+
+const isWorstTie =
+  playerDays === lowestDays &&
+  tieGroup.length > 1;
+
+const rankText = isWorstTie
+  ? `T-${positionSize}`
+  : (tieGroup.length > 1
+      ? `T-${rank}`
+      : `${rank}`);
+
+
+playerRank.textContent =
+  `${rankText} out of ${group.length}`;
+
+
+
+  renderPlayerModuleChart(p);
+  recoveryDaysLabel.textContent =
+  showingLastWeek
+    ? "Recovery Days (Last Week)"
+    : "Recovery Days (This Week)";
+
+  const rankLabel =
+  document.getElementById("rankLabel");
+
+rankLabel.textContent =
+  showingLastWeek
+    ? "Rank in Position (Last Week)"
+    : "Rank in Position (This Week)";
+
+weekToggleLink.textContent =
+  showingLastWeek
+    ? "show current week"
+    : "show last week";
+
+}
 
 /* ================= MODULE PARTICIPATION ================= */
 function renderModules(){
@@ -2018,27 +1989,23 @@ positionFilter.onchange = () => {
 
 playerFilter.onchange = () => {
 
- // 🔄 Player cleared
-if(!playerFilter.value){
-
+  // 🔄 Player cleared
+  if(!playerFilter.value){
   document.getElementById("playerDetailsEmpty")
-    .style.display = "block";
+  .classList.remove("hidden");
+    // Reset titles
+    document.getElementById("playerDetailsTitle").textContent = "Player Details";
+    document.getElementById("playerModuleTitle").textContent = "Cumulative Module Usage";
 
-  // Reset titles
-  document.getElementById("playerDetailsTitle").textContent = "Player Details";
-  document.getElementById("playerModuleTitle").textContent = "Cumulative Module Usage";
+    // Hide player stats
+    playerStatsGrid.classList.add("hidden");
 
-  // Hide player stats
-  playerStatsGrid.classList.add("hidden");
+    // Hide chart, show empty state
+    document.getElementById("playerModuleChart").style.display = "none";
+    document.querySelector("#playerModuleContainer .empty-state").style.display = "block";
 
-  // Hide chart, show empty state
-  document.getElementById("playerModuleChart").style.display = "none";
-  document.querySelector("#playerModuleContainer .empty-state")
-    .style.display = "block";
-
-  return;
-}
-
+    return;
+  }
 
   // ✅ Player selected
   showPlayer();
