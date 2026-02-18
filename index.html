@@ -851,6 +851,9 @@ function showPlayer(){
 
   if(!p) return;
 
+  document.getElementById("playerDetailsEmpty")
+  .style.display = "none";
+
   const today = new Date();
 
   const currentWeekStart = new Date(today);
@@ -892,9 +895,6 @@ if(thisWeekInputs === 0){
       : currentWeekEnd;
 }
 
-  // 🔥 WEEKLY PLAYER DAYS (MOVE THIS UP)
-  const playerDays =
-    uniqueDaysInRange(p,start,end);
 
   // 🔥 TEAM INPUT DAYS (for denominator)
   const teamInputs =
@@ -2060,23 +2060,27 @@ positionFilter.onchange = () => {
 
 playerFilter.onchange = () => {
 
-  // 🔄 Player cleared
-  if(!playerFilter.value){
+ // 🔄 Player cleared
+if(!playerFilter.value){
+
   document.getElementById("playerDetailsEmpty")
-  .classList.remove("hidden");
-    // Reset titles
-    document.getElementById("playerDetailsTitle").textContent = "Player Details";
-    document.getElementById("playerModuleTitle").textContent = "Cumulative Module Usage";
+    .style.display = "block";
 
-    // Hide player stats
-    playerStatsGrid.classList.add("hidden");
+  // Reset titles
+  document.getElementById("playerDetailsTitle").textContent = "Player Details";
+  document.getElementById("playerModuleTitle").textContent = "Cumulative Module Usage";
 
-    // Hide chart, show empty state
-    document.getElementById("playerModuleChart").style.display = "none";
-    document.querySelector("#playerModuleContainer .empty-state").style.display = "block";
+  // Hide player stats
+  playerStatsGrid.classList.add("hidden");
 
-    return;
-  }
+  // Hide chart, show empty state
+  document.getElementById("playerModuleChart").style.display = "none";
+  document.querySelector("#playerModuleContainer .empty-state")
+    .style.display = "block";
+
+  return;
+}
+
 
   // ✅ Player selected
   showPlayer();
