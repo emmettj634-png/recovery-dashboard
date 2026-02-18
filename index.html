@@ -1605,6 +1605,17 @@ if(group.length > 5 && !nobodyActive && !everyoneSameNonZero){
   ">
 `;
 
+if(bottom.length === 0){
+
+  html += `
+    <li style="opacity:.7;">
+      No bottom performers this week
+    </li>
+  `;
+
+}
+else{
+
   let prevValue = null;
   let displayRank = 0;
 
@@ -1640,8 +1651,10 @@ bottom.forEach(p => {
   `;
 });
 
-html += `</ul>`;
 }
+
+html += `</ul>`;
+
 div.innerHTML = html;
 leaderboardContainer.appendChild(div);
 });   // closes positions.forEach
