@@ -885,8 +885,16 @@ document.getElementById("playerModuleTitle").textContent =
   document.getElementById("playerDetailsTitle").textContent =
   `Player Details: ${p.name}`;
   playerStatsGrid.classList.remove("hidden");
-  playerRecoveryDays.textContent =
+ const playerDays =
   uniqueDaysInRange(p,start,end);
+
+const teamInputs =
+  teamInputDatesInRange(start,end);
+
+playerRecoveryDays.textContent =
+  teamInputs > 0
+    ? `${playerDays}/${teamInputs}`
+    : "-";
 
   const lastDate = uniqueDates(p)
   .map(d => new Date(d))
