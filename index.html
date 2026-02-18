@@ -895,11 +895,6 @@ if(thisWeekInputs === 0){
       : currentWeekEnd;
 }
 
-
-  // 🔥 TEAM INPUT DAYS (for denominator)
-  const teamInputs =
-    teamInputDatesInRange(start,end);
-
   const percent =
     teamInputs > 0
       ? Math.round((playerDays / teamInputs) * 100)
