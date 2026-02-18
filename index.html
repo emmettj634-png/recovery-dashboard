@@ -867,15 +867,30 @@ function showPlayer(){
   const lastWeekEnd = new Date(currentWeekEnd);
   lastWeekEnd.setDate(currentWeekEnd.getDate() - 7);
 
-  const start =
+  const thisWeekInputs =
+  teamInputDatesInRange(currentWeekStart, currentWeekEnd);
+
+let start, end;
+
+// 🔒 If no data exists yet this week,
+// keep showing last completed week
+if(thisWeekInputs === 0){
+
+  start = lastWeekStart;
+  end   = lastWeekEnd;
+
+}else{
+
+  start =
     showingLastWeek
       ? lastWeekStart
       : currentWeekStart;
 
-  const end =
+  end =
     showingLastWeek
       ? lastWeekEnd
       : currentWeekEnd;
+}
 
   // 🔥 WEEKLY PLAYER DAYS (MOVE THIS UP)
   const playerDays =
@@ -905,6 +920,23 @@ function showPlayer(){
     `Player Details: ${p.name}`;
 
   playerStatsGrid.classList.remove("hidden");
+  document.getElementById("playerDetailsEmpty")
+  .style.display = "none";
+  const playerDays =
+  uniqueDaysInRange(p, start, end);
+
+const teamInputs =
+  teamInputDatesInRange(start, end);
+
+let percent = 0;
+
+if(teamInputs > 0){
+  percent = Math.round(
+    (playerDays / teamInputs) * 100
+  );
+}
+  document.getElementById("playerDetailsEmpty")
+  .style.display = "none";
 
   playerRecoveryDays.textContent =
     teamInputs > 0
