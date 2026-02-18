@@ -236,37 +236,36 @@ button{cursor:pointer;}
 <div id="playerStatsGrid" class="stats-grid hidden">
 <div class="stat-card">
 
+ <div
+  style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  ">
+
   <span id="recoveryDaysLabel">
     Recovery Days (This Week)
   </span>
 
-  <div
+  <span
+    id="weekToggleLink"
     style="
-      display:flex;
-      justify-content:flex-start;
-gap:113px;
-      align-items:center;
-      margin-top:4px;
+      font-size:.65rem;
+      font-weight:bold;
+      opacity:.85;
+      cursor:pointer;
     ">
+    show last week
+  </span>
 
-    <strong id="playerRecoveryDays">
-      -
-    </strong>
+</div>
 
-    <span
-      id="weekToggleLink"
-      style="
-        font-size:.50rem;
-        opacity:.80;
-        cursor:pointer;
-        position:relative;
-        top:-3px;
+<strong
+  id="playerRecoveryDays"
+  style="display:block; margin-top:4px;">
+  -
+</strong>
 
-      ">
-      show last week
-    </span>
-
-  </div>
 
 </div>
 
