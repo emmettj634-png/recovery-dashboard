@@ -1479,10 +1479,24 @@ fullRanked.forEach((p,i)=>{
   p.trueRank = trueRank;
 });
 
-const bottom = fullRanked
-  .filter(p =>
-    !top.some(t => t.name === p.name)
-  )
+// Get ALL ranks represented in Top 5
+const topRanks =
+  new Set(
+    top.map(p => {
+      const match =
+        fullRanked.find(x => x.name === p.name);
+      return match.trueRank;
+    })
+  );
+
+// Remove ANYONE whose rank exists in Top
+const eligibleBottom =
+  fullRanked.filter(p =>
+    !topRanks.has(p.trueRank)
+  );
+
+// Now take last 5 ONLY from ranks not shown above
+const bottom = eligibleBottom
   .slice(-5)
   .sort((a,b)=>a.trueRank - b.trueRank);
 
