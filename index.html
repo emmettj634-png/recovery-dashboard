@@ -925,21 +925,9 @@ playerData.forEach(x=>{
   });
 });
 
-const playerDays = new Set(
-  p.sessions
-    .filter(s=>{
-      const d = new Date(s.date);
-      return (
-        d >= start &&
-        d <= end &&
-        validTeamInputDatesInRange(
-          new Date(s.date),
-          new Date(s.date)
-        ) > 0
-      );
-    })
-    .map(s=>s.date)
-).size;
+const playerDays =
+  uniqueDaysInRange(p,start,end);
+
 
 const teamDays =
   validTeamInputDatesInRange(start,end);
@@ -1398,37 +1386,12 @@ function renderLeaderboards(){
    const ranked = group.length
 ? group.map(p => {
 
-   const thisWeekDays = new Set(
-  p.sessions
-    .filter(s=>{
-      const d = new Date(s.date);
-      return (
-        d >= start &&
-        d <= end &&
-        validTeamInputDatesInRange(
-          new Date(s.date),
-          new Date(s.date)
-        ) > 0
-      );
-    })
-    .map(s=>s.date)
-).size;
+  const thisWeekDays =
+  uniqueDaysInRange(p, start, end);
 
- const lastWeekDays = new Set(
-  p.sessions
-    .filter(s=>{
-      const d = new Date(s.date);
-      return (
-        d >= lastWeekStart &&
-        d <= lastWeekEnd &&
-        validTeamInputDatesInRange(
-          new Date(s.date),
-          new Date(s.date)
-        ) > 0
-      );
-    })
-    .map(s=>s.date)
-).size;
+const lastWeekDays =
+  uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+
 
 
     const weeklyModules =
