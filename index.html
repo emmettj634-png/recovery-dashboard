@@ -914,11 +914,35 @@ for(let i = 0; i < sortedGroup.length; i++){
   }
 }
 
-const playerDays =
-  uniqueDaysInRange(p,start,end);
+const validDates = new Set();
+
+playerData.forEach(x=>{
+  x.sessions.forEach(s=>{
+    const d = new Date(s.date);
+    if(d >= start && d <= end){
+      validDates.add(s.date);
+    }
+  });
+});
+
+const playerDays = new Set(
+  p.sessions
+    .filter(s=>{
+      const d = new Date(s.date);
+      return (
+        d >= start &&
+        d <= end &&
+        validTeamInputDatesInRange(
+          new Date(s.date),
+          new Date(s.date)
+        ) > 0
+      );
+    })
+    .map(s=>s.date)
+).size;
 
 const teamDays =
-  teamInputDatesInRange(start,end);
+  validTeamInputDatesInRange(start,end);
 
 const pct =
   teamDays === 0
@@ -1348,7 +1372,8 @@ function renderLeaderboards(){
      TEAM INPUT DATE COUNTS (ONCE)
   ====================== */
 
-  const thisWeekInputs = teamInputDatesInRange(start, end);
+ const thisWeekInputs =
+  validTeamInputDatesInRange(start, end);
 
   const lastWeekStart = new Date(start);
   lastWeekStart.setDate(lastWeekStart.getDate() - 7);
@@ -1356,7 +1381,8 @@ function renderLeaderboards(){
   const lastWeekEnd = new Date(end);
   lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
 
-  const lastWeekInputs = teamInputDatesInRange(lastWeekStart, lastWeekEnd);
+  const lastWeekInputs =
+  validTeamInputDatesInRange(lastWeekStart, lastWeekEnd);
 
   // 🔒 Week maturity gate (71.3%)
   const weekIsReady =
@@ -1372,11 +1398,38 @@ function renderLeaderboards(){
    const ranked = group.length
 ? group.map(p => {
 
-    const thisWeekDays =
-      uniqueDaysInRange(p, start, end);
+   const thisWeekDays = new Set(
+  p.sessions
+    .filter(s=>{
+      const d = new Date(s.date);
+      return (
+        d >= start &&
+        d <= end &&
+        validTeamInputDatesInRange(
+          new Date(s.date),
+          new Date(s.date)
+        ) > 0
+      );
+    })
+    .map(s=>s.date)
+).size;
 
-    const lastWeekDays =
-      uniqueDaysInRange(p, lastWeekStart, lastWeekEnd);
+ const lastWeekDays = new Set(
+  p.sessions
+    .filter(s=>{
+      const d = new Date(s.date);
+      return (
+        d >= lastWeekStart &&
+        d <= lastWeekEnd &&
+        validTeamInputDatesInRange(
+          new Date(s.date),
+          new Date(s.date)
+        ) > 0
+      );
+    })
+    .map(s=>s.date)
+).size;
+
 
     const weeklyModules =
       totalModulesInRange(p, start, end);
