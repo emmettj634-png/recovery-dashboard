@@ -932,15 +932,52 @@ const playerDays =
 const teamDays =
   validTeamInputDatesInRange(start,end);
 
+// get all team-valid dates
+const validTeamDates = new Set();
+
+playerData.forEach(x=>{
+  x.sessions.forEach(s=>{
+    const d = new Date(s.date);
+    if(
+      d >= start &&
+      d <= end &&
+      validTeamInputDatesInRange(
+        new Date(s.date),
+        new Date(s.date)
+      ) > 0
+    ){
+      validTeamDates.add(s.date);
+    }
+  });
+});
+
+// get player's low-participation bonus dates
+const playerBonusDates = new Set(
+  p.sessions
+    .filter(s=>{
+      const d = new Date(s.date);
+      return (
+        d >= start &&
+        d <= end &&
+        !validTeamDates.has(s.date)
+      );
+    })
+    .map(s=>s.date)
+);
+
+// final denominator
+const adjustedTeamDays =
+  teamDays + playerBonusDates.size;
+
 const pct =
-  teamDays === 0
+  adjustedTeamDays === 0
     ? 0
-    : Math.round((playerDays / teamDays) * 100);
+    : Math.round((playerDays / adjustedTeamDays) * 100);
 
 playerRecoveryDays.textContent =
-  teamDays === 0
+  adjustedTeamDays === 0
     ? "-"
-    : `${playerDays}/${teamDays} (${pct}%)`;
+    : `${playerDays}/${adjustedTeamDays} (${pct}%)`;
 
 const tieGroup =
   sortedGroup.filter(x =>
