@@ -770,7 +770,17 @@ async function loadHawkinCSV(){
 
     const cols = r.split(",");
 
-    const name = cols[0]?.trim();
+let rawName = cols[0]?.trim();
+
+let name = rawName;
+
+if(rawName.includes(",")){
+  const parts = rawName.split(",");
+  name =
+    parts[1].trim() + " " +
+    parts[0].trim();
+}
+
     const date = cols[1]?.trim();
     const jumpPct = parseFloat(cols[5]); // Jump Height % of Max
     const asym = parseFloat(cols[12]);   // L|R Peak Propulsive Force
