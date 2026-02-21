@@ -8,6 +8,8 @@
 <div class="header">
 <title>Oklahoma Elite Recovery Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
 
 <style>
 
@@ -762,28 +764,16 @@ async function loadHawkinCSV(){
   const res = await fetch("data/hawkin_cmj.csv?v=" + Date.now());
   const text = await res.text();
 
-  const lines = text.split(/\r?\n/);
-  const headers = lines[0].split(",");
-  const cleanedHeaders = headers.map(h=>h.trim());
-  console.log(headers);
+  const parsed = Papa.parse(text,{
+    header:true,
+    skipEmptyLines:true
+  });
 
+  parsed.data.forEach(row=>{
 
-  const nameIndex = headers.indexOf("Name");
-  const dateIndex = headers.indexOf("Date");
-  const jumpIndex =
-  cleanedHeaders.indexOf("Jump Height % of Max");
+    let rawName = row["Name"];
+    if(!rawName) return;
 
-  const asymIndex =
-  cleanedHeaders.indexOf("L|R Peak Propulsive Force");
-
-
-  lines.slice(1).forEach(r=>{
-
-    if(!r.trim()) return;
-
-    const cols = r.split(",");
-
-    let rawName = cols[nameIndex]?.trim();
     let name = rawName;
 
     if(rawName.includes(",")){
@@ -793,9 +783,14 @@ async function loadHawkinCSV(){
         parts[0].trim();
     }
 
-    const date = cols[dateIndex]?.trim();
-    const jumpPct = parseFloat(cols[jumpIndex]);
-    const asym = parseFloat(cols[asymIndex]);
+    const date =
+      row["Date"];
+
+    const jumpPct =
+      parseFloat(row["Jump Height"]);
+
+    const asym =
+      parseFloat(row["L|R Peak Propulsive Force"]);
 
     const p = playerData.find(x=>x.name === name);
 
