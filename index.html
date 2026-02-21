@@ -762,15 +762,20 @@ async function loadHawkinCSV(){
   const res = await fetch("data/hawkin_cmj.csv?v=" + Date.now());
   const text = await res.text();
 
-  const lines = text.split("\n");
+  const lines = text.split(/\r?\n/);
   const headers = lines[0].split(",");
+  const cleanedHeaders = headers.map(h=>h.trim());
   console.log(headers);
 
 
   const nameIndex = headers.indexOf("Name");
   const dateIndex = headers.indexOf("Date");
-  const jumpIndex = headers.indexOf("Jump Height % of Max");
-  const asymIndex = headers.indexOf("L|R Peak Propulsive Force");
+  const jumpIndex =
+  cleanedHeaders.indexOf("Jump Height % of Max");
+
+  const asymIndex =
+  cleanedHeaders.indexOf("L|R Peak Propulsive Force");
+
 
   lines.slice(1).forEach(r=>{
 
@@ -1087,7 +1092,7 @@ weekToggleLink.textContent =
 
   renderPlayerPerformanceChart(p);
 
-
+console.log(p.name,p.hawkin.length);
 
 }
 
