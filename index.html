@@ -762,23 +762,46 @@ async function loadHawkinCSV(){
   const res = await fetch("data/hawkin_cmj.csv?v=" + Date.now());
   const text = await res.text();
 
-  const rows = text.split("\n").slice(1);
+  const lines = text.split("\n");
+  const headers = lines[0].split(",");
 
-  rows.forEach(r=>{
+  const nameIndex = headers.indexOf("Name");
+  const dateIndex = headers.indexOf("Date");
+  const jumpIndex = headers.indexOf("Jump Height % of Max");
+  const asymIndex = headers.indexOf("L|R Peak Propulsive Force");
+
+  lines.slice(1).forEach(r=>{
 
     if(!r.trim()) return;
 
     const cols = r.split(",");
 
-let rawName = cols[0]?.trim();
+    let rawName = cols[nameIndex]?.trim();
+    let name = rawName;
 
-let name = rawName;
+    if(rawName.includes(",")){
+      const parts = rawName.split(",");
+      name =
+        parts[1].trim() + " " +
+        parts[0].trim();
+    }
 
-if(rawName.includes(",")){
-  const parts = rawName.split(",");
-  name =
-    parts[1].trim() + " " +
-    parts[0].trim();
+    const date = cols[dateIndex]?.trim();
+    const jumpPct = parseFloat(cols[jumpIndex]);
+    const asym = parseFloat(cols[asymIndex]);
+
+    const p = playerData.find(x=>x.name === name);
+
+    if(p && !isNaN(jumpPct) && !isNaN(asym)){
+      p.hawkin.push({
+        date,
+        jumpPct,
+        asym
+      });
+    }
+
+  });
+
 }
 
     const date = cols[1]?.trim();
@@ -1079,6 +1102,8 @@ weekToggleLink.textContent =
     : "show last week";
 
   renderPlayerPerformanceChart(p);
+
+  console.log(p.name, p.hawkin.length);
 
 
 }
