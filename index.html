@@ -804,24 +804,6 @@ async function loadHawkinCSV(){
 
 }
 
-    const date = cols[1]?.trim();
-    const jumpPct = parseFloat(cols[5]); // Jump Height % of Max
-    const asym = parseFloat(cols[12]);   // L|R Peak Propulsive Force
-
-    const p = playerData.find(x=>x.name === name);
-
-    if(p){
-      p.hawkin.push({
-        date,
-        jumpPct,
-        asym
-      });
-    }
-
-  });
-
-}
-
 /* ================= DROPDOWNS ================= */
 let mostRecentDate = null;
 function populateDates(){
