@@ -761,11 +761,14 @@ loadCSV();
 
 function normalizeName(name){
   return name
-    ?.replace(/"/g,"")
+    ?.normalize("NFKD")
+    .replace(/[\u00A0\u2007\u202F]/g,"") // remove NBSP types
+    .replace(/"/g,"")
     .replace(/\s+/g,"")
     .toLowerCase()
     .trim();
 }
+
 async function loadHawkinCSV(){
 
   const res = await fetch("data/hawkin_cmj.csv?v=" + Date.now());
@@ -817,6 +820,7 @@ async function loadHawkinCSV(){
       );
 
       if(p){
+        console.log("MATCHED:", entry.name);
         p.hawkin.push({
           date: entry.date,
           jumpPct: entry.jump,
