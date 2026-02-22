@@ -759,6 +759,13 @@ async function loadCSV(){
 
 loadCSV();
 
+function normalizeName(name){
+  return name
+    ?.replace(/"/g,"")
+    .replace(/\s+/g,"")
+    .toLowerCase()
+    .trim();
+}
 async function loadHawkinCSV(){
 
   const res = await fetch("data/hawkin_cmj.csv?v=" + Date.now());
@@ -771,17 +778,10 @@ async function loadHawkinCSV(){
 
   parsed.data.forEach(row=>{
 
-    let rawName = row["Name"];
-    if(!rawName) return;
+  let name =
+  normalizeName(row["Name"]);
 
-    let name = rawName;
-
-    if(rawName.includes(",")){
-      const parts = rawName.split(",");
-      name =
-        parts[1].trim() + " " +
-        parts[0].trim();
-    }
+if(!name) return;
 
     const date =
       row["Date"];
@@ -792,7 +792,10 @@ async function loadHawkinCSV(){
     const asym =
       parseFloat(row["L|R Peak Propulsive Force"]);
 
-    const p = playerData.find(x=>x.name === name);
+   const p = playerData.find(
+  x => normalizeName(x.name) === name
+);
+
 
     if(p && !isNaN(jumpPct) && !isNaN(asym)){
       p.hawkin.push({
