@@ -779,7 +779,8 @@ async function loadHawkinCSV(){
 const bestPerDay = {};
 
 parsed.data.forEach(row=>{
-
+  
+console.log(parsed.data[0]);
   const name =
     normalizeName(row["Name"]);
   if(!name) return;
