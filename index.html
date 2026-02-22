@@ -768,7 +768,21 @@ function normalizeName(name){
     .toLowerCase()
     .trim();
 }
+function safeNum(val){
+  if(!val) return null;
 
+  const v = val
+    .replace(/"/g,"")
+    .trim();
+
+  if(v === "" || v === "—") return null;
+
+  const n = parseFloat(v);
+
+  return isNaN(n)
+    ? null
+    : n;
+}
 async function loadHawkinCSV(){
 
   const res = await fetch("data/hawkin_cmj.csv?v=" + Date.now());
