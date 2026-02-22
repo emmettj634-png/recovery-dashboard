@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,8 +9,6 @@
 <div class="header">
 <title>Oklahoma Elite Recovery Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
 
 <style>
 
@@ -279,11 +278,6 @@ button{cursor:pointer;}
 <h2 id="positionModuleTitle">Module Participation</h2>
 <div id="selectedDateLabel" style="text-align:center;font-weight:bold;"></div>
 <div id="moduleGrid" class="module-grid"></div>
-
-<h2>Performance Trend</h2>
-<div class="chart-box">
-  <canvas id="playerPerformanceChart"></canvas>
-</div>
 
 <h2 id="playerModuleTitle">Cumulative Module Usage</h2>
 <div class="chart-box" id="playerModuleContainer">
@@ -705,12 +699,7 @@ const roster = [
   {name:"eLGee Webster",position:"LB"}
 ];
 
-let playerData = roster.map(p => ({
-  ...p,
-  sessions: [],
-  hawkin: []   // ← NEW
-}));
-
+let playerData=roster.map(p=>({...p,sessions:[]}));
 const uniqueDates=p=>[...new Set(p.sessions.map(s=>s.date))];
 
 /* ================= CSV LOAD ================= */
@@ -734,7 +723,6 @@ async function loadCSV(){
   renderCharts();
   populateMonths();
   renderMonthlyAvgChart();
-  await loadHawkinCSV();
 
   /* =========================
      Populate Module Dropdown
@@ -759,94 +747,6 @@ async function loadCSV(){
 
 loadCSV();
 
-function normalizeName(name){
-  return name
-    ?.normalize("NFKD")
-    .replace(/[\u00A0\u2007\u202F]/g,"") // remove NBSP types
-    .replace(/"/g,"")
-    .replace(/\s+/g,"")
-    .toLowerCase()
-    .trim();
-}
-function safeNum(val){
-  if(!val) return null;
-
-  const v = val
-    .replace(/"/g,"")
-    .trim();
-
-  if(v === "" || v === "—") return null;
-
-  const n = parseFloat(v);
-
-  return isNaN(n)
-    ? null
-    : n;
-}
-async function loadHawkinCSV(){
-
-  const res = await fetch("data/hawkin_cmj.csv?v=" + Date.now());
-  const text = await res.text();
-
-  Papa.parse(text,{
-  header:true,
-  skipEmptyLines:true,
-  transformHeader: h =>
-    h.replace(/^\uFEFF/, "").trim(),
-  complete:(parsed)=>{
-
-    const bestPerDay = {};
-
-    parsed.data.forEach(row=>{
-
-      const name =
-        normalizeName(row["Name"]);
-      if(!name) return;
-
-      const date =
-        row["Date"];
-      if(!date) return;
-
-      const jump =
-        safeNum(row["Jump Height"]);
-      if(jump === null) return;
-
-      const key =
-        name + "_" + date;
-
-      if(
-        !bestPerDay[key] ||
-        jump > bestPerDay[key].jump
-      ){
-        bestPerDay[key] = {
-          name,
-          date,
-          jump
-        };
-      }
-
-    });
-
-    Object.values(bestPerDay).forEach(entry=>{
-
-      const p = playerData.find(
-        x => normalizeName(x.name) === entry.name
-      );
-
-      if(p){
-        console.log("MATCHED:", entry.name);
-        p.hawkin.push({
-          date: entry.date,
-          jumpPct: entry.jump,
-          asym: 0
-        });
-      }
-
-    });
-console.log("HAWKIN LOADED");
-  }
-});
-}
 /* ================= DROPDOWNS ================= */
 let mostRecentDate = null;
 function populateDates(){
@@ -1125,10 +1025,6 @@ weekToggleLink.textContent =
   showingLastWeek
     ? "show current week"
     : "show last week";
-
-  renderPlayerPerformanceChart(p);
-
-console.log(p.name,p.hawkin.length);
 
 }
 
@@ -1443,82 +1339,6 @@ function uniqueDaysInRange(player, start, end){
       .map(s => s.date)
   ).size;
 }
-
-function jumpPctInRange(player,start,end){
-
-  const vals = player.hawkin
-    .filter(h=>{
-      const d=new Date(h.date);
-      return d>=start && d<=end;
-    })
-    .map(h=>h.jumpPct)
-    .filter(v=>!isNaN(v));
-
-  if(!vals.length) return null;
-
-  return vals.reduce((a,b)=>a+b,0)/vals.length;
-}
-
-function asymInRange(player,start,end){
-
-  const vals = player.hawkin
-    .filter(h=>{
-      const d=new Date(h.date);
-      return d>=start && d<=end;
-    })
-    .map(h=>h.asym)
-    .filter(v=>!isNaN(v));
-
-  if(!vals.length) return null;
-
-  return vals.reduce((a,b)=>a+b,0)/vals.length;
-}
-
-function buildPerformanceTimeline(p){
-
-  const weeks = {};
-
-  p.sessions.forEach(s=>{
-    const w = weekRange(s.date);
-    weeks[w.label]=w;
-  });
-
-  const labels=[];
-  const recovery=[];
-  const jump=[];
-  const asym=[];
-
-  Object.values(weeks)
-    .sort((a,b)=>a.start - b.start)
-    .forEach(w=>{
-
-      const playerDays =
-        uniqueDaysInRange(p,w.start,w.end);
-
-      const teamDays =
-        validTeamInputDatesInRange(w.start,w.end);
-
-      const adjustedDays =
-        Math.max(playerDays,teamDays);
-
-      const recPct =
-        adjustedDays===0?null:(playerDays/adjustedDays)*100;
-
-      const j = jumpPctInRange(p,w.start,w.end);
-      const a = asymInRange(p,w.start,w.end);
-
-      if(recPct!==null && j!==null && a!==null){
-        labels.push(w.label);
-        recovery.push(recPct);
-        jump.push(j);
-        asym.push(a);
-      }
-
-    });
-
-  return{labels,recovery,jump,asym};
-}
-
 function teamInputDatesInRange(start, end){
 
   const dates = new Set();
@@ -2027,63 +1847,6 @@ if(p.sessions.length === 0){
     }
   );
 }
-let playerPerformanceChart=null;
-
-function renderPlayerPerformanceChart(p){
-
-  const t = buildPerformanceTimeline(p);
-
-  playerPerformanceChart?.destroy();
-
-  playerPerformanceChart = new Chart(
-    document.getElementById("playerPerformanceChart"),
-    {
-      type:"line",
-      data:{
-        labels:t.labels,
-        datasets:[
-          {
-            label:"Recovery %",
-            data:t.recovery,
-            borderColor:"#FDF9D8",
-            tension:0.3
-          },
-          {
-            label:"Jump % PR",
-            data:t.jump,
-            borderColor:"#4CAF50",
-            tension:0.3
-          },
-          {
-            label:"Asymmetry %",
-            data:t.asym,
-            borderColor:"#E53935",
-            tension:0.3
-          }
-        ]
-      },
-      options:{
-        plugins:{
-          legend:{
-            labels:{color:"#FDF9D8"}
-          }
-        },
-        scales:{
-          y:{
-            min:0,
-            max:100,
-            ticks:{color:"#FDF9D8"}
-          },
-          x:{
-            ticks:{color:"#FDF9D8"}
-          }
-        }
-      }
-    }
-  );
-
-}
-
 let monthlyAvgChart = null;
 function parseWeekLabel(label){
 
