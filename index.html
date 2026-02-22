@@ -772,6 +772,12 @@ async function loadHawkinCSV(){
   const text = await res.text();
 
   const parsed = Papa.parse(text,{
+  header:true,
+  skipEmptyLines:true,
+  transformHeader: h =>
+    h.replace(/^\uFEFF/, "").trim(),
+  complete:(parsed)=>{
+
     header:true,
     skipEmptyLines:true
   });
