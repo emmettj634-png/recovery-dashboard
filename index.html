@@ -794,7 +794,7 @@ parsed.data.forEach(row=>{
     safeNum(row["L|R Peak Propulsive Force"]);
 
   // must have asymmetry to count
-  if(asym === null) return;
+ if(jump === null) return;
 
   const key =
     name + "_" + date;
@@ -820,10 +820,11 @@ Object.values(bestPerDay).forEach(entry=>{
 
   if(p){
     p.hawkin.push({
-      date: entry.date,
-      jumpPct: entry.jump,
-      asym: entry.asym
-    });
+  date: entry.date,
+  jumpPct: entry.jump,
+  asym: 0
+});
+
   }
 
 });
