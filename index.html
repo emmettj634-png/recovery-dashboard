@@ -771,72 +771,63 @@ async function loadHawkinCSV(){
   const res = await fetch("data/hawkin_cmj.csv?v=" + Date.now());
   const text = await res.text();
 
-  const parsed = Papa.parse(text,{
+  Papa.parse(text,{
   header:true,
   skipEmptyLines:true,
   transformHeader: h =>
     h.replace(/^\uFEFF/, "").trim(),
   complete:(parsed)=>{
 
-    header:true,
-    skipEmptyLines:true
-  });
+    const bestPerDay = {};
 
-const bestPerDay = {};
+    parsed.data.forEach(row=>{
 
-parsed.data.forEach(row=>{
-  
-console.log(parsed.data[0]);
-  const name =
-    normalizeName(row["Name"]);
-  if(!name) return;
+      const name =
+        normalizeName(row["Name"]);
+      if(!name) return;
 
-  const date =
-    row["Date"];
-  if(!date) return;
+      const date =
+        row["Date"];
+      if(!date) return;
 
-  const jump =
-    safeNum(row["Jump Height"]);
-  const asym =
-    safeNum(row["L|R Peak Propulsive Force"]);
+      const jump =
+        safeNum(row["Jump Height"]);
+      if(jump === null) return;
 
-  // must have asymmetry to count
- if(jump === null) return;
+      const key =
+        name + "_" + date;
 
-  const key =
-    name + "_" + date;
+      if(
+        !bestPerDay[key] ||
+        jump > bestPerDay[key].jump
+      ){
+        bestPerDay[key] = {
+          name,
+          date,
+          jump
+        };
+      }
 
-  if(
-    !bestPerDay[key] ||
-    jump > bestPerDay[key].jump
-  ){
-    bestPerDay[key] = {
-      name,
-      date,
-      jump,
-      asym
-    };
-  }
+    });
 
-});
-Object.values(bestPerDay).forEach(entry=>{
+    Object.values(bestPerDay).forEach(entry=>{
 
-  const p = playerData.find(
-    x => normalizeName(x.name) === entry.name
-  );
+      const p = playerData.find(
+        x => normalizeName(x.name) === entry.name
+      );
 
-  if(p){
-    p.hawkin.push({
-  date: entry.date,
-  jumpPct: entry.jump,
-  asym: 0
-});
+      if(p){
+        p.hawkin.push({
+          date: entry.date,
+          jumpPct: entry.jump,
+          asym: 0
+        });
+      }
+
+    });
 
   }
-
 });
-
-}
 
 /* ================= DROPDOWNS ================= */
 let mostRecentDate = null;
