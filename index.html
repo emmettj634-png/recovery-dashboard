@@ -8,6 +8,8 @@
 <div class="header">
 <title>Oklahoma Elite Recovery Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
 
 <style>
 
@@ -762,22 +764,37 @@ async function loadHawkinCSV(){
   const res = await fetch("data/hawkin_cmj.csv?v=" + Date.now());
   const text = await res.text();
 
-  const rows = text.split("\n").slice(1);
+  const parsed = Papa.parse(text,{
+    header:true,
+    skipEmptyLines:true
+  });
 
-  rows.forEach(r=>{
+  parsed.data.forEach(row=>{
 
-    if(!r.trim()) return;
+    let rawName = row["Name"];
+    if(!rawName) return;
 
-    const cols = r.split(",");
+    let name = rawName;
 
-    const name = cols[0]?.trim();
-    const date = cols[1]?.trim();
-    const jumpPct = parseFloat(cols[5]); // Jump Height % of Max
-    const asym = parseFloat(cols[12]);   // L|R Peak Propulsive Force
+    if(rawName.includes(",")){
+      const parts = rawName.split(",");
+      name =
+        parts[1].trim() + " " +
+        parts[0].trim();
+    }
+
+    const date =
+      row["Date"];
+
+    const jumpPct =
+      parseFloat(row["Jump Height"]);
+
+    const asym =
+      parseFloat(row["L|R Peak Propulsive Force"]);
 
     const p = playerData.find(x=>x.name === name);
 
-    if(p){
+    if(p && !isNaN(jumpPct) && !isNaN(asym)){
       p.hawkin.push({
         date,
         jumpPct,
@@ -1070,6 +1087,7 @@ weekToggleLink.textContent =
 
   renderPlayerPerformanceChart(p);
 
+console.log(p.name,p.hawkin.length);
 
 }
 
