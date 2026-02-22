@@ -776,36 +776,57 @@ async function loadHawkinCSV(){
     skipEmptyLines:true
   });
 
-  parsed.data.forEach(row=>{
+const bestPerDay = {};
 
-  let name =
-  normalizeName(row["Name"]);
+parsed.data.forEach(row=>{
 
-if(!name) return;
+  const name =
+    normalizeName(row["Name"]);
+  if(!name) return;
 
-    const date =
-      row["Date"];
+  const date =
+    row["Date"];
+  if(!date) return;
 
-    const jumpPct =
-      parseFloat(row["Jump Height"]);
+  const jump =
+    safeNum(row["Jump Height"]);
+  const asym =
+    safeNum(row["L|R Peak Propulsive Force"]);
 
-    const asym =
-      parseFloat(row["L|R Peak Propulsive Force"]);
+  // must have asymmetry to count
+  if(asym === null) return;
 
-   const p = playerData.find(
-  x => normalizeName(x.name) === name
-);
+  const key =
+    name + "_" + date;
 
+  if(
+    !bestPerDay[key] ||
+    jump > bestPerDay[key].jump
+  ){
+    bestPerDay[key] = {
+      name,
+      date,
+      jump,
+      asym
+    };
+  }
 
-    if(p && !isNaN(jumpPct) && !isNaN(asym)){
-      p.hawkin.push({
-        date,
-        jumpPct,
-        asym
-      });
-    }
+});
+Object.values(bestPerDay).forEach(entry=>{
 
-  });
+  const p = playerData.find(
+    x => normalizeName(x.name) === entry.name
+  );
+
+  if(p){
+    p.hawkin.push({
+      date: entry.date,
+      jumpPct: entry.jump,
+      asym: entry.asym
+    });
+  }
+
+});
 
 }
 
