@@ -531,6 +531,17 @@ function fmtDate(d){
   const x = new Date(d);
   return `${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}-${x.getFullYear()}`;
 }
+function shortWeekLabel(start,end){
+
+  const s = new Date(start);
+  const e = new Date(end);
+
+  const fmt = d =>
+    `${d.getMonth()+1}/${d.getDate()}`;
+
+  return `${fmt(s)} - ${fmt(e)}`;
+}
+
 const monthKey = d => {
   const x = new Date(d);
   return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`;
@@ -818,7 +829,8 @@ function populateMonthWeeks(){
     .forEach(w=>{
       const o = document.createElement("option");
      o.value = w.label;
-o.textContent = w.label;
+o.textContent =
+  shortWeekLabel(w.start,w.end);
       monthWeekFilter.appendChild(o);
     });
 }
@@ -1276,11 +1288,24 @@ leadersDiv.style.paddingLeft = "20px";
 
 /* ================= WEEKLY LEADERBOARD ================= */
 function getWeekRange(dateStr){
-  const d=new Date(dateStr);
-  const start=new Date(d);start.setDate(d.getDate()-d.getDay());
-  const end=new Date(start);end.setDate(start.getDate()+6);
-  return{label:`${start.toLocaleDateString()} - ${end.toLocaleDateString()}`,start,end};
+
+  const d = new Date(dateStr);
+
+  const start = new Date(d);
+  start.setDate(d.getDate()-d.getDay());
+  start.setHours(0,0,0,0);
+
+  const end = new Date(start);
+  end.setDate(start.getDate()+6);
+  end.setHours(23,59,59,999);
+
+  return{
+    label: shortWeekLabel(start,end),
+    start,
+    end
+  };
 }
+
 function populateWeeks(){
   weekFilter.innerHTML = "";
   const weeks = {};
@@ -1924,8 +1949,9 @@ function renderPlayerVsPositionChart(p){
     posVals.push(r.posPct.toFixed(1));
 
     labels.push(
-      weekRange(w.start).label
-    );
+  shortWeekLabel(w.start,w.end)
+);
+
 
   });
 
@@ -2125,10 +2151,17 @@ function renderMonthlyAvgChart(){
           plugins:{
             legend:{display:false},
             tooltip:{
-              callbacks:{
-                label:ctx=>ctx.parsed.y+"%"
-              }
-            }
+  callbacks:{
+    title:(items)=>{
+
+      const label = items[0].label;
+      return label;
+
+    },
+    label:ctx=>ctx.parsed.y+"%"
+  }
+}
+
           }
         }
       }
