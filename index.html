@@ -896,24 +896,47 @@ playerLastDate.textContent = lastDate
   const group=playerData.filter(x=>x.position===p.position);
   const sortedGroup = group
   .map(player => ({
+
     name: player.name,
-    days: uniqueDaysInRange(player,start,end)
+
+    days:
+      uniqueDaysInRange(player,start,end),
+
+    modules:
+      totalModulesInRange(
+        player,
+        start,
+        end
+      )
 
   }))
-  .sort((a,b)=>b.days - a.days);
+  .sort((a,b)=>{
 
-let rank = 1;
+    if(b.days !== a.days){
+      return b.days - a.days;
+    }
 
-for(let i = 0; i < sortedGroup.length; i++){
+    return b.modules - a.modules;
 
-  if(i > 0 && sortedGroup[i].days < sortedGroup[i-1].days){
-    rank = i + 1;
+  });
+
+let rank = 0;
+
+for(let i=0;i<sortedGroup.length;i++){
+
+  if(sortedGroup[i].days === 0){
+    rank = sortedGroup.length;
+  }
+  else{
+    rank = i+1;
   }
 
   if(sortedGroup[i].name === p.name){
     break;
   }
+
 }
+
 
 const validDates = new Set();
 
@@ -980,29 +1003,13 @@ playerRecoveryDays.textContent =
     ? "-"
     : `${playerDays}/${adjustedTeamDays} (${pct}%)`;
 
-const tieGroup =
-  sortedGroup.filter(x =>
-    x.days === playerDays
-  );
+const playerDays =
+  uniqueDaysInRange(p,start,end);
 
-const lowestDays =
-  Math.min(...sortedGroup.map(x => x.days));
-
-const positionSize =
-  sortedGroup.length;
-
-const isWorstTie =
-  playerDays === 0 &&
-  lowestDays === 0 &&
-  tieGroup.length > 1;
-
-
-const rankText = isWorstTie
-  ? `T-${positionSize}`
-  : (tieGroup.length > 1
-      ? `T-${rank}`
-      : `${rank}`);
-
+const rankText =
+  playerDays === 0
+    ? `T-${sortedGroup.length}`
+    : `${rank}`;
 
 playerRank.textContent =
   `${rankText} out of ${group.length}`;
@@ -1574,16 +1581,16 @@ const fullRanked = [...ranked]
     return b.modules - a.modules;
 
   });
-let trueRank = 1;
-
 fullRanked.forEach((p,i)=>{
 
-  if(i>0 && p.days < fullRanked[i-1].days){
-    trueRank = i+1;
+  if(p.days === 0){
+    p.trueRank = fullRanked.length;
+  } else {
+    p.trueRank = i+1;
   }
 
-  p.trueRank = trueRank;
 });
+
 
 // Get ALL ranks represented in Top 5
 const topRanks =
