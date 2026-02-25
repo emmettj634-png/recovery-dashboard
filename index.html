@@ -2325,7 +2325,13 @@ toggleView.onclick = () => {
   // Hide irrelevant dropdowns in Team View
   playerFilter.classList.toggle("hidden");
   positionFilter.classList.toggle("hidden");
-  dateFilter.classList.toggle("hidden");
+  if(toTeam){
+  dateFilter.classList.remove("hidden");   // entering Team View
+}
+else{
+  dateFilter.classList.add("hidden");      // entering Player View
+}
+
 
 
  // Update button label
