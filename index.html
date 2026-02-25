@@ -275,6 +275,10 @@ button{cursor:pointer;}
 </div>
 </div>
   
+<h2>Player vs Position Weekly Average</h2>
+<div class="chart-box">
+  <canvas id="playerVsPositionChart"></canvas>
+</div>
 
 
 <h2 id="playerModuleTitle">Cumulative Module Usage</h2>
@@ -1021,6 +1025,8 @@ weekToggleLink.textContent =
   showingLastWeek
     ? "show current week"
     : "show last week";
+  renderPlayerVsPositionChart(p);
+
 
 }
 
@@ -1288,6 +1294,101 @@ function uniqueDaysInRange(player, start, end){
       .map(s => s.date)
   ).size;
 }
+function weeklyRecoveryPercent(player, pos, start, end){
+
+  const teamDates = {};
+  const playerDates = new Set();
+
+  playerData.forEach(p=>{
+    p.sessions.forEach(s=>{
+      const d = new Date(s.date);
+      if(d >= start && d <= end){
+        teamDates[s.date] ??= new Set();
+        teamDates[s.date].add(p.name);
+      }
+    });
+  });
+
+  player.sessions.forEach(s=>{
+    const d = new Date(s.date);
+    if(d >= start && d <= end){
+      playerDates.add(s.date);
+    }
+  });
+
+  const validTeamDates = Object.entries(teamDates)
+    .filter(([d,set])=>set.size>=10)
+    .map(([d])=>d);
+
+  let playerDen = validTeamDates.length;
+  let playerNum = 0;
+
+  validTeamDates.forEach(d=>{
+    if(playerDates.has(d)) playerNum++;
+  });
+
+  playerDates.forEach(d=>{
+    if(!validTeamDates.includes(d)){
+      playerDen++;
+      playerNum++;
+    }
+  });
+
+  const posPlayers =
+    playerData.filter(p=>p.position===pos);
+
+  let posNum = 0;
+
+  validTeamDates.forEach(d=>{
+    posPlayers.forEach(p=>{
+      if(p.sessions.some(s=>s.date===d)){
+        posNum++;
+      }
+    });
+  });
+
+  const posDen =
+    validTeamDates.length * posPlayers.length;
+
+  return {
+    playerPct:
+      playerDen
+        ? (playerNum/playerDen)*100
+        : 0,
+    posPct:
+      posDen
+        ? (posNum/posDen)*100
+        : 0
+  };
+}
+function getLastFiveWeeks(){
+
+  const today = getActiveWeekBaseDate();
+
+  const weeks = [];
+
+  for(let i=4;i>=0;i--){
+
+    const start = new Date(today);
+    start.setDate(today.getDate() - today.getDay() - (i*7));
+    start.setHours(0,0,0,0);
+
+    const end = new Date(start);
+    end.setDate(start.getDate()+6);
+    end.setHours(23,59,59,999);
+
+    const inputs =
+      validTeamInputDatesInRange(start,end);
+
+    if(inputs>=2){
+      weeks.push({start,end});
+    }
+
+  }
+
+  return weeks;
+}
+
 function teamInputDatesInRange(start, end){
 
   const dates = new Set();
@@ -1796,6 +1897,89 @@ if(p.sessions.length === 0){
     }
   );
 }
+function renderPlayerVsPositionChart(p){
+
+  const weeks = getLastFiveWeeks();
+
+  const playerVals=[];
+  const posVals=[];
+  const labels=[];
+
+  weeks.forEach(w=>{
+
+    const r =
+      weeklyRecoveryPercent(
+        p,
+        p.position,
+        w.start,
+        w.end
+      );
+
+    playerVals.push(r.playerPct.toFixed(1));
+    posVals.push(r.posPct.toFixed(1));
+
+    labels.push(
+      weekRange(w.start).label
+    );
+
+  });
+
+  playerVsPositionChart?.destroy();
+
+  playerVsPositionChart =
+    new Chart(
+      document.getElementById("playerVsPositionChart"),
+      {
+        type:"line",
+        data:{
+          labels,
+          datasets:[
+            {
+              label:"Player %",
+              data:playerVals,
+              tension:.3
+            },
+            {
+              label:"Position Avg %",
+              data:posVals,
+              tension:.3
+            }
+          ]
+        },
+        options:{
+  scales:{
+    x:{
+      ticks:{
+        color:cream
+      }
+    },
+    y:{
+      min:0,
+      max:100,
+      ticks:{
+        color:cream,
+        callback:v=>v+"%"
+      }
+    }
+  },
+  plugins:{
+    legend:{
+      labels:{
+        color:cream
+      }
+    },
+    tooltip:{
+      callbacks:{
+        label:(ctx)=>ctx.parsed.y+"%"
+      }
+    }
+  }
+}
+
+      }
+    );
+}
+
 let monthlyAvgChart = null;
 function parseWeekLabel(label){
 
@@ -2024,6 +2208,7 @@ borderWidth: 1
   );
 }
 
+let playerVsPositionChart = null;  
 /* ================= EVENTS ================= */
 positionFilter.onchange = () => {
   populatePlayers();
