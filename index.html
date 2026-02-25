@@ -1016,10 +1016,14 @@ playerRecoveryDays.textContent =
     : `${playerDays}/${adjustedTeamDays} (${pct}%)`;
 
 
+const zeroGroup =
+  sortedGroup.filter(x => x.days === 0);
+
 const rankText =
-  playerDays === 0
+  playerDays === 0 && zeroGroup.length > 1
     ? `T-${sortedGroup.length}`
     : `${rank}`;
+
 
 playerRank.textContent =
   `${rankText} out of ${group.length}`;
@@ -1681,10 +1685,14 @@ else{
 
  top.forEach(p=>{
 
-  const rankText =
-    p.days === 0
-      ? `T-${fullRanked.length}`
-      : `${p.trueRank}`;
+  const zeroGroup =
+  fullRanked.filter(x => x.days === 0);
+
+const rankText =
+  p.days === 0 && zeroGroup.length > 1
+    ? `T-${fullRanked.length}`
+    : `${p.trueRank}`;
+
 
   html += `
     <li>
@@ -1733,10 +1741,14 @@ else{
 
 bottom.forEach(p=>{
 
-  const rankText =
-    p.days === 0
-      ? `T-${fullRanked.length}`
-      : `${p.trueRank}`;
+  const zeroGroup =
+  fullRanked.filter(x => x.days === 0);
+
+const rankText =
+  p.days === 0 && zeroGroup.length > 1
+    ? `T-${fullRanked.length}`
+    : `${p.trueRank}`;
+
 
   html += `
     <li>
