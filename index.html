@@ -276,9 +276,13 @@ button{cursor:pointer;}
 </div>
   
 <h2>Player vs Position Weekly Average</h2>
-<div class="chart-box">
-  <canvas id="playerVsPositionChart"></canvas>
+<div class="chart-box" id="playerVsPosContainer">
+  <div class="empty-state">
+    Select a player to view weekly recovery vs position average
+  </div>
+  <canvas id="playerVsPositionChart" style="display:none;"></canvas>
 </div>
+
 
 
 <h2 id="playerModuleTitle">Cumulative Module Usage</h2>
@@ -840,6 +844,14 @@ function showPlayer(){
 document.getElementById("playerDetailsEmpty")
   .classList.add("hidden");
   const p=playerData.find(x=>x.name===playerFilter.value);
+  document.querySelector(
+  "#playerVsPosContainer .empty-state"
+).style.display = "none";
+
+document.getElementById(
+  "playerVsPositionChart"
+).style.display = "block";
+
   const today = getActiveWeekBaseDate();
 
 const currentWeekStart = new Date(today);
@@ -2244,6 +2256,14 @@ playerFilter.onchange = () => {
     // Hide chart, show empty state
     document.getElementById("playerModuleChart").style.display = "none";
     document.querySelector("#playerModuleContainer .empty-state").style.display = "block";
+    document.getElementById(
+  "playerVsPositionChart"
+).style.display = "none";
+
+document.querySelector(
+  "#playerVsPosContainer .empty-state"
+).style.display = "block";
+
 
     return;
   }
