@@ -1679,33 +1679,22 @@ else if(everyoneSameNonZero){
 }
 else{
 
-  let prevValue = null;
-  let displayRank = 0;
+ top.forEach(p=>{
 
-  top.forEach((p,index)=>{
+  const rankText =
+    p.days === 0
+      ? `T-${fullRanked.length}`
+      : `${p.trueRank}`;
 
-    if(prevValue === null || p.days < prevValue){
-      displayRank = index+1;
-    }
+  html += `
+    <li>
+      ${rankText}. ${p.name}
+      ${p.trend || ""}
+    </li>
+  `;
 
-    const tieCount =
-      top.filter(x =>
-        x.days === p.days
-      ).length;
+});
 
-    const rankText = tieCount > 1
-      ? `T-${displayRank}`
-      : `${displayRank}`;
-
-    prevValue = p.days;
-
-    html += `
-      <li>
-        ${rankText}. ${p.name}
-        ${p.trend || ""}
-      </li>
-    `;
-  });
 
 }
 
@@ -1742,29 +1731,12 @@ else{
   let prevValue = null;
   let displayRank = 0;
 
-bottom.forEach(p => {
+bottom.forEach(p=>{
 
-  const lowestDays =
-    Math.min(...fullRanked.map(x => x.days));
-
-  const tieGroup =
-    fullRanked.filter(x =>
-      x.days === p.days
-    );
-
-  const positionSize = fullRanked.length;
-
-  const isWorstTie =
-  lowestDays === 0 &&     // 👈 ONLY force T-LAST if worst = ZERO
-  p.days === lowestDays &&
-  tieGroup.length > 1;
-
-
-  const rankText = isWorstTie
-    ? `T-${positionSize}`
-    : (tieGroup.length > 1
-        ? `T-${p.trueRank}`
-        : `${p.trueRank}`);
+  const rankText =
+    p.days === 0
+      ? `T-${fullRanked.length}`
+      : `${p.trueRank}`;
 
   html += `
     <li>
@@ -1772,7 +1744,9 @@ bottom.forEach(p => {
       ${p.trend || ""}
     </li>
   `;
+
 });
+
 
 }
 
