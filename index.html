@@ -1947,16 +1947,35 @@ function renderPlayerVsPositionChart(p){
           ]
         },
         options:{
-          scales:{
-            y:{
-              min:0,
-              max:100,
-              ticks:{
-                callback:v=>v+"%"
-              }
-            }
-          }
-        }
+  scales:{
+    x:{
+      ticks:{
+        color:cream
+      }
+    },
+    y:{
+      min:0,
+      max:100,
+      ticks:{
+        color:cream,
+        callback:v=>v+"%"
+      }
+    }
+  },
+  plugins:{
+    legend:{
+      labels:{
+        color:cream
+      }
+    },
+    tooltip:{
+      callbacks:{
+        label:(ctx)=>ctx.parsed.y+"%"
+      }
+    }
+  }
+}
+
       }
     );
 }
