@@ -220,9 +220,10 @@ button{cursor:pointer;}
     <option value="">Select Player</option>
   </select>
 
-  <select id="dateFilter">
-    <option value="">Select Date</option>
-  </select>
+<select id="dateFilter">
+  <option value="">Select Date</option>
+</select>
+
 
   <button id="toggleView">Team View</button>
 </div>
@@ -1332,9 +1333,14 @@ o.textContent =
     weekFilter.appendChild(o);
   });
 
-  if(sortedWeeks.length){
-    weekFilter.value = sortedWeeks[0].label;
-  }
+ if(sortedWeeks.length){
+
+  weekFilter.value =
+    `${sortedWeeks[0].start.toISOString()}|${sortedWeeks[0].end.toISOString()}`;
+
+  renderLeaderboards();   // 👈 AUTO LOAD
+}
+
 }
 function uniqueDaysInRange(player, start, end){
 
@@ -2319,6 +2325,8 @@ toggleView.onclick = () => {
   // Hide irrelevant dropdowns in Team View
   playerFilter.classList.toggle("hidden");
   positionFilter.classList.toggle("hidden");
+  dateFilter.classList.toggle("hidden");
+
 
  // Update button label
 toggleView.textContent =
@@ -2367,6 +2375,7 @@ teamRankToggleBtn.onclick = () => {
 
   teamRankToggleBtn.textContent =
     "Back to Team View";
+  dateFilter.classList.add("hidden");
 
 
   } else {
@@ -2380,6 +2389,8 @@ teamRankToggleBtn.onclick = () => {
 
   teamRankToggleBtn.textContent =
     "Team Rank";
+  dateFilter.classList.remove("hidden");
+
 
   }
 
