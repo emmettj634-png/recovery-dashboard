@@ -992,8 +992,10 @@ const positionSize =
   sortedGroup.length;
 
 const isWorstTie =
-  playerDays === lowestDays &&
+  playerDays === 0 &&
+  lowestDays === 0 &&
   tieGroup.length > 1;
+
 
 const rankText = isWorstTie
   ? `T-${positionSize}`
