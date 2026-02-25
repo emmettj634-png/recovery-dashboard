@@ -1322,8 +1322,13 @@ function populateWeeks(){
 
   sortedWeeks.forEach(w=>{
     const o = document.createElement("option");
-    o.value = w.label;
-    o.textContent = w.label;
+
+o.value =
+  `${w.start.toISOString()}|${w.end.toISOString()}`;
+
+o.textContent =
+  shortWeekLabel(w.start,w.end);
+
     weekFilter.appendChild(o);
   });
 
@@ -1486,9 +1491,12 @@ function renderLeaderboards(){
 
   const weeklyLeaderboard = [];
 
-  const [s, e] = weekFilter.value.split(" - ");
-  const start = new Date(s);
-  const end = new Date(e);
+  const [s, e] =
+  weekFilter.value.split("|");
+
+const start = new Date(s);
+const end = new Date(e);
+
 
   const earliestWeekStart = getEarliestWeekStart();
 
