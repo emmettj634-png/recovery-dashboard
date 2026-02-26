@@ -2321,6 +2321,20 @@ toggleView.onclick = () => {
   // Toggle views
   playerView.classList.toggle("hidden");
   teamView.classList.toggle("hidden");
+  if(!toTeam){
+
+  // leaving Team View → entering Player View
+
+  showingTeamRank = false;
+
+  teamRankSection.classList.add("hidden");
+  weeklyLeaderboardSection.classList.add("hidden");
+  teamModuleSection.classList.remove("hidden");
+
+  teamRankToggleBtn.textContent = "Team Ranks";
+
+}
+
 
   // Hide irrelevant dropdowns in Team View
   playerFilter.classList.toggle("hidden");
@@ -2341,8 +2355,20 @@ toggleView.textContent =
 
   // Render team modules immediately when entering Team View
   if (toTeam) {
-    renderTeamView();
-  }
+
+  // entering Team View fresh
+  showingTeamRank = false;
+
+  teamRankSection.classList.add("hidden");
+  weeklyLeaderboardSection.classList.add("hidden");
+  teamModuleSection.classList.remove("hidden");
+
+  teamRankToggleBtn.textContent = "Team Ranks";
+
+  renderTeamView();
+
+}
+
 };
 weekFilter.onchange=renderLeaderboards;
 monthFilter.onchange = () => {
