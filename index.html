@@ -202,7 +202,43 @@ button{cursor:pointer;}
 </head>
 
 <body>
-<div class="container">
+<div id="loginScreen" style="
+position:fixed;
+inset:0;
+background:#6F1213;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:9999;
+color:#FDF9D8;
+">
+
+<h2>OU Elite Recovery Dashboard</h2>
+
+<input
+  id="usernameInput"
+  placeholder="Username"
+  style="margin:8px;padding:10px;border-radius:6px;"
+>
+
+<input
+  id="passwordInput"
+  type="password"
+  placeholder="Password"
+  style="margin:8px;padding:10px;border-radius:6px;"
+>
+
+<button onclick="loginUser()" style="padding:10px;">
+Login
+</button>
+
+<p id="loginError" style="color:#F28B82;"></p>
+
+</div>
+
+<div class="container" id="dashboard" style="display:none;">
+
 
 <div class="header">
   
@@ -2441,6 +2477,67 @@ monthWeekFilter.addEventListener("change", () => {
 dateFilter.classList.add("hidden");
 
   });  
+  async function sha256(str){
+  const buf = new TextEncoder().encode(str);
+  const hash =
+    await crypto.subtle.digest("SHA-256", buf);
+  return [...new Uint8Array(hash)]
+    .map(x=>x.toString(16).padStart(2,'0'))
+    .join('');
+}
+async function loginUser(){
+
+  const user =
+    document.getElementById("usernameInput")
+    .value
+    .toLowerCase();
+
+  const pass =
+    document.getElementById("passwordInput")
+    .value;
+
+  const hash =
+    await sha256(pass);
+
+  // 🔐 USER DATABASE
+  const users = {
+
+    "Emmett":
+    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+
+    "Sausaman":
+    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+
+    "Steven":
+    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599"
+
+  };
+
+  if(users[user] && users[user] === hash){
+
+    sessionStorage.setItem("loggedIn","yes");
+
+    document.getElementById("loginScreen")
+      .style.display="none";
+
+    document.getElementById("dashboard")
+      .style.display="block";
+
+  } else {
+
+    document.getElementById("loginError")
+      .textContent="Invalid login";
+
+  }
+
+}
+
+// remember login for session
+if(sessionStorage.getItem("loggedIn")==="yes"){
+  document.getElementById("loginScreen").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+}
+
 </script>
 
 </body>
