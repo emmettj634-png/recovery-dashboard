@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2498,22 +2499,21 @@ dateFilter.classList.add("hidden");
     .map(x=>x.toString(16).padStart(2,'0'))
     .join('');
 }
-
 async function loginUser(){
 
   const user =
     document.getElementById("usernameInput")
     .value
-    .trim()
     .toLowerCase();
 
   const pass =
     document.getElementById("passwordInput")
-    .value
-    .trim();
+    .value;
 
-  const hash = await sha256(pass);
+  const hash =
+    await sha256(pass);
 
+  // 🔐 USER DATABASE
   const users = {
 
     "emmett":
@@ -2562,6 +2562,10 @@ async function loginUser(){
 
   if(users[user] && users[user] === hash){
 
+    sessionStorage.setItem("loggedIn","yes");
+    startLogoutTimer();
+
+
     document.getElementById("loginScreen")
       .style.display="none";
 
@@ -2578,14 +2582,30 @@ async function loginUser(){
 }
 
 // remember login for session
+if(sessionStorage.getItem("loggedIn")==="yes"){
+  document.getElementById("loginScreen").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  startLogoutTimer();
+}
+let logoutTimer;
 
+function startLogoutTimer(){
 
+  clearTimeout(logoutTimer);
+
+  logoutTimer = setTimeout(()=>{
+    sessionStorage.removeItem("loggedIn");
+    location.reload();
+  }, 15 * 60 * 1000); // 15 minutes
+
+}
 
 // Reset timer on activity
 ["click","mousemove","keypress","touchstart"]
 .forEach(event=>{
   document.addEventListener(event,()=>{
-   
+    if(sessionStorage.getItem("loggedIn")==="yes"){
+      startLogoutTimer();
     }
   });
 });
