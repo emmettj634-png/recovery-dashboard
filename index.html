@@ -2561,8 +2561,8 @@ async function loginUser(){
 
   if(users[user] && users[user] === hash){
 
-    sessionStorage.setItem("loggedIn","yes");
-    startLogoutTimer();
+  
+
 
 
     document.getElementById("loginScreen")
@@ -2581,30 +2581,14 @@ async function loginUser(){
 }
 
 // remember login for session
-if(sessionStorage.getItem("loggedIn")==="yes"){
-  document.getElementById("loginScreen").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  startLogoutTimer();
-}
-let logoutTimer;
 
-function startLogoutTimer(){
 
-  clearTimeout(logoutTimer);
-
-  logoutTimer = setTimeout(()=>{
-    sessionStorage.removeItem("loggedIn");
-    location.reload();
-  }, 15 * 60 * 1000); // 15 minutes
-
-}
 
 // Reset timer on activity
 ["click","mousemove","keypress","touchstart"]
 .forEach(event=>{
   document.addEventListener(event,()=>{
-    if(sessionStorage.getItem("loggedIn")==="yes"){
-      startLogoutTimer();
+   
     }
   });
 });
