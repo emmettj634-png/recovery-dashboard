@@ -2498,21 +2498,22 @@ dateFilter.classList.add("hidden");
     .map(x=>x.toString(16).padStart(2,'0'))
     .join('');
 }
+
 async function loginUser(){
 
   const user =
     document.getElementById("usernameInput")
     .value
+    .trim()
     .toLowerCase();
 
   const pass =
     document.getElementById("passwordInput")
-    .value;
+    .value
+    .trim();
 
-  const hash =
-    await sha256(pass);
+  const hash = await sha256(pass);
 
-  // 🔐 USER DATABASE
   const users = {
 
     "emmett":
@@ -2560,10 +2561,6 @@ async function loginUser(){
   };
 
   if(users[user] && users[user] === hash){
-
-  
-
-
 
     document.getElementById("loginScreen")
       .style.display="none";
