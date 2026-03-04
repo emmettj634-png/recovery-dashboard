@@ -2503,89 +2503,53 @@ async function loginUser(){
 
   const user =
     document.getElementById("usernameInput")
-    .value
-    .toLowerCase();
+      .value
+      .trim()
+      .toLowerCase();
 
   const pass =
     document.getElementById("passwordInput")
-    .value;
+      .value
+      .trim();
 
-  const hash =
-    await sha256(pass);
+  const hash = await sha256(pass);
 
   // 🔐 USER DATABASE
   const users = {
 
-    "emmett":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "sausaman":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "venables":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-   
-    "bedenbaugh":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "bates":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "chavis":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "mccullough":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "witten":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "dreiling":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "hall":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "morgan":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "jones":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "arbuckle":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
-
-    "steven":
-    "7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599"
+    "emmett":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "sausaman":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "venables":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "bedenbaugh":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "bates":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "chavis":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "mccullough":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "witten":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "dreiling":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "hall":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "morgan":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "jones":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "arbuckle":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599",
+    "steven":"7e496cccb452675095857b11b90d5b2528039102de9d7aba62c31bb38be87599"
 
   };
 
   if(users[user] && users[user] === hash){
 
-    sessionStorage.setItem("loggedIn","yes");
-    startLogoutTimer();
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("dashboard").style.display="block";
 
-
-    document.getElementById("loginScreen")
-      .style.display="none";
-
-    document.getElementById("dashboard")
-      .style.display="block";
+    startLogoutTimer(); // start inactivity timer
 
   } else {
 
-    document.getElementById("loginError")
-      .textContent="Invalid login";
+    document.getElementById("loginError").textContent =
+      "Invalid login";
 
   }
 
 }
 
-// remember login for session
-if(sessionStorage.getItem("loggedIn")==="yes"){
-  document.getElementById("loginScreen").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  startLogoutTimer();
 }
 let logoutTimer;
 
@@ -2594,8 +2558,7 @@ function startLogoutTimer(){
   clearTimeout(logoutTimer);
 
   logoutTimer = setTimeout(()=>{
-    sessionStorage.removeItem("loggedIn");
-    location.reload();
+    location.reload(); // forces login on timeout
   }, 15 * 60 * 1000); // 15 minutes
 
 }
@@ -2604,11 +2567,18 @@ function startLogoutTimer(){
 ["click","mousemove","keypress","touchstart"]
 .forEach(event=>{
   document.addEventListener(event,()=>{
-    if(sessionStorage.getItem("loggedIn")==="yes"){
+    if(document.getElementById("dashboard").style.display === "block"){
       startLogoutTimer();
     }
   });
 });
+
+
+window.addEventListener("load",()=>{
+  document.getElementById("loginScreen").style.display="flex";
+  document.getElementById("dashboard").style.display="none";
+});
+
 
 </script>
 
