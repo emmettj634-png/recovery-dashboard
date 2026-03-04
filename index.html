@@ -2578,6 +2578,16 @@ window.addEventListener("load",()=>{
   document.getElementById("dashboard").style.display="none";
 });
 
+document.addEventListener("keydown", function(event){
+
+  if(event.key === "Enter" &&
+     document.getElementById("loginScreen").style.display !== "none"){
+
+    loginUser();
+
+  }
+
+});
 
 </script>
 
