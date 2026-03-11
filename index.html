@@ -778,22 +778,25 @@ async function loadCSV(){
   const res = await fetch("eliterecoverykey.csv?v=" + Date.now());
   const text = await res.text();
 
-  playerData.forEach(p => p.sessions = []);
+playerData.forEach(p => p.sessions = []);
 
-  text.split("\n").slice(1).forEach(r=>{
-    if(!r.trim()) return;
+text.split("\n").slice(1).forEach(r=>{
+  if(!r.trim()) return;
 
-    const [n, m, d, pre, post] = r.split(",").map(x => x.trim());
+  const [n, m, d, pre, post] = r.split(",").map(x => x.trim());
+
+  const p = playerData.find(x => x.name === n);
+
+  if(p){
     p.sessions.push({
-  module: m,
-  date: d,
-  pre: pre,
-  post: post
-});
-    const p = playerData.find(x => x.name === n);
-    if(p) p.sessions.push({ module: m, date: d });
-  });
+      module: m,
+      date: d,
+      pre: pre,
+      post: post
+    });
+  }
 
+});
   populateDates();
   populatePlayers();
   renderCharts();
