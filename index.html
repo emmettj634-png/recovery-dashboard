@@ -375,10 +375,29 @@ Login
 <div style="text-align:center; margin:20px 0;">
   <button id="teamRankToggleBtn">Team Ranks</button>
 </div>
-<div id="practiceFilter" style="display:none; margin-bottom:10px;">
-  <label><input type="checkbox" id="allPractice" checked> All</label>
-  <label style="margin-left:10px;"><input type="checkbox" id="prePractice"> Pre Practice</label>
-  <label style="margin-left:10px;"><input type="checkbox" id="postPractice"> Post Practice</label>
+<div id="practiceFilter"
+style="
+display:none;
+text-align:center;
+margin:10px 0 20px 0;
+font-weight:bold;
+">
+
+<label style="margin:0 12px;">
+<input type="checkbox" id="allPractice" checked>
+All
+</label>
+
+<label style="margin:0 12px;">
+<input type="checkbox" id="prePractice">
+Pre Practice
+</label>
+
+<label style="margin:0 12px;">
+<input type="checkbox" id="postPractice">
+Post Practice
+</label>
+
 </div>
 <div id="teamModuleSection">
   <h2 style="text-align:center;">
@@ -2486,6 +2505,7 @@ teamRankToggleBtn.onclick = () => {
   teamRankToggleBtn.textContent =
     "Back to Team View";
   dateFilter.classList.add("hidden");
+  practiceFilter.style.display = "none";
 
 
   } else {
@@ -2500,6 +2520,7 @@ teamRankToggleBtn.onclick = () => {
   teamRankToggleBtn.textContent =
     "Team Ranks";
   dateFilter.classList.remove("hidden");
+  practiceFilter.style.display = "block";
 
 
   }
