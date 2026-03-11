@@ -375,7 +375,11 @@ Login
 <div style="text-align:center; margin:20px 0;">
   <button id="teamRankToggleBtn">Team Ranks</button>
 </div>
-
+<div id="practiceFilter" style="display:none; margin-bottom:10px;">
+  <label><input type="checkbox" id="allPractice" checked> All</label>
+  <label style="margin-left:10px;"><input type="checkbox" id="prePractice"> Pre Practice</label>
+  <label style="margin-left:10px;"><input type="checkbox" id="postPractice"> Post Practice</label>
+</div>
 <div id="teamModuleSection">
   <h2 style="text-align:center;">
     Team Module Participation (Selected Date)
@@ -779,7 +783,13 @@ async function loadCSV(){
   text.split("\n").slice(1).forEach(r=>{
     if(!r.trim()) return;
 
-    const [n, m, d] = r.split(",").map(x => x.trim());
+    const [n, m, d, pre, post] = r.split(",").map(x => x.trim());
+    p.sessions.push({
+  module: m,
+  date: d,
+  pre: pre,
+  post: post
+});
     const p = playerData.find(x => x.name === n);
     if(p) p.sessions.push({ module: m, date: d });
   });
@@ -1132,7 +1142,20 @@ function renderTeamView(){
       const ul=card.querySelector("ul");
 
       playerData.filter(p=>p.position===pos).forEach(p=>{
-        const count=p.sessions.filter(s=>s.module===mod&&s.date===dateFilter.value).length;
+        const count = p.sessions.filter(s => {
+
+  if(s.module !== mod) return false;
+  if(s.date !== dateFilter.value) return false;
+
+  // PRE PRACTICE
+  if(prePractice.checked && s.pre !== "pre") return false;
+
+  // POST PRACTICE
+  if(postPractice.checked && s.post !== "post") return false;
+
+  return true;
+
+}).length;
         if(count>0){
           const li=document.createElement("li");
           li.textContent=count>1?`${p.name} x${count}`:p.name;
@@ -2390,10 +2413,12 @@ toggleView.onclick = () => {
   playerFilter.classList.toggle("hidden");
   positionFilter.classList.toggle("hidden");
   if(toTeam){
-  dateFilter.classList.remove("hidden");   // entering Team View
+  dateFilter.classList.remove("hidden"); // entering Team View
+  practiceFilter.style.display = "block";
 }
 else{
   dateFilter.classList.add("hidden");      // entering Player View
+  practiceFilter.style.display = "none";
 }
 
 
@@ -2477,6 +2502,18 @@ teamRankToggleBtn.onclick = () => {
   }
 
 };   // ✅ closes teamRankToggleBtn.onclick
+  function updatePracticeCheckbox(active){
+
+  allPractice.checked = active === "all";
+  prePractice.checked = active === "pre";
+  postPractice.checked = active === "post";
+
+  renderTeamView(); // refresh modules
+}
+
+allPractice.onclick = () => updatePracticeCheckbox("all");
+prePractice.onclick = () => updatePracticeCheckbox("pre");
+postPractice.onclick = () => updatePracticeCheckbox("post");
 
 moduleBreakdownSelect.onchange =
   renderModuleBreakdownChart;
