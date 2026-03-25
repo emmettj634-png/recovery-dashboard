@@ -1521,26 +1521,30 @@ function getLastFiveWeeks(){
 
   const weeks = [];
 
-  for(let i=4;i>=0;i--){
+  for(let i=4; i>=0; i--){
 
     const start = new Date(today);
-    start.setDate(today.getDate() - today.getDay() - (i*7));
+
+    start.setDate(
+      today.getDate()
+      - today.getDay()
+      - (i*7)
+    );
+
     start.setHours(0,0,0,0);
 
     const end = new Date(start);
     end.setDate(start.getDate()+6);
-    end.setHours(23,59,59,999);
 
-    const inputs =
-      validTeamInputDatesInRange(start,end);
-
-    if(inputs>=2){
-      weeks.push({start,end});
-    }
+    weeks.push({
+      start,
+      end
+    });
 
   }
 
   return weeks;
+
 }
 
 function teamInputDatesInRange(start, end){
