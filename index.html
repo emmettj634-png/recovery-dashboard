@@ -2055,34 +2055,34 @@ function renderPlayerVsPositionChart(p){
   const posVals=[];
   const labels=[];
 
-  weeks.forEach(w=>{
+ weeks.forEach(w=>{
 
-    const r =
-      weeklyRecoveryPercent(
-        p,
-        p.position,
-        w.start,
-        w.end
-      );
+  const r =
+    weeklyRecoveryPercent(
+      p,
+      p.position,
+      w.start,
+      w.end
+    );
 
-    playerVals.push(
-  r.playerPct === null
-    ? null
-    : r.playerPct.toFixed(1)
-);
+  // 🔥 Skip weeks with no valid data
+  if(r.playerPct === null && r.posPct === null){
+    return;
+  }
 
-posVals.push(
-  r.posPct === null
-    ? null
-    : r.posPct.toFixed(1)
-);
+  playerVals.push(
+    r.playerPct.toFixed(1)
+  );
 
-    labels.push(
-  shortWeekLabel(w.start,w.end)
-);
+  posVals.push(
+    r.posPct.toFixed(1)
+  );
 
+  labels.push(
+    shortWeekLabel(w.start,w.end)
+  );
 
-  });
+});
 
   playerVsPositionChart?.destroy();
 
