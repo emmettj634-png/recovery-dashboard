@@ -1504,16 +1504,23 @@ function weeklyRecoveryPercent(player, pos, start, end){
   const posDen =
     validTeamDates.length * posPlayers.length;
 
+  if(validTeamDates.length === 0){
   return {
-    playerPct:
-      playerDen
-        ? (playerNum/playerDen)*100
-        : 0,
-    posPct:
-      posDen
-        ? (posNum/posDen)*100
-        : 0
+    playerPct: null,
+    posPct: null
   };
+}
+
+return {
+  playerPct:
+    playerDen
+      ? (playerNum/playerDen)*100
+      : null,
+  posPct:
+    posDen
+      ? (posNum/posDen)*100
+      : null
+};
 }
 function getLastFiveWeeks(){
 
