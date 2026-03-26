@@ -2065,8 +2065,17 @@ function renderPlayerVsPositionChart(p){
         w.end
       );
 
-    playerVals.push(r.playerPct.toFixed(1));
-    posVals.push(r.posPct.toFixed(1));
+    playerVals.push(
+  r.playerPct === null
+    ? null
+    : r.playerPct.toFixed(1)
+);
+
+posVals.push(
+  r.posPct === null
+    ? null
+    : r.posPct.toFixed(1)
+);
 
     labels.push(
   shortWeekLabel(w.start,w.end)
