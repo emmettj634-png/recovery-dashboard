@@ -2170,19 +2170,24 @@ function parseWeekLabel(label){
 }
 
 function renderMonthlyAvgChart(){
-
-let hasPrePost = false;
-
 const practiceAvgSelect =
 document.getElementById("practiceAvgSelect");
 
-const practiceFilter =
-practiceAvgSelect ? practiceAvgSelect.value : "all";
+// temporarily show dropdown
+practiceAvgSelect.style.display = "inline-block";
 
-const posDay = {};
-const teamDateCounts = {};
-const playerDates = {};
+  const hasPrePost = playerData.some(p =>
+  p.sessions.some(s =>
+    (s.pre === "pre" || s.post === "post") &&
+    (!monthFilter.value || s.date.startsWith(monthFilter.value))
+  )
+);
 
+practiceAvgSelect.style.display = hasPrePost ? "inline-block" : "none";
+  const posDay = {};
+  const teamDateCounts = {};
+  const playerDates = {};
+  const practiceFilter = practiceAvgSelect.value;
 
   /* =========================
      PASS 1 — TEAM COUNTS
@@ -2192,30 +2197,24 @@ const playerDates = {};
 
     playerDates[p.name] = new Set();
 
-   p.sessions.forEach(s=>{
+    p.sessions.forEach(s=>{
 
-  if(monthKey(s.date) !== monthFilter.value) return;
+      if(monthKey(s.date) !== monthFilter.value) return;
 
-  if(monthWeekFilter.value !== "all"){
-    const w = weekRange(s.date);
-    if(w.label !== monthWeekFilter.value) return;
-  }
+      if(monthWeekFilter.value !== "all"){
+        const w = weekRange(s.date);
+        if(w.label !== monthWeekFilter.value) return;
+      }
+      // ✅ ADD THIS BLOCK
+    if(practiceFilter === "pre" && s.pre !== "pre") return;
+    if(practiceFilter === "post" && s.post !== "post") return;
+    
+      teamDateCounts[s.date] =
+        (teamDateCounts[s.date] || 0) + 1;
 
-  // ✅ Detect if pre/post exists
-  if(s.pre === "pre" || s.post === "post"){
-    hasPrePost = true;
-  }
+      playerDates[p.name].add(s.date);
 
-  // ✅ Practice filter
-  if(practiceFilter === "pre" && s.pre !== "pre") return;
-  if(practiceFilter === "post" && s.post !== "post") return;
-
-  teamDateCounts[s.date] =
-    (teamDateCounts[s.date] || 0) + 1;
-
-  playerDates[p.name].add(s.date);
-
-});
+    });
 
   });
 
@@ -2339,12 +2338,9 @@ const playerDates = {};
 
   });
 
-  if(practiceAvgSelect){
-    practiceAvgSelect.style.display =
-    hasPrePost ? "inline-block" : "none";
-  }
-
 }
+let moduleBreakdownChart = null;
+
 function renderModuleBreakdownChart(){
 
   const selectedModule = moduleBreakdownSelect.value;
