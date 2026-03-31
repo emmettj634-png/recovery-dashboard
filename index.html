@@ -2161,6 +2161,11 @@ function parseWeekLabel(label){
 }
 
 function renderMonthlyAvgChart(){
+const practiceAvgSelect =
+document.getElementById("practiceAvgSelect");
+
+// temporarily show dropdown
+practiceAvgSelect.style.display = "inline-block";
 
   const hasPrePost = playerData.some(p =>
   p.sessions.some(s =>
