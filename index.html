@@ -2170,6 +2170,7 @@ function parseWeekLabel(label){
 }
 
 function renderMonthlyAvgChart(){
+ let hasPrePost = false;
 const practiceAvgSelect =
 document.getElementById("practiceAvgSelect");
 
@@ -2189,6 +2190,7 @@ practiceAvgSelect.style.display = hasPrePost ? "inline-block" : "none";
   const playerDates = {};
   const practiceFilter = practiceAvgSelect.value;
 
+
   /* =========================
      PASS 1 — TEAM COUNTS
   ========================== */
@@ -2197,24 +2199,30 @@ practiceAvgSelect.style.display = hasPrePost ? "inline-block" : "none";
 
     playerDates[p.name] = new Set();
 
-    p.sessions.forEach(s=>{
+   p.sessions.forEach(s=>{
 
-      if(monthKey(s.date) !== monthFilter.value) return;
+  if(monthKey(s.date) !== monthFilter.value) return;
 
-      if(monthWeekFilter.value !== "all"){
-        const w = weekRange(s.date);
-        if(w.label !== monthWeekFilter.value) return;
-      }
-      // ✅ ADD THIS BLOCK
-    if(practiceFilter === "pre" && s.pre !== "pre") return;
-    if(practiceFilter === "post" && s.post !== "post") return;
-    
-      teamDateCounts[s.date] =
-        (teamDateCounts[s.date] || 0) + 1;
+  if(monthWeekFilter.value !== "all"){
+    const w = weekRange(s.date);
+    if(w.label !== monthWeekFilter.value) return;
+  }
 
-      playerDates[p.name].add(s.date);
+  // ✅ Detect if pre/post exists
+  if(s.pre === "pre" || s.post === "post"){
+    hasPrePost = true;
+  }
 
-    });
+  // ✅ Practice filter
+  if(practiceFilter === "pre" && s.pre !== "pre") return;
+  if(practiceFilter === "post" && s.post !== "post") return;
+
+  teamDateCounts[s.date] =
+    (teamDateCounts[s.date] || 0) + 1;
+
+  playerDates[p.name].add(s.date);
+
+});
 
   });
 
@@ -2340,6 +2348,11 @@ practiceAvgSelect.style.display = hasPrePost ? "inline-block" : "none";
 
 }
 let moduleBreakdownChart = null;
+const practiceAvgSelect =
+document.getElementById("practiceAvgSelect");
+
+practiceAvgSelect.style.display =
+hasPrePost ? "inline-block" : "none";
 
 function renderModuleBreakdownChart(){
 
