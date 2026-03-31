@@ -340,15 +340,23 @@ Login
   <canvas id="playerModuleChart" style="display:none;"></canvas>
 </div>
 
-  <h2>Average Monthly Participation by Position (%)</h2>
+ <h2>Average Monthly Participation by Position (%)</h2>
+
 <div class="controls">
   <select id="monthFilter"></select>
   <select id="monthWeekFilter"></select>
+
+  <select id="practiceAvgSelect" style="display:none;">
+    <option value="all">All</option>
+    <option value="pre">Pre Practice</option>
+    <option value="post">Post Practice</option>
+  </select>
+
 </div>
+
 <div class="chart-box">
   <canvas id="monthlyAvgChart"></canvas>
 </div>
-
 <h2>Module Usage by Position (%)</h2>
 
 <div class="controls" style="justify-content:center;">
@@ -672,6 +680,8 @@ const positionColors = {
 };
 const monthFilter = document.getElementById("monthFilter");
 const monthWeekFilter = document.getElementById("monthWeekFilter");
+const practiceAvgSelect =
+document.getElementById("practiceAvgSelect");
 const moduleBreakdownSelect =
   document.getElementById("moduleBreakdownSelect");
 
@@ -2152,9 +2162,18 @@ function parseWeekLabel(label){
 
 function renderMonthlyAvgChart(){
 
+  const hasPrePost = playerData.some(p =>
+  p.sessions.some(s =>
+    (s.pre === "pre" || s.post === "post") &&
+    (!monthFilter.value || s.date.startsWith(monthFilter.value))
+  )
+);
+
+practiceAvgSelect.style.display = hasPrePost ? "inline-block" : "none";
   const posDay = {};
   const teamDateCounts = {};
   const playerDates = {};
+  const practiceFilter = practiceAvgSelect.value;
 
   /* =========================
      PASS 1 — TEAM COUNTS
@@ -2172,7 +2191,10 @@ function renderMonthlyAvgChart(){
         const w = weekRange(s.date);
         if(w.label !== monthWeekFilter.value) return;
       }
-
+      // ✅ ADD THIS BLOCK
+    if(practiceFilter === "pre" && s.pre !== "pre") return;
+    if(practiceFilter === "post" && s.post !== "post") return;
+    
       teamDateCounts[s.date] =
         (teamDateCounts[s.date] || 0) + 1;
 
@@ -2567,6 +2589,10 @@ monthWeekFilter.addEventListener("input", () => {
 monthWeekFilter.addEventListener("change", () => {
   renderMonthlyAvgChart();
 });
+practiceAvgSelect.addEventListener(
+"change",
+renderMonthlyAvgChart
+);
 dateFilter.classList.add("hidden");
 
   });  
