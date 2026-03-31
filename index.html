@@ -2170,25 +2170,18 @@ function parseWeekLabel(label){
 }
 
 function renderMonthlyAvgChart(){
- let hasPrePost = false;
+
+let hasPrePost = false;
+
 const practiceAvgSelect =
 document.getElementById("practiceAvgSelect");
 
-// temporarily show dropdown
-practiceAvgSelect.style.display = "inline-block";
+const practiceFilter =
+practiceAvgSelect ? practiceAvgSelect.value : "all";
 
-  const hasPrePost = playerData.some(p =>
-  p.sessions.some(s =>
-    (s.pre === "pre" || s.post === "post") &&
-    (!monthFilter.value || s.date.startsWith(monthFilter.value))
-  )
-);
-
-practiceAvgSelect.style.display = hasPrePost ? "inline-block" : "none";
-  const posDay = {};
-  const teamDateCounts = {};
-  const playerDates = {};
-  const practiceFilter = practiceAvgSelect.value;
+const posDay = {};
+const teamDateCounts = {};
+const playerDates = {};
 
 
   /* =========================
@@ -2346,16 +2339,12 @@ practiceAvgSelect.style.display = hasPrePost ? "inline-block" : "none";
 
   });
 
-}
-let moduleBreakdownChart = null;
-const practiceAvgSelect =
-document.getElementById("practiceAvgSelect");
+  if(practiceAvgSelect){
+    practiceAvgSelect.style.display =
+    hasPrePost ? "inline-block" : "none";
+  }
 
-if(practiceAvgSelect){
-practiceAvgSelect.style.display =
-hasPrePost ? "inline-block" : "none";
 }
-
 function renderModuleBreakdownChart(){
 
   const selectedModule = moduleBreakdownSelect.value;
