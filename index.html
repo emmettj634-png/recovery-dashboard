@@ -2351,8 +2351,10 @@ let moduleBreakdownChart = null;
 const practiceAvgSelect =
 document.getElementById("practiceAvgSelect");
 
+if(practiceAvgSelect){
 practiceAvgSelect.style.display =
 hasPrePost ? "inline-block" : "none";
+}
 
 function renderModuleBreakdownChart(){
 
