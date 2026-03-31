@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -119,10 +117,19 @@ button{cursor:pointer;}
 }
 
 
-.stats-grid,.module-grid{
+.stats-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:15px;
+}
+
+.module-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:20px;
+  max-width:1400px;
+  margin:0 auto;
+  justify-items:center;
 }
 .stat-card,.module-card{
   background:var(--card);
@@ -648,15 +655,15 @@ const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual M
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
 const positionNotes = {
   QB: "Each guy beginning to invest daily time",
-  RB: "Steady as a rock",
-  WR: "Have gotten all 14/14 engaged. Need consistency.",
-  TE: "Rocky, Hayden, and Locke take care like no other",
-  OL: "Can see guys developing and executing thier personal daily plan",
-  DT: "Improving collectively week by week",
-  DE: "Could do a lot better considering current circumstances",
-  CB: "Discplined group",
-  S: "Ford and Omarion could apply a little more",
-  LB: "One of the best groups this offseason.",
+  RB: "Probably the most well-rounded position group",
+  WR: "Do well with post-practice recovery out of the entire team",
+  TE: "All 8 guys show up and do something at least once a week",
+  OL: "Post-Practice recovery could improve",
+  DT: "Lowest participation consistently",
+  DE: "No standout in this group, but will see guys occasionally",
+  CB: "2-deep guys need improvement. Newcombe takes advantage of modules",
+  S:  "Very heavy with cryo and red-light. Tend to get something out of everyone",
+  LB: "Majority of the group have met the demands of spring ball",
   Specialists: "Have and continue to be solid"
 };
 const positionColors = {
