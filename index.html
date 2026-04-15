@@ -520,7 +520,7 @@ function validTeamInputDatesInRange(start, end){
 
   // only count dates with ≥10 unique participants
   return Object.values(dateCounts)
-    .filter(set => set.size >= 10)
+    .filter(set => set.size >= 13)
     .length;
 }
 
@@ -662,16 +662,16 @@ const cream="#FDF9D8";
 const modules=["Cryo","Red Light","Cold Tub","Hot Tub","Massage Chair","Manual Massages","Cocoon"];
 const positions=["QB","RB","WR","TE","OL","DT","DE","CB","S","LB","Specialists"];
 const positionNotes = {
-  QB: "Each guy beginning to invest daily time",
+  QB: "Complete transformation since beginning of semester to now",
   RB: "Probably the most well-rounded position group",
-  WR: "Do well with post-practice recovery out of the entire team",
+  WR: "Injured guys can take advantage of modules",
   TE: "All 8 guys show up and do something at least once a week",
   OL: "Post-Practice recovery could improve",
-  DT: "No standout in this group, but will see guys occasionally",
-  DE: "Lowest Participation throughout offseason and spring ball",
+  DT: "Beginning to see Nigel become a daily particpant",
+  DE: "Seeing intentionality emerge with plenty of guys",
   CB: "2-deep guys need improvement. Newcombe takes advantage of modules",
   S:  "Very heavy with cryo and red-light. Tend to get something out of everyone",
-  LB: "Majority of the group have met the demands of spring ball",
+  LB: "Healthy guys continue to meet the demands of spring ball",
   Specialists: "Have and continue to be solid"
 };
 const positionColors = {
@@ -779,7 +779,7 @@ const roster = [
   {name:"Parker Livingstone",position:"WR"},
   {name:"Peyton Bowen",position:"S"},
   {name:"Peyton Joseph",position:"OL"},
-  {name:"Preston Mickens",position:"CB"},
+  {name:"Preston Mickens",position:"S"},
   {name:"Preston Tarpley",position:"Specialists"},
   {name:"Prince Ijioma",position:"CB"},
   {name:"Reed DeQuasie",position:"S"},
