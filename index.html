@@ -520,7 +520,7 @@ function validTeamInputDatesInRange(start, end){
 
   // only count dates with ≥10 unique participants
   return Object.values(dateCounts)
-    .filter(set => set.size >= 10)
+    .filter(set => set.size >= 13)
     .length;
 }
 
