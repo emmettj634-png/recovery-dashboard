@@ -1565,33 +1565,35 @@ function getLastFiveWeeks(){
   const excludeStart = new Date("2026-05-09");
   const excludeEnd = new Date("2026-05-31");
 
-  for(let i=4; i>=0; i--){
+  let i = 0;
+
+  while(weeks.length < 5){
 
     const start = new Date(today);
 
     start.setDate(
       today.getDate()
       - today.getDay()
-      - (i*7)
+      - (i * 7)
     );
 
     start.setHours(0,0,0,0);
 
     const end = new Date(start);
-    end.setDate(start.getDate()+6);
+    end.setDate(start.getDate() + 6);
 
-    // Skip any week that overlaps May 9–May 31
+    // Skip excluded weeks
     if(
-      start <= excludeEnd &&
-      end >= excludeStart
+      !(start <= excludeEnd &&
+        end >= excludeStart)
     ){
-      continue;
+      weeks.unshift({
+        start,
+        end
+      });
     }
 
-    weeks.push({
-      start,
-      end
-    });
+    i++;
 
   }
 
