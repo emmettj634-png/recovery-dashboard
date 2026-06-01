@@ -448,6 +448,7 @@ Post Practice
 </div>
 
 <script>
+
 document.addEventListener("DOMContentLoaded",()=>{
 let showingLastWeek = false;
 
@@ -717,6 +718,7 @@ const roster = [
   {name:"Dakoda Fields",position:"CB"},
   {name:"Dane Bathurst",position:"LB"},
   {name:"Daniel Akinkunmi",position:"OL"},
+  {name:"Daniel Norman",position:"DE"},
   {name:"Daniel Odom",position:"WR"},
   {name:"Danny Okoye",position:"DE"},
   {name:"Darius Afalava",position:"OL"},
@@ -762,6 +764,7 @@ const roster = [
   {name:"Kenny Ozowalu",position:"DE"},
   {name:"Kip Lewis",position:"LB"},
   {name:"Kristan Moore",position:"LB"},
+  {name:"Lebron Bauer",position:"CB"},
   {name:"Liam Evans",position:"Specialists"},
   {name:"Lloyd Avant",position:"RB"},
   {name:"Mackenzie Alleyne",position:"WR"},
@@ -804,7 +807,8 @@ const roster = [
   {name:"Whitt Newbauer",position:"QB"},
   {name:"Wyatt Gilmore",position:"DE"},
   {name:"Xavier Robinson",position:"RB"},
-  {name:"eLGee Webster",position:"LB"}
+  {name:"eLGee Webster",position:"LB"},
+  {name:"Zizi Okwufulueze",position:"WR"}
 ];
 
 let playerData=roster.map(p=>({...p,sessions:[]}));
@@ -1473,20 +1477,32 @@ function weeklyRecoveryPercent(player, pos, start, end){
 
   playerData.forEach(p=>{
     p.sessions.forEach(s=>{
-      const d = new Date(s.date);
-      if(d >= start && d <= end){
-        teamDates[s.date] ??= new Set();
-        teamDates[s.date].add(p.name);
-      }
-    });
+  const d = new Date(s.date);
+
+  const excludeStart = new Date("2026-05-09");
+  const excludeEnd = new Date("2026-05-31");
+
+  if(d >= excludeStart && d <= excludeEnd) return;
+
+  if(d >= start && d <= end){
+    teamDates[s.date] ??= new Set();
+    teamDates[s.date].add(p.name);
+  }
+});
   });
 
   player.sessions.forEach(s=>{
-    const d = new Date(s.date);
-    if(d >= start && d <= end){
-      playerDates.add(s.date);
-    }
-  });
+  const d = new Date(s.date);
+
+  const excludeStart = new Date("2026-05-09");
+  const excludeEnd = new Date("2026-05-31");
+
+  if(d >= excludeStart && d <= excludeEnd) return;
+
+  if(d >= start && d <= end){
+    playerDates.add(s.date);
+  }
+});
 
   const validTeamDates = Object.entries(teamDates)
     .filter(([d,set])=>set.size>=10)
@@ -1546,6 +1562,9 @@ function getLastFiveWeeks(){
 
   const weeks = [];
 
+  const excludeStart = new Date("2026-05-09");
+  const excludeEnd = new Date("2026-05-31");
+
   for(let i=4; i>=0; i--){
 
     const start = new Date(today);
@@ -1561,6 +1580,14 @@ function getLastFiveWeeks(){
     const end = new Date(start);
     end.setDate(start.getDate()+6);
 
+    // Skip any week that overlaps May 9–May 31
+    if(
+      start <= excludeEnd &&
+      end >= excludeStart
+    ){
+      continue;
+    }
+
     weeks.push({
       start,
       end
@@ -1571,7 +1598,6 @@ function getLastFiveWeeks(){
   return weeks;
 
 }
-
 function teamInputDatesInRange(start, end){
 
   const dates = new Set();
